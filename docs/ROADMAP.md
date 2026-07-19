@@ -19,8 +19,8 @@ Este documento detalha o roteiro de implementação do projeto **estagio.io**, d
 - [x] Orquestração (n8n ou cron/APScheduler)
 
 ### 1.3 Backend (API)
-- [ ] Endpoint de listagem de vagas com filtros (área, cidade, modalidade, fonte)
-- [ ] Endpoint de detalhes da vaga
+- [x] Endpoint de listagem de vagas com filtros (área, cidade, modalidade, fonte)
+- [x] Endpoint de detalhes da vaga
 
 ### 1.4 Frontend (Astro) e SEO
 - [ ] Criar página de listagem (Home) consumindo a API
