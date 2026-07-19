@@ -51,10 +51,19 @@ MAX_HTML_CHARS = 12000
 def _get_llm_client() -> tuple[AsyncOpenAI, str]:
     provider = os.getenv("LLM_PROVIDER", "openai").lower()
     model = os.getenv("LLM_MODEL", "")
+    
+    # Suporte para GROQ (Usa API compatível com OpenAI)
+    groq_api_key = os.getenv("GROQ_API_KEY")
+    if groq_api_key:
+        return AsyncOpenAI(
+            api_key=groq_api_key,
+            base_url="https://api.groq.com/openai/v1"
+        ), model or "llama-3.1-8b-instant"
+
     api_key = os.getenv("OPENAI_API_KEY") or os.getenv("GEMINI_API_KEY")
     
     if not api_key:
-        raise ValueError("Chave de API não definida. Configure OPENAI_API_KEY no .env")
+        raise ValueError("Chave de API não definida. Configure GROQ_API_KEY ou OPENAI_API_KEY no .env")
 
     if provider == "gemini":
         return AsyncOpenAI(

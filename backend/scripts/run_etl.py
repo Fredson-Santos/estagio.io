@@ -4,6 +4,9 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from sqlalchemy.future import select
 from app.db.database import AsyncSessionLocal
 from app.db.models import Job, Source, SourceStatus

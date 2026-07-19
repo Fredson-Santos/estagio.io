@@ -55,7 +55,7 @@ async def scrape_secondary_platforms() -> Dict[str, List[Dict]]:
     }
     
     # Exemplo de fluxo real via LLM para Vagas.com.br
-    has_llm_key = bool(os.getenv("OPENAI_API_KEY") or os.getenv("GEMINI_API_KEY"))
+    has_llm_key = bool(os.getenv("OPENAI_API_KEY") or os.getenv("GEMINI_API_KEY") or os.getenv("GROQ_API_KEY"))
     if has_llm_key:
         print("Chave de API detectada. Iniciando LLM Extraction para Vagas.com.br...")
         vagascom_urls = await get_vagascom_urls()
