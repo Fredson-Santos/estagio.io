@@ -4,25 +4,35 @@ from datetime import datetime, timezone
 
 from app.core.taxonomy import JobArea, JobModality
 
-GUPY_API_URL = "https://portal.api.gupy.io/api/v1/jobs"
+GUPY_API_URL = "https://employability-portal.gupy.io/api/v1/jobs"
 
-async def fetch_gupy_jobs(query: str = "estágio", limit: int = 50) -> list[dict]:
+async def fetch_gupy_jobs(query: str = "estágio", limit: int = 2000) -> list[dict]:
     """Busca vagas de estágio na Gupy usando a API pública (Portal)."""
-    params = {
-        "jobName": query,
-        "limit": limit,
-        "offset": 0,
-    }
+    all_jobs = []
+    chunk_size = 100
     
     async with httpx.AsyncClient(timeout=15.0) as client:
-        try:
-            resp = await client.get(GUPY_API_URL, params=params)
-            resp.raise_for_status()
-            data = resp.json()
-            return data.get("data", [])
-        except Exception as exc:
-            print(f"Erro ao buscar vagas na Gupy: {exc}")
-            return []
+        for offset in range(0, limit, chunk_size):
+            params = {
+                "jobName": query,
+                "limit": min(chunk_size, limit - offset),
+                "offset": offset,
+            }
+            try:
+                resp = await client.get(GUPY_API_URL, params=params)
+                resp.raise_for_status()
+                data = resp.json()
+                jobs = data.get("data", [])
+                
+                if not jobs:
+                    break
+                    
+                all_jobs.extend(jobs)
+            except Exception as exc:
+                print(f"Erro ao buscar vagas na Gupy no offset {offset}: {exc}")
+                break
+                
+    return all_jobs
 
 def _map_modality(workplace_type: str) -> JobModality:
     mapping = {

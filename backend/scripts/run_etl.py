@@ -46,7 +46,7 @@ async def run_pipeline():
         
         # Busca vagas na Gupy
         print("Buscando vagas na Gupy...")
-        new_jobs_data = await run_gupy_scraper(limit=20)
+        new_jobs_data = await run_gupy_scraper(limit=2000)
         print(f"Foram encontradas {len(new_jobs_data)} vagas na Gupy.")
         
         jobs_added = 0
