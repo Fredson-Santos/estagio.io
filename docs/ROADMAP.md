@@ -13,10 +13,10 @@ Este documento detalha o roteiro de implementação do projeto **estagio.io**, d
 - [x] Configuração do ambiente FastAPI
 
 ### 1.2 Pipeline de Dados (Scraping)
-- [ ] Desenvolver scraper inicial para a Gupy (via endpoints JSON)
-- [ ] Implementar lógica de deduplicação (filtro de string / similaridade)
+- [x] Desenvolver scraper inicial para a Gupy (via endpoints JSON)
+- [x] Implementar lógica de deduplicação (filtro de string / similaridade)
 - [ ] Desenvolver scrapers secundários (CIEE/Nube, Vagas.com/InfoJobs/Catho)
-- [ ] Orquestração (n8n ou cron/APScheduler)
+- [x] Orquestração (n8n ou cron/APScheduler)
 
 ### 1.3 Backend (API)
 - [ ] Endpoint de listagem de vagas com filtros (área, cidade, modalidade, fonte)
