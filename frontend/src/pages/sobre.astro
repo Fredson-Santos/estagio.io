@@ -1,0 +1,51 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import Header from '../components/Header.astro';
+---
+
+<MainLayout title="Sobre nós - estagio.io">
+  <Header />
+  
+  <main class="about-main container">
+    <h1>Nossa Missão</h1>
+    <p class="lead">O <strong>estagio.io</strong> nasceu para democratizar o acesso às melhores oportunidades de início de carreira no Brasil. Acreditamos que a busca por estágios não deve ser fragmentada, exaustiva e cheia de barreiras.</p>
+    
+    <h2>Transparência e Confiança</h2>
+    <p>Nós agregamos vagas das plataformas oficiais mais confiáveis (como Vagas.com, Cia de Talentos, Gupy e SuperEstagios). Nossa tecnologia garante que você tenha acesso a links diretos para as candidaturas reais, sem intermediários. Não cobramos taxas dos candidatos e nunca venderemos seus dados.</p>
+    
+    <h2>A Tecnologia</h2>
+    <p>Desenvolvido com inteligência artificial, nosso motor varre a internet para encontrar, categorizar e trazer a você as vagas de estágio mais relevantes e quentes do momento.</p>
+  </main>
+</MainLayout>
+
+<style>
+    padding: 40px 20px;
+  }
+  
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 24px;
+    letter-spacing: -0.02em;
+  }
+  
+  p {
+    color: var(--c-text-light);
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 768px) {
+    .sobre-content {
+      padding: 24px 16px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+    }
+
+    p {
+      font-size: 14px;
+    }
+  }
+</style>

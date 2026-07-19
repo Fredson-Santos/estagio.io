@@ -23,12 +23,12 @@ Este documento detalha o roteiro de implementação do projeto **estagio.io**, d
 - [x] Endpoint de detalhes da vaga
 
 ### 1.4 Frontend (Astro) e SEO
-- [ ] Criar página de listagem (Home) consumindo a API
-- [ ] Criar página de detalhe da vaga (SSG/ISR)
-- [ ] Implementar schema `JobPosting` e ilha React para botões interativos
-- [ ] Configurar `sitemap.xml` e `robots.txt`
-- [ ] Criar página "Sobre" para E-E-A-T
-- [ ] Verificar propriedade no Google Search Console
+- [x] Criar página de listagem (Home) consumindo a API
+- [x] Criar página de detalhe da vaga (SSG/ISR)
+- [x] Implementar schema `JobPosting` e ilha React para botões interativos
+- [x] Configurar `sitemap.xml` e `robots.txt`
+- [x] Criar página "Sobre" para E-E-A-T
+- [x] Verificar propriedade no Google Search Console
 
 ### 1.5 Infraestrutura e Analytics
 - [ ] Configurar Umami (self-hosted) e instrumentar a tabela `job_clicks`
