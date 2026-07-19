@@ -15,7 +15,7 @@ Este documento detalha o roteiro de implementação do projeto **estagio.io**, d
 ### 1.2 Pipeline de Dados (Scraping)
 - [x] Desenvolver scraper inicial para a Gupy (via endpoints JSON)
 - [x] Implementar lógica de deduplicação (filtro de string / similaridade)
-- [ ] Desenvolver scrapers secundários (CIEE/Nube, Vagas.com/InfoJobs/Catho)
+- [x] Desenvolver scrapers secundários (CIEE, Nube, Eureca, Vagas.com, etc)
 - [x] Orquestração (n8n ou cron/APScheduler)
 
 ### 1.3 Backend (API)
