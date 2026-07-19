@@ -14,28 +14,30 @@ from app.services.scrapers.rules_manager import load_rules, save_rules
 SYSTEM_PROMPT = """\
 Você é um assistente especializado em extrair informações de vagas de emprego.
 Dado o código HTML simplificado de uma página de vaga, retorne SOMENTE um objeto JSON válido
-com exatamente as duas chaves abaixo: 'job_data' (os dados extraídos) e 'selectors' (os seletores CSS que você encontrou e usou para extrair aqueles dados).
+com exatamente as duas chaves abaixo: 'job_data' (os dados extraídos limpos) e 'selectors' (os seletores CSS).
 
 {
   "job_data": {
-    "title": "título/cargo da vaga",
-    "company": "nome da empresa",
+    "title": "título limpo e amigável da vaga (Ex: 'Estágio em Direito' e NÃO 'PROCESSO SELETIVO - UNIFESP 01/2026')",
+    "company": "nome da empresa limpo (ou null se não for possível determinar)",
     "location": "cidade, estado (ou null se for remoto)",
     "modality": "um dos valores exatos: 'REMOTE', 'HYBRID', 'ONSITE'. Se não informado, deduzir pelo texto ou usar 'ONSITE' como padrão",
     "area": "um dos valores exatos da taxonomia: 'TI_SOFTWARE', 'DADOS', 'DESIGN', 'MARKETING', 'NEGOCIOS', 'RH', 'FINANCAS', 'ENGENHARIA_OUTRAS', 'DIREITO', 'OUTROS'",
     "description": "resumo limpo da descrição da vaga (max 500 caracteres)"
   },
   "selectors": {
-    "title": "seletor css para o titulo (ex: h1.job-title)",
-    "company": "seletor css para a empresa (ex: .company-name)",
+    "title": "seletor css para o titulo",
+    "company": "seletor css para a empresa",
     "location": "seletor css para localizacao",
     "description": "seletor css para a descricao"
   }
 }
 
-Se algum campo não puder ser determinado, use "Não informado" ou null.
-Para os seletores, tente usar classes (ex: `.vaga-titulo`) que parecem estáveis, evitando IDs ou caminhos muito complexos que podem quebrar. Se não achar seletor para algum campo, passe null no selector.
-Retorne APENAS o JSON, sem nenhum texto adicional.
+REGRAS CRÍTICAS PARA OS SELETORES:
+1. Se o HTML não tiver uma tag que contenha EXATAMENTE e APENAS o dado limpo, retorne `null` para aquele seletor.
+2. Por exemplo, se o título da vaga estiver misturado com lixo textual numa tag <h1> (ex: <h1>Processo Seletivo - TRE-BA</h1>), retorne `null` em `selectors.title`!
+3. Se um seletor for `null`, o sistema usará o seu `job_data` como fallback.
+Retorne APENAS o JSON, sem markdown e sem textos adicionais.
 """
 
 HEADERS = {
@@ -111,9 +113,9 @@ def extract_via_rules(soup: BeautifulSoup, rules: dict) -> dict:
     desc_el = soup.select_one(rules.get("description", "")) if rules.get("description") else None
     
     # Formatação limpa
-    job_data["title"] = title_el.get_text(strip=True)
-    job_data["company"] = company_el.get_text(strip=True) if company_el else "Não informado"
-    job_data["location"] = location_el.get_text(strip=True) if location_el else "Não informado"
+    job_data["title"] = title_el.get_text(strip=True).title()
+    job_data["company"] = company_el.get_text(strip=True).title() if company_el else "Não informado"
+    job_data["location"] = location_el.get_text(strip=True).title() if location_el else "Não informado"
     job_data["description"] = desc_el.get_text(strip=True)[:500] if desc_el else ""
     
     # Se conseguiu o básico, tenta inferir a área e modalidade localmente via regex (como fizemos na Gupy)
