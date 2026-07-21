@@ -2,37 +2,41 @@
 import Layout from '../../layouts/Layout.astro';
 import JobPostingSchema from '../../components/JobPostingSchema.astro';
 
-export function getStaticPaths() {
-  return [
-    { params: { id: 'p1' } },
-    { params: { id: 'p2' } },
-    { params: { id: 'p3' } },
-    { params: { id: 'p4' } },
-    { params: { id: 'p5' } },
-    { params: { id: 'p6' } },
-    { params: { id: 'p7' } },
-    { params: { id: 'p8' } },
-  ];
-}
+export const prerender = false;
 
 const { id } = Astro.params;
 
-// Mock da vaga
-const job = {
-  title: "Product Design Intern",
-  description: "Estamos procurando um estagiário de Design de Produto talentoso para se juntar à nossa equipe...",
-  datePosted: new Date().toISOString(),
-  employmentType: "INTERN" as const,
-  hiringOrganization: {
-    name: "Lumina Tech",
-    logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuA9huf1HcbKfxiH4BFvY4X6loBmJcxLH0XHCxyca542d652b61oFKoOFUKc31zbTLRNG5ZSd43V4tXqkhkKo_cWxRUj7CqnBOHJ17HNGblFs-cOxc_N6459lOGv8qXay9SrXbq-m8EmGt5dkjUCUziWu31grbI-0UKXfpp49-o0xR7mhaUYRfe1f5OyV49mV-zSKS7HtXE6plN-g_Ua6eSq5Zd7BAUNjqHwcORI8aJK0exmUu3d2kPhtg"
-  },
-  jobLocation: {
-    addressLocality: "San Francisco",
-    addressRegion: "CA",
-    addressCountry: "US"
+let job: any = null;
+
+try {
+  const response = await fetch(`http://localhost:8000/api/v1/jobs/${id}`);
+  if (response.ok) {
+    const data = await response.json();
+    job = {
+      title: data.title,
+      description: data.description,
+      datePosted: data.posted_at || new Date().toISOString(),
+      employmentType: "INTERN" as const,
+      hiringOrganization: {
+        name: data.company,
+        logo: data.company_logo || "https://via.placeholder.com/150"
+      },
+      jobLocation: {
+        addressLocality: data.location || "Remoto",
+        addressRegion: "",
+        addressCountry: "BR"
+      }
+    };
+  } else if (response.status === 404) {
+    return Astro.redirect('/404');
   }
-};
+} catch (e) {
+  console.error("Erro ao buscar detalhes da vaga", e);
+}
+
+if (!job) {
+  return Astro.redirect('/404');
+}
 ---
 
 <Layout 

@@ -2,63 +2,21 @@
 import Layout from '../layouts/Layout.astro';
 import JobCard from '../components/JobCard.astro';
 
-// Exemplo de vagas mockadas com base no HTML original para a Home
-const featuredJobs = [
-  {
-    id: "1",
-    title: "Estágio em Engenharia de Software",
-    company: "Nubank",
-    location: "São Paulo, SP (Híbrido)",
-    salary: "R$ 2.800",
-    logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuApQpZd312FjZJZVcST91pXh_jtL22nnudJq-kJIkj6CYKwpsY_hb3glmeyAKUNGgsjC1DngIiKHZ-plW5b04Ma9dotFXnLGnsGRqjyK6RkRNGbie_YGfJvn50VnhxyRQePhV-QfXAMTeNhWQdz1l9t2-_usg-HhYB5FlcI3RtRE-cjpAMKg9ojMOOtBa1mQ1nk2jkrLsTHUHB-ee9G509ACPNM1DfwfSsi1czBnBYk2z1jKh8ntSfQhA",
-    isNew: true
-  },
-  {
-    id: "2",
-    title: "Estágio em Business Intelligence",
-    company: "XP Inc.",
-    location: "Remoto",
-    salary: "R$ 2.400",
-    logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuB1poSpjvE_iYG7BS9McG0qc_mJrkR_0F8hpnl8plWQ98SS50JAL7quUWMZR4Y6K8BLPbDdHx2UnRZBR_Kb01osXvdCwUzRR7NHhcKJumXp8XQUDtWJ2zENibC4zM2gqOc5QOtdbGSq4yugzTHPEz4PsZWDOljO90tS0DV4mUiGJsNbHYJKsvZtr9dO0Wl2qOxOskDHFALHLFHoSDpfZOiMI8i3iDMD73xXH9vDCUScgQ3MCRRU36Wi8Q",
-    isNew: false
-  },
-  {
-    id: "3",
-    title: "Estágio em Product Design",
-    company: "Mercado Livre",
-    location: "Osasco, SP",
-    salary: "R$ 3.100",
-    logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuA35fK2N9PxbwKR708m8U0VIACIwnWitADVu87pnCrbOXE1UdP3xlH1KbQG9i7B5b37AuoVU27BW8sqcAB9VP4C4u9SXH-tbTY-Vf7LpEwbXR30jkNNfAzeDa7jtMgnQa4ThyFrnJXzXcD7BAZh4KwTk7gJabTR_NhmFyiI0cUSX0DdeS0yhipOOA82GXvcbaeqkSyanjdywEIvUbDQS0exIXCTa1aOjIsGx6--e5Zgq_5SaQlf_6sDkA",
-    isNew: false
-  },
-  {
-    id: "4",
-    title: "Analista de Dados Júnior",
-    company: "iFood",
-    location: "Remoto",
-    salary: "R$ 2.600",
-    logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuArVdf0G6yzqrvawzaDfgpNj-NxMHqqqpvBVX7ChHFoFM8jujVPA99zfKbCyCTOqYQ-AbkYkr76OmMYBS5xD46FzNxmRep2h8_cFOdTHAh2ACJZCHPVo0PNIWjzXXNnv32bF-i6PEgS5knLTlLYXzLNihr4Yyds3fUsPHD17d8aVKKFxmHZ5P6QG6sBrIPwtGWJLZ27iW9kdgCIIyYy_rsBeiO7xwOqDhXZu04JQHyYfB6Qa-PWvYlm4w",
-    isNew: false
-  },
-  {
-    id: "5",
-    title: "Estágio de Marketing Digital",
-    company: "Unilever",
-    location: "Mogi das Cruzes, SP",
-    salary: "R$ 2.200",
-    logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuBaCp8RqxWz2v0ExpvwAD9025hyguTXPi1M4x-7qpw6LPfeSIr76gejQOS1-w4qYzktWQKUyfzyH03hQCdgntnoOKcsxv9ezm456UyUkkvi-IkrOKsKEmJkS8K21ldylqW8s1cU9AnheYEyPNmxWmAc_cxhz7P0JR6V6f2jpegMOR9P0V1d_aYiT5DsKR6hJgFSIsmW5xjzyEesbtDOpLNchUxDMQH2aQUlRBIh1dpMr8AkoSnT0NcuuQ",
-    isNew: false
-  },
-  {
-    id: "6",
-    title: "Estágio em Supply Chain",
-    company: "Ambev",
-    location: "Jundiaí, SP",
-    salary: "R$ 2.500",
-    logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuCex-_MEKRDiFzU-mBhM-w7GhpxoTouwnDHQYTF9_cJEynI6ASO7PYbZjkoIjuPYCcUERdGe9kOnIsnr-Pxdm67RdVxAZ4XDyU7QweVDYmURSufi7qBV9B4-qWNBrR0aaBNMroD_zDubip4GDX0Kcejr0CH76mfxxQVUJlE7JAl-OwguKCV3OYb9kmIgjkxNjQRyM_AEVTefpX9jrFlOePhXAhByKl3GxF4YvTRTDpZVnbT0gnZ2O-KJQ",
-    isNew: false
+let featuredJobs = [];
+try {
+  const response = await fetch(`http://localhost:8000/api/v1/jobs?limit=6&featured=true`);
+  if (response.ok) {
+    const data = await response.json();
+    featuredJobs = data.items.map((job: any) => ({
+      ...job,
+      publishedAt: job.posted_at ? new Date(job.posted_at).toLocaleDateString('pt-BR') : 'Recente',
+      logo: job.company_logo || undefined,
+      isNew: job.is_new
+    }));
   }
-];
+} catch (e) {
+  console.error("Erro ao buscar vagas do backend", e);
+}
 ---
 
 <Layout 
