@@ -1,0 +1,125 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import JobCard from '../../components/JobCard.astro';
+import FilterSidebar from '../../components/FilterSidebar.astro';
+
+const jobs = [
+  {
+    id: "p1",
+    title: "Product Design Intern",
+    company: "Lumina Tech",
+    location: "San Francisco, CA",
+    logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuA9huf1HcbKfxiH4BFvY4X6loBmJcxLH0XHCxyca542d652b61oFKoOFUKc31zbTLRNG5ZSd43V4tXqkhkKo_cWxRUj7CqnBOHJ17HNGblFs-cOxc_N6459lOGv8qXay9SrXbq-m8EmGt5dkjUCUziWu31grbI-0UKXfpp49-o0xR7mhaUYRfe1f5OyV49mV-zSKS7HtXE6plN-g_Ua6eSq5Zd7BAUNjqHwcORI8aJK0exmUu3d2kPhtg"
+  },
+  {
+    id: "p2",
+    title: "Data Science Intern",
+    company: "Zenith Capital",
+    location: "New York, NY",
+    logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuBYGl9MpFGVWQipq8pe4jvYP9SJW_VnwlOUkIQPy6hV9l0hfIM_PcTSHdeaKIJ_wNt3In8MfL8zJHS6eae6QkV-2N9qa_OMAIHYEJyHtXf5s0-p3Z7xj_cxfC1k09PBGmLFkV32ico7pVbK-VAPJViW00xzqfYXoBWc5tg0OAXIZ6seovcla4xhltmg7k4aJIWR6XjqGPfUgLWHKhnH5ZgB-SZEYUQyFPV7xVADyT8I_kfDpHybc-uKDg"
+  },
+  {
+    id: "p3",
+    title: "Growth Marketing Intern",
+    company: "EcoFlow",
+    location: "Austin, TX",
+    logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuAoz5JJpWuKS_sqcl8O5ovEXMxRjSDmt6SVpu1nIRpDL_w5k8h89xjrtHTU9A6444W7kDter452bmOf9bot4RQrQsBKDcWhU_uykmAQBxhHbq2fu8nxxvqOmgX6xYXsqc_HuLU5ysJr_ckqsN5jlt12AaUwMoODHglBoGh7Lc6Eq6ypNL6LLe4y6gnG4drVHsQ_mKXUNhC4iH7K8_HkEzd3BSKRhcUgLTLoqwQW5jYBvTJi9CYononu4Q"
+  },
+  {
+    id: "p4",
+    title: "Operations Intern",
+    company: "RapidX",
+    location: "Chicago, IL",
+    logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuD5WTXg3BqQLoOWfxxvY8RXL0k5bngnhHKl6khVyYQwqRn_MxmTzkFyF4OiAksiVj7W2di7-7GRpfMgum24Wce8k9iDAGv_j6rAL3z_MfnKDTJWRwT_ksybHLU723m0E7-2ppMpl0YmofyOnesTWSSe9NEGgphQ6aw431Akj1cEuSzLW-3RLlguHIPeNkJG64Uf3Sx6qc-311_dp4SOMTZ5Pk3Pt-T1tXF1QhpODL-K4VmN4v_gyDqTww"
+  },
+  {
+    id: "p5",
+    title: "Fullstack Developer Intern",
+    company: "TechFlow",
+    location: "Seattle, WA"
+  },
+  {
+    id: "p6",
+    title: "UX Research Intern",
+    company: "CreativePulse",
+    location: "London, UK"
+  },
+  {
+    id: "p7",
+    title: "Mobile Engineering Intern",
+    company: "Streamline",
+    location: "Berlin, DE"
+  },
+  {
+    id: "p8",
+    title: "Finance Intern",
+    company: "Visionary",
+    location: "New York, NY"
+  }
+];
+---
+
+<Layout 
+  title="Vagas | estagio.io"
+  description="Encontre sua próxima vaga de estágio. Filtre por área, regime e mais."
+>
+  <div class="pt-24 pb-xl px-gutter max-w-container-max mx-auto w-full">
+    <!-- Search Section -->
+    <section class="mb-xl">
+      <form action="/vagas" method="GET" class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+        <div class="flex flex-col md:flex-row gap-md">
+          <div class="flex-grow relative">
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
+            <input name="q" class="w-full pl-12 pr-4 py-3 bg-surface border-outline-variant border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-md text-on-surface-variant" placeholder="Cargo, palavra-chave ou empresa..." type="text">
+          </div>
+          <div class="relative min-w-[200px]">
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">location_on</span>
+            <input name="location" class="w-full pl-12 pr-4 py-3 bg-surface border-outline-variant border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-md text-on-surface-variant" placeholder="Cidade ou remoto" type="text">
+          </div>
+          <button type="submit" class="bg-primary text-on-primary px-xl py-3 rounded-lg font-label-md text-label-md hover:bg-primary-container transition-all flex items-center justify-center gap-sm">
+            <span>Buscar</span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <div class="flex flex-col lg:flex-row gap-xl">
+      <FilterSidebar />
+      
+      <!-- Main Job Feed -->
+      <div class="flex-grow">
+        <div class="flex justify-between items-center mb-lg">
+          <p class="font-body-sm text-body-sm text-on-surface-variant">Mostrando <span class="font-bold text-on-surface">{jobs.length}</span> oportunidades</p>
+          <div class="flex items-center gap-sm">
+            <span class="text-label-sm font-label-sm text-outline">Ordenar por:</span>
+            <select class="bg-transparent border-none focus:ring-0 font-label-md text-label-md text-primary cursor-pointer pr-8 outline-none">
+              <option>Mais recentes</option>
+              <option>Relevância</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+          {jobs.map((job) => (
+            <JobCard {...job} />
+          ))}
+        </div>
+
+        <!-- Pagination -->
+        <div class="mt-xl flex items-center justify-center gap-sm">
+          <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-colors">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <button class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-on-primary font-label-md text-label-md">1</button>
+          <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-colors">2</button>
+          <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-colors">3</button>
+          <span class="px-xs text-outline">...</span>
+          <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-colors">12</button>
+          <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-colors">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

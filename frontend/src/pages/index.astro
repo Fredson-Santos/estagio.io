@@ -1,0 +1,203 @@
+---
+import Layout from '../layouts/Layout.astro';
+import JobCard from '../components/JobCard.astro';
+
+// Exemplo de vagas mockadas com base no HTML original para a Home
+const featuredJobs = [
+  {
+    id: "1",
+    title: "Estágio em Engenharia de Software",
+    company: "Nubank",
+    location: "São Paulo, SP (Híbrido)",
+    salary: "R$ 2.800",
+    logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuApQpZd312FjZJZVcST91pXh_jtL22nnudJq-kJIkj6CYKwpsY_hb3glmeyAKUNGgsjC1DngIiKHZ-plW5b04Ma9dotFXnLGnsGRqjyK6RkRNGbie_YGfJvn50VnhxyRQePhV-QfXAMTeNhWQdz1l9t2-_usg-HhYB5FlcI3RtRE-cjpAMKg9ojMOOtBa1mQ1nk2jkrLsTHUHB-ee9G509ACPNM1DfwfSsi1czBnBYk2z1jKh8ntSfQhA",
+    isNew: true
+  },
+  {
+    id: "2",
+    title: "Estágio em Business Intelligence",
+    company: "XP Inc.",
+    location: "Remoto",
+    salary: "R$ 2.400",
+    logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuB1poSpjvE_iYG7BS9McG0qc_mJrkR_0F8hpnl8plWQ98SS50JAL7quUWMZR4Y6K8BLPbDdHx2UnRZBR_Kb01osXvdCwUzRR7NHhcKJumXp8XQUDtWJ2zENibC4zM2gqOc5QOtdbGSq4yugzTHPEz4PsZWDOljO90tS0DV4mUiGJsNbHYJKsvZtr9dO0Wl2qOxOskDHFALHLFHoSDpfZOiMI8i3iDMD73xXH9vDCUScgQ3MCRRU36Wi8Q",
+    isNew: false
+  },
+  {
+    id: "3",
+    title: "Estágio em Product Design",
+    company: "Mercado Livre",
+    location: "Osasco, SP",
+    salary: "R$ 3.100",
+    logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuA35fK2N9PxbwKR708m8U0VIACIwnWitADVu87pnCrbOXE1UdP3xlH1KbQG9i7B5b37AuoVU27BW8sqcAB9VP4C4u9SXH-tbTY-Vf7LpEwbXR30jkNNfAzeDa7jtMgnQa4ThyFrnJXzXcD7BAZh4KwTk7gJabTR_NhmFyiI0cUSX0DdeS0yhipOOA82GXvcbaeqkSyanjdywEIvUbDQS0exIXCTa1aOjIsGx6--e5Zgq_5SaQlf_6sDkA",
+    isNew: false
+  },
+  {
+    id: "4",
+    title: "Analista de Dados Júnior",
+    company: "iFood",
+    location: "Remoto",
+    salary: "R$ 2.600",
+    logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuArVdf0G6yzqrvawzaDfgpNj-NxMHqqqpvBVX7ChHFoFM8jujVPA99zfKbCyCTOqYQ-AbkYkr76OmMYBS5xD46FzNxmRep2h8_cFOdTHAh2ACJZCHPVo0PNIWjzXXNnv32bF-i6PEgS5knLTlLYXzLNihr4Yyds3fUsPHD17d8aVKKFxmHZ5P6QG6sBrIPwtGWJLZ27iW9kdgCIIyYy_rsBeiO7xwOqDhXZu04JQHyYfB6Qa-PWvYlm4w",
+    isNew: false
+  },
+  {
+    id: "5",
+    title: "Estágio de Marketing Digital",
+    company: "Unilever",
+    location: "Mogi das Cruzes, SP",
+    salary: "R$ 2.200",
+    logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuBaCp8RqxWz2v0ExpvwAD9025hyguTXPi1M4x-7qpw6LPfeSIr76gejQOS1-w4qYzktWQKUyfzyH03hQCdgntnoOKcsxv9ezm456UyUkkvi-IkrOKsKEmJkS8K21ldylqW8s1cU9AnheYEyPNmxWmAc_cxhz7P0JR6V6f2jpegMOR9P0V1d_aYiT5DsKR6hJgFSIsmW5xjzyEesbtDOpLNchUxDMQH2aQUlRBIh1dpMr8AkoSnT0NcuuQ",
+    isNew: false
+  },
+  {
+    id: "6",
+    title: "Estágio em Supply Chain",
+    company: "Ambev",
+    location: "Jundiaí, SP",
+    salary: "R$ 2.500",
+    logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuCex-_MEKRDiFzU-mBhM-w7GhpxoTouwnDHQYTF9_cJEynI6ASO7PYbZjkoIjuPYCcUERdGe9kOnIsnr-Pxdm67RdVxAZ4XDyU7QweVDYmURSufi7qBV9B4-qWNBrR0aaBNMroD_zDubip4GDX0Kcejr0CH76mfxxQVUJlE7JAl-OwguKCV3OYb9kmIgjkxNjQRyM_AEVTefpX9jrFlOePhXAhByKl3GxF4YvTRTDpZVnbT0gnZ2O-KJQ",
+    isNew: false
+  }
+];
+---
+
+<Layout 
+  title="estagio.io | Encontre seu estágio"
+  description="As melhores vagas de estágio reunidas em um só lugar. Conectamos talentos às maiores empresas do país."
+>
+  <!-- Hero Section -->
+  <section class="relative pt-32 pb-xl px-gutter overflow-hidden">
+    <!-- Background Decoration -->
+    <div class="absolute -top-24 -right-24 w-96 h-96 bg-primary-container/10 rounded-full blur-[100px]"></div>
+    <div class="absolute top-1/2 -left-24 w-64 h-64 bg-secondary-container/20 rounded-full blur-[80px]"></div>
+    
+    <div class="max-w-container-max mx-auto text-center relative z-10">
+      <h1 class="font-display text-display text-on-surface max-w-3xl mx-auto mb-md leading-tight">
+        Encontre seu estágio
+      </h1>
+      <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto mb-xl">
+        As melhores vagas de estágio reunidas em um só lugar. Conectamos talentos às maiores empresas do país.
+      </p>
+      
+      <!-- Centered Search Bar -->
+      <div class="max-w-3xl mx-auto mb-xl">
+        <form action="/vagas" method="GET" class="bg-surface-container-lowest p-sm rounded-xl border border-outline-variant shadow-lg flex flex-col md:flex-row items-center gap-sm">
+          <div class="flex-1 flex items-center gap-sm px-md w-full">
+            <span class="material-symbols-outlined text-outline">search</span>
+            <input name="q" class="w-full bg-transparent border-none focus:ring-0 font-body-md text-body-md text-on-surface placeholder:text-outline" placeholder="Cargo, empresa ou palavra-chave" type="text" />
+          </div>
+          <div class="h-8 w-px bg-outline-variant hidden md:block"></div>
+          <div class="flex-1 flex items-center gap-sm px-md w-full">
+            <span class="material-symbols-outlined text-outline">location_on</span>
+            <input name="location" class="w-full bg-transparent border-none focus:ring-0 font-body-md text-body-md text-on-surface placeholder:text-outline" placeholder="Cidade ou Remoto" type="text" />
+          </div>
+          <button type="submit" class="w-full md:w-auto bg-primary text-on-primary font-label-md text-label-md px-xl py-md rounded-lg hover:brightness-110 active:scale-95 transition-all">
+            Buscar
+          </button>
+        </form>
+      </div>
+      
+      <!-- Trusted Partners / Sources -->
+      <div class="pt-lg">
+        <p class="font-label-sm text-label-sm text-outline uppercase tracking-widest mb-md">Vagas integradas de</p>
+        <div class="flex flex-wrap justify-center items-center gap-xl grayscale opacity-60">
+          <span class="font-headline-sm font-extrabold tracking-tighter">Gupy</span>
+          <span class="font-headline-sm font-extrabold tracking-tighter">CIEE</span>
+          <span class="font-headline-sm font-extrabold tracking-tighter">Vagas.com</span>
+          <span class="font-headline-sm font-extrabold tracking-tighter">InfoJobs</span>
+          <span class="font-headline-sm font-extrabold tracking-tighter">Catho</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Programas em destaque -->
+  <section class="py-xl bg-surface-container-low px-gutter">
+    <div class="max-w-container-max mx-auto">
+      <div class="flex justify-between items-end mb-xl">
+        <div>
+          <h2 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Programas em destaque</h2>
+          <p class="font-body-md text-body-md text-on-surface-variant">Oportunidades exclusivas nas empresas que mais crescem.</p>
+        </div>
+        <a href="/vagas" class="hidden md:flex items-center gap-xs font-label-md text-label-md text-primary hover:underline group">
+          Ver todas as vagas
+          <span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+        </a>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg fade-in-group">
+        {featuredJobs.map(job => (
+          <JobCard {...job} />
+        ))}
+      </div>
+      
+      <div class="mt-xl text-center md:hidden">
+        <a href="/vagas" class="inline-flex items-center gap-xs font-label-md text-label-md text-primary font-bold">
+          Ver todas as vagas
+          <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Us / Bento Grid Pattern -->
+  <section class="py-xl px-gutter fade-in-group">
+    <div class="max-w-container-max mx-auto">
+      <h2 class="font-headline-lg text-headline-lg text-on-surface text-center mb-xl">Por que usar o estagio.io?</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-12 md:grid-rows-2 gap-lg">
+        <div class="md:col-span-8 bg-surface-container p-xl rounded-xl flex flex-col justify-center">
+          <span class="material-symbols-outlined text-primary text-4xl mb-md">bolt</span>
+          <h3 class="font-headline-md text-headline-md text-on-surface mb-sm">Atualização em Tempo Real</h3>
+          <p class="font-body-md text-body-md text-on-surface-variant max-w-[512px]">Nossos robôs varrem as principais plataformas de emprego 24/7 para garantir que você veja as vagas assim que forem publicadas.</p>
+        </div>
+        
+        <div class="md:col-span-4 bg-primary text-on-primary p-xl rounded-xl flex flex-col justify-end">
+          <span class="material-symbols-outlined text-4xl mb-md">verified_user</span>
+          <h3 class="font-headline-md text-headline-md mb-sm">Vagas Verificadas</h3>
+          <p class="font-body-sm text-body-sm text-primary-fixed opacity-90">Eliminamos golpes e vagas duplicadas para que sua busca seja segura e produtiva.</p>
+        </div>
+        
+        <div class="md:col-span-4 bg-secondary-container p-xl rounded-xl flex flex-col">
+          <span class="material-symbols-outlined text-on-secondary-container text-4xl mb-md">filter_alt</span>
+          <h3 class="font-headline-sm text-headline-sm text-on-secondary-container mb-sm">Filtros Inteligentes</h3>
+          <p class="font-body-sm text-body-sm text-on-secondary-variant">Busque por valor de bolsa, regime (remoto/híbrido) e área de atuação com um clique.</p>
+        </div>
+        
+        <div class="md:col-span-8 bg-surface-container-highest p-xl rounded-xl flex items-center justify-between overflow-hidden">
+          <div class="max-w-[320px]">
+            <h3 class="font-headline-md text-headline-md text-on-surface mb-sm">Para Recrutadores</h3>
+            <p class="font-body-md text-body-md text-on-surface-variant">Publique seu programa de estágio e alcance milhares de estudantes qualificados.</p>
+            <button class="mt-md font-label-md text-label-md text-primary font-bold">Saiba mais &rarr;</button>
+          </div>
+          <div class="hidden lg:block">
+            <div class="w-48 h-48 bg-white/50 rounded-full border border-white flex items-center justify-center -mr-16">
+              <span class="material-symbols-outlined text-6xl text-primary">groups</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Simple animation on scroll reveal
+    const observerOptions = {
+      threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('opacity-100', 'translate-y-0');
+          entry.target.classList.remove('opacity-0', 'translate-y-8');
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.fade-in-group > div, .fade-in-group > a').forEach(el => {
+      el.classList.add('transition-all', 'duration-700', 'opacity-0', 'translate-y-8');
+      observer.observe(el);
+    });
+  </script>
+</Layout>

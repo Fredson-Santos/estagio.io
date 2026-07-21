@@ -1,51 +1,125 @@
 ---
-import MainLayout from '../layouts/MainLayout.astro';
-import Header from '../components/Header.astro';
+import Layout from '../layouts/Layout.astro';
 ---
 
-<MainLayout title="Sobre nós - estagio.io">
-  <Header />
-  
-  <main class="about-main container">
-    <h1>Nossa Missão</h1>
-    <p class="lead">O <strong>estagio.io</strong> nasceu para democratizar o acesso às melhores oportunidades de início de carreira no Brasil. Acreditamos que a busca por estágios não deve ser fragmentada, exaustiva e cheia de barreiras.</p>
-    
-    <h2>Transparência e Confiança</h2>
-    <p>Nós agregamos vagas das plataformas oficiais mais confiáveis (como Vagas.com, Cia de Talentos, Gupy e SuperEstagios). Nossa tecnologia garante que você tenha acesso a links diretos para as candidaturas reais, sem intermediários. Não cobramos taxas dos candidatos e nunca venderemos seus dados.</p>
-    
-    <h2>A Tecnologia</h2>
-    <p>Desenvolvido com inteligência artificial, nosso motor varre a internet para encontrar, categorizar e trazer a você as vagas de estágio mais relevantes e quentes do momento.</p>
-  </main>
-</MainLayout>
-
-<style>
-    padding: 40px 20px;
-  }
-  
-  h1 {
-    font-size: 2rem;
-    margin-bottom: 24px;
-    letter-spacing: -0.02em;
-  }
-  
-  p {
-    color: var(--c-text-light);
-    margin-bottom: 16px;
-    line-height: 1.6;
-  }
-
-  @media (max-width: 768px) {
-    .sobre-content {
-      padding: 24px 16px;
+<Layout 
+  title="Sobre o estagio.io | Democratizando Oportunidades"
+  description="O estagio.io reúne as melhores oportunidades de estágio em um só lugar para facilitar sua busca."
+>
+  <style>
+    .hero-gradient {
+        background: radial-gradient(circle at 50% 50%, rgba(0, 112, 243, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
     }
+  </style>
 
-    h1 {
-      font-size: 1.5rem;
-      margin-bottom: 16px;
-    }
+  <!-- Hero Section -->
+  <section class="hero-gradient py-xl md:py-32 px-gutter">
+    <div class="max-w-4xl mx-auto text-center space-y-md fade-in-section">
+      <h1 class="font-display text-display md:text-[64px] leading-tight tracking-tight text-on-surface">O agregador de vagas para estudantes</h1>
+      <p class="font-body-lg text-body-lg text-secondary max-w-2xl mx-auto">O estagio.io reúne as melhores oportunidades de estágio em um só lugar para facilitar sua busca.</p>
+    </div>
+  </section>
 
-    p {
-      font-size: 14px;
-    }
-  }
-</style>
+  <!-- Mission Section -->
+  <section class="py-xl px-gutter max-w-container-max mx-auto">
+    <div class="grid md:grid-cols-2 gap-xl items-center fade-in-section">
+      <div class="space-y-lg order-2 md:order-1">
+        <div class="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full font-label-sm text-label-sm">
+          <span class="material-symbols-outlined !text-[16px]">flag</span>
+          Nossa Missão
+        </div>
+        <h2 class="font-headline-lg text-headline-lg">Todas as vagas em um só lugar</h2>
+        <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">O estagio.io é um agregador que monitora os principais portais de carreira para que você não precise visitar dezenas de sites todos os dias.</p>
+        <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">Nossa plataforma centraliza e organiza as oportunidades, permitindo que você encontre seu próximo estágio de forma rápida, eficiente e totalmente gratuita.</p>
+      </div>
+      <div class="order-1 md:order-2 rounded-xl bg-surface-container-low p-xl flex flex-col justify-center gap-xl shadow-sm border border-outline-variant aspect-square md:aspect-video">
+        <div class="flex items-center gap-md">
+          <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined">work</span>
+          </div>
+          <div>
+            <div class="font-display text-headline-lg font-bold text-on-surface">10.000+</div>
+            <div class="font-label-md text-label-md text-on-surface-variant">Vagas Agregadas</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-md">
+          <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined">business</span>
+          </div>
+          <div>
+            <div class="font-display text-headline-lg font-bold text-on-surface">500+</div>
+            <div class="font-label-md text-label-md text-on-surface-variant">Empresas Parceiras</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-md">
+          <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined">school</span>
+          </div>
+          <div>
+            <div class="font-display text-headline-lg font-bold text-on-surface">100%</div>
+            <div class="font-label-md text-label-md text-on-surface-variant">Gratuito para Alunos</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it Works (Crawl/Integration) -->
+  <section class="py-xl px-gutter max-w-container-max mx-auto">
+    <div class="bg-on-secondary-fixed rounded-2xl p-xl md:p-24 text-on-primary relative overflow-hidden fade-in-section">
+      <!-- Abstract pattern overlay -->
+      <div class="absolute top-0 right-0 w-1/2 h-full opacity-10 pointer-events-none">
+        <svg fill="none" viewbox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="200" cy="200" r="180" stroke="white" stroke-dasharray="10 10" stroke-width="2"></circle>
+          <circle cx="200" cy="200" r="140" stroke="white" stroke-width="2"></circle>
+          <circle cx="200" cy="200" r="100" stroke="white" stroke-dasharray="5 5" stroke-width="2"></circle>
+        </svg>
+      </div>
+      <div class="relative z-10 max-w-2xl">
+        <h2 class="font-display text-headline-lg md:text-[40px] text-white mb-md">Como funcionamos?</h2>
+        <p class="font-body-lg text-body-lg text-secondary-fixed-dim mb-lg">
+          Nosso sistema realiza uma varredura constante nos principais portais de carreira do mercado brasileiro.
+        </p>
+        <div class="flex flex-wrap gap-md items-center mb-xl">
+          <span class="px-4 py-2 bg-white/10 rounded-full font-label-md text-label-md border border-white/20">Gupy</span>
+          <span class="px-4 py-2 bg-white/10 rounded-full font-label-md text-label-md border border-white/20">CIEE</span>
+          <span class="px-4 py-2 bg-white/10 rounded-full font-label-md text-label-md border border-white/20">Vagas.com</span>
+          <span class="px-4 py-2 bg-white/10 rounded-full font-label-md text-label-md border border-white/20">LinkedIn</span>
+          <span class="px-4 py-2 bg-white/10 rounded-full font-label-md text-label-md border border-white/20">+10 outros</span>
+        </div>
+        <p class="font-body-md text-body-md text-secondary-fixed-dim">
+          Isso garante que você não perca nenhuma oportunidade relevante. Organizamos tudo de forma limpa, permitindo filtros avançados por localização, bolsa-auxílio e modalidade.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-xl text-center px-gutter fade-in-section">
+    <h2 class="font-headline-lg text-headline-lg mb-md">Pronto para dar o próximo passo?</h2>
+    <div class="flex flex-col sm:flex-row gap-md justify-center items-center">
+      <a class="w-full sm:w-auto px-8 py-3 bg-primary text-white rounded-lg font-label-md text-label-md hover:bg-primary/90 transition-colors shadow-lg" href="/vagas">Ver vagas disponíveis</a>
+      <a class="w-full sm:w-auto px-8 py-3 bg-white border border-outline-variant text-secondary rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-all" href="#">Assinar Newsletter</a>
+    </div>
+  </section>
+
+  <script>
+    const observerOptions = {
+      threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('opacity-100', 'translate-y-0');
+          entry.target.classList.remove('opacity-0', 'translate-y-10');
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.fade-in-section').forEach(el => {
+      el.classList.add('transition-all', 'duration-1000', 'opacity-0', 'translate-y-10');
+      observer.observe(el);
+    });
+  </script>
+</Layout>

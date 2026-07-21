@@ -1,0 +1,92 @@
+---
+// Componente de Sidebar de Filtros
+---
+
+<aside class="w-full lg:w-64 flex-shrink-0 space-y-lg">
+  <div class="flex items-center justify-between lg:hidden mb-md">
+    <h2 class="font-headline-sm text-headline-sm">Filtros</h2>
+    <button class="text-primary font-label-md" id="toggle-filters-btn">Mostrar Todos</button>
+  </div>
+  
+  <div class="hidden lg:block space-y-lg" id="filters-container">
+    <!-- Área de Atuação -->
+    <div class="space-y-sm">
+      <h3 class="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider text-[11px]">Área de Atuação</h3>
+      <div class="space-y-base">
+        <label class="flex items-center gap-sm cursor-pointer hover:bg-surface-container-low p-sm rounded-lg transition-colors">
+          <input class="rounded border-outline-variant text-primary focus:ring-primary/20" type="checkbox">
+          <span class="font-body-sm text-body-sm text-on-surface-variant">Engenharia e Tecnologia</span>
+        </label>
+        <label class="flex items-center gap-sm cursor-pointer hover:bg-surface-container-low p-sm rounded-lg transition-colors">
+          <input class="rounded border-outline-variant text-primary focus:ring-primary/20" type="checkbox">
+          <span class="font-body-sm text-body-sm text-on-surface-variant">Design e UX</span>
+        </label>
+        <label class="flex items-center gap-sm cursor-pointer hover:bg-surface-container-low p-sm rounded-lg transition-colors">
+          <input class="rounded border-outline-variant text-primary focus:ring-primary/20" type="checkbox">
+          <span class="font-body-sm text-body-sm text-on-surface-variant">Marketing</span>
+        </label>
+      </div>
+    </div>
+    
+    <hr class="border-outline-variant/30">
+    
+    <!-- Tipo de Estágio -->
+    <div class="space-y-sm">
+      <h3 class="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider text-[11px]">Tipo de Estágio</h3>
+      <div class="space-y-base">
+        <label class="flex items-center gap-sm cursor-pointer hover:bg-surface-container-low p-sm rounded-lg transition-colors">
+          <input class="text-primary focus:ring-primary/20 border-outline-variant" name="type" type="radio">
+          <span class="font-body-sm text-body-sm text-on-surface-variant">Integral</span>
+        </label>
+        <label class="flex items-center gap-sm cursor-pointer hover:bg-surface-container-low p-sm rounded-lg transition-colors">
+          <input checked class="text-primary focus:ring-primary/20 border-outline-variant" name="type" type="radio">
+          <span class="font-body-sm text-body-sm text-on-surface-variant">Meio período</span>
+        </label>
+      </div>
+    </div>
+    
+    <hr class="border-outline-variant/30">
+    
+    <!-- Modelo de Trabalho -->
+    <div class="space-y-sm">
+      <h3 class="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider text-[11px]">Modelo de Trabalho</h3>
+      <div class="flex flex-wrap gap-xs">
+        <button class="px-md py-xs bg-primary-container text-on-primary-container border border-primary/20 rounded-full font-label-sm text-label-sm">Remoto</button>
+        <button class="px-md py-xs bg-surface border border-outline-variant rounded-full font-label-sm text-label-sm text-on-surface-variant hover:border-primary/50 transition-colors">Híbrido</button>
+        <button class="px-md py-xs bg-surface border border-outline-variant rounded-full font-label-sm text-label-sm text-on-surface-variant hover:border-primary/50 transition-colors">Presencial</button>
+      </div>
+    </div>
+    
+    <hr class="border-outline-variant/30">
+    
+    <!-- Empresas Top -->
+    <div class="space-y-sm">
+      <h3 class="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider text-[11px]">Empresas</h3>
+      <div class="space-y-base">
+        <label class="flex items-center gap-sm cursor-pointer p-sm rounded-lg">
+          <input class="rounded border-outline-variant text-primary" type="checkbox">
+          <span class="font-body-sm text-body-sm text-on-surface-variant">Google</span>
+        </label>
+        <label class="flex items-center gap-sm cursor-pointer p-sm rounded-lg">
+          <input class="rounded border-outline-variant text-primary" type="checkbox">
+          <span class="font-body-sm text-body-sm text-on-surface-variant">Nubank</span>
+        </label>
+        <label class="flex items-center gap-sm cursor-pointer p-sm rounded-lg">
+          <input class="rounded border-outline-variant text-primary" type="checkbox">
+          <span class="font-body-sm text-body-sm text-on-surface-variant">Stripe</span>
+        </label>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<script>
+  const toggleBtn = document.getElementById('toggle-filters-btn');
+  const filtersContainer = document.getElementById('filters-container');
+  
+  if (toggleBtn && filtersContainer) {
+    toggleBtn.addEventListener('click', () => {
+      filtersContainer.classList.toggle('hidden');
+    });
+  }
+</script>

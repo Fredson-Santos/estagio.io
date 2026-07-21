@@ -1,268 +1,45 @@
 ---
 interface Props {
   id: string;
-  initial: string;
-  source: string;
   title: string;
   company: string;
   location: string;
-  modality: string;
-  timeAgo: string;
   salary?: string;
+  logo?: string;
+  isNew?: boolean;
 }
 
-const { id, initial, source, title, company, location, modality, timeAgo, salary } = Astro.props;
+const { id, title, company, location, salary, logo, isNew = false } = Astro.props;
 ---
 
-<a href={`/vaga/${id}`} class="job-card group">
-  <div class="card-header">
-    <div class="avatar">{initial}</div>
-    <div class="badge">{source}</div>
-  </div>
-  
-  <div class="card-main">
-    <h3 class="title">{title}</h3>
-    <p class="company">{company}</p>
-  </div>
-  
-  <div class="details">
-    <div class="details-row">
-      <div class="location-modality">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-          <circle cx="12" cy="10" r="3"></circle>
-        </svg>
-        <span>{location}</span>
-        <span class="dot-separator">•</span>
-        <span class={modality === 'Remoto' ? 'text-primary' : (modality === 'Híbrido' ? 'text-foreground' : '')}>{modality}</span>
-      </div>
-      
-      {salary && (
-        <div class="salary">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="1" x2="12" y2="23"></line>
-            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-          </svg>
-          <span>{salary}</span>
-        </div>
+<a href={`/vagas/${id}`} class="block bg-surface-container-lowest p-lg rounded-xl border border-outline-variant hover:shadow-xl transition-all duration-300 group">
+  <div class="flex justify-between items-start mb-md">
+    <div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center overflow-hidden border border-outline-variant/30">
+      {logo ? (
+        <img class="w-10 h-10 object-contain" alt={`Logo ${company}`} src={logo} />
+      ) : (
+        <span class="font-bold text-on-surface-variant text-xl">{company.charAt(0)}</span>
       )}
     </div>
-    
-    <div class="time-ago">
-      <div class="time-wrapper">
-        <span class="recency-dot"></span>
-        <span>{timeAgo}</span>
-      </div>
-      <div class="redirect-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="7" y1="17" x2="17" y2="7"></line>
-          <polyline points="7 7 17 7 17 17"></polyline>
-        </svg>
-      </div>
-    </div>
+    {isNew && (
+      <span class="bg-primary-container/10 text-primary-fixed-dim text-[10px] font-bold px-sm py-xs rounded-full uppercase tracking-wider">Novo</span>
+    )}
   </div>
+  <h3 class="font-headline-sm text-headline-sm text-on-surface mb-xs group-hover:text-primary transition-colors">{title}</h3>
+  <p class="font-body-md text-body-md text-on-surface-variant mb-md">{company}</p>
+  <div class="flex flex-wrap items-center gap-md mb-lg">
+    <div class="flex items-center gap-xs text-outline">
+      <span class="material-symbols-outlined text-[18px]">location_on</span>
+      <span class="font-label-sm text-label-sm">{location}</span>
+    </div>
+    {salary && (
+      <div class="flex items-center gap-xs text-outline">
+        <span class="material-symbols-outlined text-[18px]">payments</span>
+        <span class="font-label-sm text-label-sm">{salary}</span>
+      </div>
+    )}
+  </div>
+  <button class="w-full bg-primary-container text-on-primary font-label-md text-label-md py-md rounded-lg hover:brightness-105 active:scale-[0.98] transition-all">
+    Candidatar-se
+  </button>
 </a>
-
-<style>
-  .job-card {
-    background: var(--c-card);
-    border: 1px solid var(--c-border);
-    border-radius: 16px; /* rounded-2xl */
-    padding: 20px; /* p-5 */
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    transition: all 0.2s;
-    height: 100%;
-  }
-  
-  .job-card:hover {
-    border-color: color-mix(in srgb, var(--c-foreground) 20%, transparent);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  }
-
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .avatar {
-    width: 44px; /* size-11 */
-    height: 44px;
-    border-radius: 12px; /* rounded-xl */
-    background-color: var(--c-secondary);
-    border: 1px solid var(--c-border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 16px; /* text-base */
-    color: var(--c-muted-foreground);
-    flex-shrink: 0;
-  }
-
-  .badge {
-    background: var(--c-secondary);
-    border: 1px solid var(--c-border);
-    padding: 2px 8px; /* py-0.5 px-2 */
-    border-radius: 6px; /* rounded-md */
-    font-size: 11px; /* text-[11px] */
-    font-family: 'Geist Mono', monospace;
-    color: var(--c-muted-foreground);
-  }
-
-  .card-main {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .title {
-    font-size: 15px; /* text-[15px] */
-    font-weight: 600;
-    line-height: 1.375; /* leading-snug */
-    color: var(--c-foreground);
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    transition: color 0.2s;
-  }
-  
-  .job-card:hover .title {
-    color: var(--c-primary);
-  }
-
-  .company {
-    color: color-mix(in srgb, var(--c-foreground) 70%, transparent);
-    font-size: 14px; /* text-sm */
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .details {
-    margin-top: auto;
-  }
-
-  .details-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    gap: 8px;
-  }
-
-  .location-modality {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    font-size: 12px; /* text-xs */
-    color: var(--c-muted-foreground);
-  }
-
-  .dot-separator {
-    color: var(--c-border);
-  }
-
-  .salary {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 12px; /* text-xs */
-    font-weight: 500;
-    color: var(--c-foreground);
-    flex-shrink: 0;
-  }
-
-  .time-ago {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-top: 1px solid var(--c-border);
-    padding-top: 12px;
-  }
-
-  .time-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--c-muted-foreground);
-  }
-
-  .redirect-icon {
-    color: var(--c-muted-foreground);
-    opacity: 0;
-    transform: translate(-4px, 4px);
-    transition: all 0.2s;
-  }
-
-  .job-card:hover .redirect-icon {
-    opacity: 1;
-    transform: translate(0, 0);
-    color: var(--c-primary);
-  }
-
-  .recency-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: var(--c-primary);
-  }
-
-  .text-primary {
-    color: var(--c-primary);
-  }
-  
-  .text-foreground {
-    color: var(--c-foreground);
-  }
-
-  @media (max-width: 480px) {
-    .job-card {
-      padding: 16px;
-      border-radius: 12px;
-      gap: 12px;
-    }
-
-    .avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      font-size: 14px;
-    }
-
-    .badge {
-      font-size: 10px;
-      padding: 2px 6px;
-    }
-
-    .title {
-      font-size: 14px;
-    }
-
-    .company {
-      font-size: 13px;
-    }
-
-    .location-modality {
-      font-size: 11px;
-    }
-
-    .salary {
-      font-size: 11px;
-    }
-
-    .time-wrapper {
-      font-size: 11px;
-    }
-  }
-</style>

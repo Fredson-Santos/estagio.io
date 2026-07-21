@@ -1,0 +1,77 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  datePosted: string;
+  validThrough?: string;
+  employmentType: "FULL_TIME" | "PART_TIME" | "CONTRACTOR" | "TEMPORARY" | "INTERN" | "VOLUNTEER" | "PER_DIEM" | "OTHER";
+  hiringOrganization: {
+    name: string;
+    sameAs?: string;
+    logo?: string;
+  };
+  jobLocation: {
+    streetAddress?: string;
+    addressLocality?: string;
+    addressRegion?: string;
+    postalCode?: string;
+    addressCountry: string;
+  };
+  baseSalary?: {
+    currency: string;
+    value: number;
+    unitText: "HOUR" | "DAY" | "WEEK" | "MONTH" | "YEAR";
+  };
+}
+
+const {
+  title,
+  description,
+  datePosted,
+  validThrough,
+  employmentType,
+  hiringOrganization,
+  jobLocation,
+  baseSalary
+} = Astro.props;
+
+const schema = {
+  "@context": "https://schema.org/",
+  "@type": "JobPosting",
+  "title": title,
+  "description": description,
+  "datePosted": datePosted,
+  ...(validThrough && { "validThrough": validThrough }),
+  "employmentType": employmentType,
+  "hiringOrganization": {
+    "@type": "Organization",
+    "name": hiringOrganization.name,
+    ...(hiringOrganization.sameAs && { "sameAs": hiringOrganization.sameAs }),
+    ...(hiringOrganization.logo && { "logo": hiringOrganization.logo })
+  },
+  "jobLocation": {
+    "@type": "Place",
+    "address": {
+      "@type": "PostalAddress",
+      ...(jobLocation.streetAddress && { "streetAddress": jobLocation.streetAddress }),
+      ...(jobLocation.addressLocality && { "addressLocality": jobLocation.addressLocality }),
+      ...(jobLocation.addressRegion && { "addressRegion": jobLocation.addressRegion }),
+      ...(jobLocation.postalCode && { "postalCode": jobLocation.postalCode }),
+      "addressCountry": jobLocation.addressCountry
+    }
+  },
+  ...(baseSalary && {
+    "baseSalary": {
+      "@type": "MonetaryAmount",
+      "currency": baseSalary.currency,
+      "value": {
+        "@type": "QuantitativeValue",
+        "value": baseSalary.value,
+        "unitText": baseSalary.unitText
+      }
+    }
+  })
+};
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(schema)} />
