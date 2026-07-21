@@ -20,6 +20,7 @@ async def list_jobs(
     modality: Optional[JobModality] = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=10000),
+    featured: bool = Query(False),
     db: AsyncSession = Depends(get_db)
 ):
     query = select(Job).where(Job.is_active == True)
@@ -45,7 +46,28 @@ async def list_jobs(
     total = total_result.scalar_one()
     
     # Get items
-    query = query.order_by(Job.posted_at.desc().nulls_last()).offset(skip).limit(limit)
+    if featured:
+        from sqlalchemy import case
+        priority_cases = case(
+            (Job.title.ilike('%programa%'), 1),
+            (Job.company.ilike('%vivo%'), 1),
+            (Job.company.ilike('%bradesco%'), 1),
+            (Job.company.ilike('%itaú%'), 1),
+            (Job.company.ilike('%itau%'), 1),
+            (Job.company.ilike('%natura%'), 1),
+            (Job.company.ilike('%ambev%'), 1),
+            (Job.company.ilike('%vale%'), 1),
+            (Job.company.ilike('%globo%'), 1),
+            (Job.company.ilike('%google%'), 1),
+            (Job.company.ilike('%amazon%'), 1),
+            (Job.company.ilike('%microsoft%'), 1),
+            (Job.company.ilike('%nubank%'), 1),
+            else_=0
+        ).desc()
+        query = query.order_by(priority_cases, Job.posted_at.desc().nulls_last()).offset(skip).limit(limit)
+    else:
+        query = query.order_by(Job.posted_at.desc().nulls_last()).offset(skip).limit(limit)
+        
     result = await db.execute(query)
     items = result.scalars().all()
     
