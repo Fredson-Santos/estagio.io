@@ -11,6 +11,7 @@ from sqlalchemy.future import select
 from app.db.database import AsyncSessionLocal
 from app.db.models import Job, Source, SourceStatus
 from app.services.scrapers.gupy import run_gupy_scraper
+from app.services.scrapers.eureca import run_eureca_scraper
 from app.services.scrapers.estagios import scrape_secondary_platforms
 from app.services.dedup import is_duplicate
 from app.core.taxonomy import JobStatus
@@ -30,12 +31,28 @@ async def get_or_create_gupy_source(session) -> Source:
         await session.refresh(source)
     return source
 
+async def get_or_create_eureca_source(session) -> Source:
+    result = await session.execute(select(Source).where(Source.name == "Eureca"))
+    source = result.scalars().first()
+    if not source:
+        source = Source(
+            name="Eureca",
+            type="json",
+            base_url="https://eureca.me",
+            status=SourceStatus.ACTIVE
+        )
+        session.add(source)
+        await session.commit()
+        await session.refresh(source)
+    return source
+
 async def run_pipeline():
     print("Iniciando pipeline de extração de vagas...")
     
     async with AsyncSessionLocal() as session:
-        # Busca a fonte Gupy
+        # Busca a fonte Gupy e Eureca
         source = await get_or_create_gupy_source(session)
+        source_eureca = await get_or_create_eureca_source(session)
         
         # Busca vagas existentes para dedup (somente ativas para simplificar cache na memória)
         result = await session.execute(select(Job).where(Job.is_active == True))
@@ -61,10 +78,38 @@ async def run_pipeline():
                     modality=job_data["modality"],
                     area=job_data["area"],
                     description=job_data["description"],
+                    company_logo=job_data.get("company_logo"),
                     source_url=job_data["source_url"],
                     source_id=job_data["source_id"],
                     posted_at=job_data["posted_at"],
                     source_uuid=source.id,
+                    status=JobStatus.ACTIVE,
+                    is_active=True
+                )
+                session.add(new_job)
+                existing_jobs.append(job_data) # Atualiza o cache local
+                jobs_added += 1
+
+        # Busca vagas na Eureca
+        print("Buscando vagas na Eureca...")
+        eureca_jobs_data = await run_eureca_scraper(limit=2000)
+        print(f"Foram encontradas {len(eureca_jobs_data)} vagas na Eureca.")
+        
+        # Processa vagas Eureca
+        for job_data in eureca_jobs_data:
+            if not is_duplicate(job_data, existing_jobs):
+                new_job = Job(
+                    title=job_data["title"],
+                    company=job_data["company"],
+                    location=job_data["location"],
+                    modality=job_data["modality"],
+                    area=job_data["area"],
+                    description=job_data["description"],
+                    company_logo=job_data.get("company_logo"),
+                    source_url=job_data["source_url"],
+                    source_id=job_data["source_id"],
+                    posted_at=job_data["posted_at"],
+                    source_uuid=source_eureca.id,
                     status=JobStatus.ACTIVE,
                     is_active=True
                 )
@@ -97,6 +142,7 @@ async def run_pipeline():
                         modality=job_data["modality"],
                         area=job_data["area"],
                         description=job_data["description"],
+                        company_logo=job_data.get("company_logo"),
                         source_url=job_data["source_url"],
                         source_id=job_data.get("source_id", ""),
                         posted_at=job_data.get("posted_at"),

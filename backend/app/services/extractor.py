@@ -23,13 +23,15 @@ com exatamente as duas chaves abaixo: 'job_data' (os dados extraídos limpos) e 
     "location": "cidade, estado (ou null se for remoto)",
     "modality": "um dos valores exatos: 'REMOTE', 'HYBRID', 'ONSITE'. Se não informado, deduzir pelo texto ou usar 'ONSITE' como padrão",
     "area": "um dos valores exatos da taxonomia: 'TI_SOFTWARE', 'DADOS', 'DESIGN', 'MARKETING', 'NEGOCIOS', 'RH', 'FINANCAS', 'ENGENHARIA_OUTRAS', 'DIREITO', 'OUTROS'",
-    "description": "resumo limpo da descrição da vaga (max 500 caracteres)"
+    "description": "resumo limpo da descrição da vaga (max 500 caracteres)",
+    "company_logo": "url da imagem do logo da empresa se existir, ou null caso não exista na página"
   },
   "selectors": {
     "title": "seletor css para o titulo",
     "company": "seletor css para a empresa",
     "location": "seletor css para localizacao",
-    "description": "seletor css para a descricao"
+    "description": "seletor css para a descricao",
+    "company_logo": "seletor css para a imagem de logo da empresa (ex: img.logo)"
   }
 }
 
@@ -111,12 +113,14 @@ def extract_via_rules(soup: BeautifulSoup, rules: dict) -> dict:
     company_el = soup.select_one(rules.get("company", "")) if rules.get("company") else None
     location_el = soup.select_one(rules.get("location", "")) if rules.get("location") else None
     desc_el = soup.select_one(rules.get("description", "")) if rules.get("description") else None
+    logo_el = soup.select_one(rules.get("company_logo", "")) if rules.get("company_logo") else None
     
     # Formatação limpa
     job_data["title"] = title_el.get_text(strip=True).title()
     job_data["company"] = company_el.get_text(strip=True).title() if company_el else "Não informado"
     job_data["location"] = location_el.get_text(strip=True).title() if location_el else "Não informado"
     job_data["description"] = desc_el.get_text(strip=True)[:500] if desc_el else ""
+    job_data["company_logo"] = logo_el.get("src") if logo_el and logo_el.has_attr("src") else None
     
     # Se conseguiu o básico, tenta inferir a área e modalidade localmente via regex (como fizemos na Gupy)
     from app.services.scrapers.gupy import _guess_area, _map_modality

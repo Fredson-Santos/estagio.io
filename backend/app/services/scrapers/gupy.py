@@ -100,6 +100,7 @@ def parse_gupy_job(raw_job: dict) -> dict:
         "modality": modality,
         "area": _guess_area(title, description),
         "description": description[:500],
+        "company_logo": raw_job.get("careerPageLogo"),
         "source_url": source_url,
         "source_id": source_id,
         "posted_at": posted_at,
