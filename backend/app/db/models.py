@@ -30,6 +30,8 @@ class Job(Base):
     modality: Mapped[JobModality] = mapped_column(SQLEnum(JobModality, name="jobmodality"), nullable=False)
     area: Mapped[JobArea] = mapped_column(SQLEnum(JobArea, name="jobarea"), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=True)
+    salary: Mapped[str] = mapped_column(String(255), nullable=True)
+    company_logo: Mapped[str] = mapped_column(String(1000), nullable=True)
     source_url: Mapped[str] = mapped_column(String(1000), nullable=False)
     source_id: Mapped[str] = mapped_column(String(255), nullable=False) # ID na fonte de origem
     posted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
