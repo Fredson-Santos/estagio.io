@@ -6,23 +6,35 @@ import JobCard from '../../components/JobCard.astro';
 const url = new URL(Astro.request.url);
 const searchParams = url.searchParams;
 
-// Mapear parâmetros do frontend para o backend, se necessário
+// Mapa de tradução de modalidade
+const MODALITY_LABELS: Record<string, string> = {
+  REMOTE: 'Remoto',
+  HYBRID: 'Híbrido',
+  ONSITE: 'Presencial',
+};
+
+// Mapear parâmetros do frontend para o backend
 const query = new URLSearchParams();
-if (searchParams.get('q')) query.append('q', searchParams.get('q') || '');
+if (searchParams.get('q'))        query.append('q',        searchParams.get('q') || '');
 if (searchParams.get('location')) query.append('location', searchParams.get('location') || '');
+if (searchParams.get('area'))     query.append('area',     searchParams.get('area') || '');
+if (searchParams.get('type'))     query.append('type',     searchParams.get('type') || '');
+if (searchParams.get('modality')) query.append('modality', searchParams.get('modality') || '');
+if (searchParams.get('company'))  query.append('company',  searchParams.get('company') || '');
 
 // Fetch jobs do backend
 let jobs = [];
 let total = 0;
 try {
-  const response = await fetch(`http://localhost:8000/api/v1/jobs?${query.toString()}`);
+  const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
+  const response = await fetch(`${backendUrl}/api/v1/jobs?${query.toString()}`);
   if (response.ok) {
     const data = await response.json();
     jobs = data.items.map((job: any) => ({
       ...job,
-      // Adaptar para os nomes esperados pelo JobCard, se necessário
       publishedAt: job.posted_at ? new Date(job.posted_at).toLocaleDateString('pt-BR') : 'Recente',
-      logo: job.company_logo || undefined
+      logo: job.company_logo || undefined,
+      modality: MODALITY_LABELS[job.modality] || job.modality || 'Presencial',
     }));
     total = data.total;
   }
@@ -38,15 +50,15 @@ try {
   <div class="pt-24 pb-xl px-gutter max-w-container-max mx-auto w-full">
     <!-- Search Section -->
     <section class="mb-lg">
-      <form action="/vagas" method="GET" class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant filter-shadow">
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-md items-center">
+      <form action="/vagas" method="GET" class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant filter-shadow" id="filter-form">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-md items-center mb-md">
           <div class="md:col-span-6 relative">
             <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
-            <input name="q" class="w-full pl-12 pr-4 py-3 bg-surface border-outline-variant border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-md text-on-surface-variant" placeholder="Pesquise por títulos, palavras-chave ou empresas..." type="text"/>
+            <input name="q" value={searchParams.get('q') || ''} class="w-full pl-12 pr-4 py-3 bg-surface border-outline-variant border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-md text-on-surface-variant" placeholder="Pesquise por títulos, palavras-chave ou empresas..." type="text"/>
           </div>
           <div class="md:col-span-3 relative">
             <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">location_on</span>
-            <input name="location" class="w-full pl-12 pr-4 py-3 bg-surface border-outline-variant border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-md text-on-surface-variant" placeholder="Cidade ou remoto" type="text"/>
+            <input name="location" value={searchParams.get('location') || ''} class="w-full pl-12 pr-4 py-3 bg-surface border-outline-variant border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-md text-on-surface-variant" placeholder="Cidade ou remoto" type="text"/>
           </div>
           <div class="md:col-span-3">
             <button type="submit" class="w-full bg-primary text-on-primary px-xl py-3 rounded-lg font-label-md text-label-md hover:bg-primary-container transition-all flex items-center justify-center gap-sm whitespace-nowrap">
@@ -54,51 +66,44 @@ try {
             </button>
           </div>
         </div>
-      </form>
-    </section>
 
-    <!-- Horizontal Filter Bar -->
-    <section class="mb-xl">
-      <div class="flex flex-wrap items-center gap-md">
-        <div class="relative group">
-          <select class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
-            <option disabled="" selected="">Área de Atuação</option>
-            <option>Engenharia &amp; Tech</option>
-            <option>Design &amp; UX</option>
-            <option>Marketing</option>
-            <option>Vendas</option>
-          </select>
-          <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">expand_more</span>
+        <!-- Filtros dentro do form para serem enviados na busca -->
+        <div class="flex flex-wrap items-center gap-md pt-md border-t border-outline-variant/30">
+          <div class="relative group">
+            <select name="area" class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
+              <option value="" selected={!searchParams.get('area')}>Área de Atuação</option>
+              <option value="TI_SOFTWARE"      selected={searchParams.get('area') === 'TI_SOFTWARE'}>Engenharia &amp; Tech</option>
+              <option value="DESIGN"           selected={searchParams.get('area') === 'DESIGN'}>Design &amp; UX</option>
+              <option value="MARKETING"        selected={searchParams.get('area') === 'MARKETING'}>Marketing</option>
+              <option value="NEGOCIOS"         selected={searchParams.get('area') === 'NEGOCIOS'}>Vendas &amp; Negócios</option>
+              <option value="DADOS"            selected={searchParams.get('area') === 'DADOS'}>Dados</option>
+              <option value="RH"               selected={searchParams.get('area') === 'RH'}>RH</option>
+              <option value="FINANCAS"         selected={searchParams.get('area') === 'FINANCAS'}>Finanças</option>
+              <option value="DIREITO"          selected={searchParams.get('area') === 'DIREITO'}>Direito</option>
+              <option value="OUTROS"           selected={searchParams.get('area') === 'OUTROS'}>Outros</option>
+            </select>
+            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">expand_more</span>
+          </div>
+          <div class="relative group">
+            <select name="type" class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
+              <option value="" selected={!searchParams.get('type')}>Tipo de Estágio</option>
+              <option value="PART_TIME" selected={searchParams.get('type') === 'PART_TIME'}>Meio Período</option>
+              <option value="FULL_TIME" selected={searchParams.get('type') === 'FULL_TIME'}>Período Integral</option>
+            </select>
+            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">expand_more</span>
+          </div>
+          <div class="relative group">
+            <select name="modality" class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
+              <option value="" selected={!searchParams.get('modality')}>Modalidade</option>
+              <option value="REMOTE"  selected={searchParams.get('modality') === 'REMOTE'}>Remoto</option>
+              <option value="HYBRID"  selected={searchParams.get('modality') === 'HYBRID'}>Híbrido</option>
+              <option value="ONSITE"  selected={searchParams.get('modality') === 'ONSITE'}>Presencial</option>
+            </select>
+            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">expand_more</span>
+          </div>
+          <a href="/vagas" class="text-primary font-label-md hover:underline px-sm py-2">Limpar filtros</a>
         </div>
-        <div class="relative group">
-          <select class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
-            <option disabled="" selected="">Tipo de Estágio</option>
-            <option>Meio Período</option>
-            <option>Período Integral</option>
-          </select>
-          <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">expand_more</span>
-        </div>
-        <div class="relative group">
-          <select class="appearance-none bg-none bg-primary-container/20 border border-primary/30 rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-primary focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
-            <option disabled="">Modalidade</option>
-            <option selected="">Remoto</option>
-            <option>Híbrido</option>
-            <option>Presencial</option>
-          </select>
-          <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none text-[20px]">expand_more</span>
-        </div>
-        <div class="relative group">
-          <select class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
-            <option disabled="" selected="">Empresa</option>
-            <option>Google</option>
-            <option>Nubank</option>
-            <option>Stripe</option>
-            <option>Lumina Tech</option>
-          </select>
-          <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">expand_more</span>
-        </div>
-        <button class="text-primary font-label-md hover:underline px-sm py-2">Limpar filtros</button>
-      </div>
+      </form>
     </section>
 
     <div class="flex flex-col gap-xl">

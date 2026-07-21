@@ -1,0 +1,6 @@
+eureca = https://candidate-api.eureca.me/v2/opportunities?pageSize=8&page=1
+
+gupy = https://employability-portal.gupy.io/api/v1/jobs/companies?jobName=estagio&limit=1000&sortBy=company&sortOrder=asc
+
+nube = 
+https://www.nube.com.br/estudantes/vagas/

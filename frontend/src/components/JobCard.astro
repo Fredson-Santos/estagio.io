@@ -14,11 +14,11 @@ const { id, title, company, location, salary, logo, isNew = false } = Astro.prop
 
 <a href={`/vagas/${id}`} class="block bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col transition-all hover:filter-shadow group cursor-pointer h-full relative" style="transform: translateY(0px);">
   <div class="flex justify-between items-start mb-md">
-    <div class="w-12 h-12 rounded-lg bg-surface border border-outline-variant flex items-center justify-center overflow-hidden flex-shrink-0">
+    <div class="w-12 h-12 rounded-full bg-surface border border-outline-variant flex items-center justify-center overflow-hidden flex-shrink-0">
       {logo ? (
         <img class="w-8 h-8 object-contain" alt={`Logo ${company}`} src={logo} />
       ) : (
-        <div class="w-8 h-8 bg-primary/10 rounded flex items-center justify-center text-primary font-bold">
+        <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold">
           {company.substring(0, 2).toUpperCase()}
         </div>
       )}
