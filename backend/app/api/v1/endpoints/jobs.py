@@ -14,15 +14,24 @@ router = APIRouter()
 
 @router.get("", response_model=PaginatedJobResponse)
 async def list_jobs(
+    q: Optional[str] = None,
     area: Optional[JobArea] = None,
     location: Optional[str] = None,
     modality: Optional[JobModality] = None,
     skip: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=10000),
     db: AsyncSession = Depends(get_db)
 ):
     query = select(Job).where(Job.is_active == True)
     
+    if q:
+        from sqlalchemy import or_
+        # Sanitiza wildcards do LIKE para evitar queries abusivas
+        safe_q = q.replace("%", "\\%").replace("_", "\\_")
+        query = query.where(or_(
+            Job.title.ilike(f"%{safe_q}%"),
+            Job.company.ilike(f"%{safe_q}%")
+        ))
     if area:
         query = query.where(Job.area == area)
     if modality:

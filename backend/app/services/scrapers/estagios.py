@@ -24,6 +24,8 @@ async def get_superestagios_urls() -> List[str]:
     """Extrator de URLs do Super Estágios."""
     urls = []
     try:
+        # verify=False: o certificado SSL do superestagios.com.br é inválido/auto-assinado.
+        # Sem essa flag, a conexão falha. Risco aceito pois só fazemos GET público.
         async with httpx.AsyncClient(timeout=10.0, verify=False) as client:
             resp = await client.get("https://www.superestagios.com.br/index/", headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
             if resp.status_code == 200:
