@@ -12,34 +12,37 @@ interface Props {
 const { id, title, company, location, salary, logo, isNew = false } = Astro.props;
 ---
 
-<a href={`/vagas/${id}`} class="block bg-surface-container-lowest p-lg rounded-xl border border-outline-variant hover:shadow-xl transition-all duration-300 group">
+<a href={`/vagas/${id}`} class="block bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col transition-all hover:filter-shadow group cursor-pointer h-full relative" style="transform: translateY(0px);">
   <div class="flex justify-between items-start mb-md">
-    <div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center overflow-hidden border border-outline-variant/30">
+    <div class="w-12 h-12 rounded-lg bg-surface border border-outline-variant flex items-center justify-center overflow-hidden flex-shrink-0">
       {logo ? (
-        <img class="w-10 h-10 object-contain" alt={`Logo ${company}`} src={logo} />
+        <img class="w-8 h-8 object-contain" alt={`Logo ${company}`} src={logo} />
       ) : (
-        <span class="font-bold text-on-surface-variant text-xl">{company.charAt(0)}</span>
+        <div class="w-8 h-8 bg-primary/10 rounded flex items-center justify-center text-primary font-bold">
+          {company.substring(0, 2).toUpperCase()}
+        </div>
       )}
     </div>
-    {isNew && (
-      <span class="bg-primary-container/10 text-primary-fixed-dim text-[10px] font-bold px-sm py-xs rounded-full uppercase tracking-wider">Novo</span>
-    )}
+    <span class="bg-secondary-container/50 text-on-secondary-container px-sm py-xs rounded-full text-label-sm font-label-sm">
+      {Astro.props.modality || (isNew ? 'Novo' : 'Presencial')}
+    </span>
   </div>
-  <h3 class="font-headline-sm text-headline-sm text-on-surface mb-xs group-hover:text-primary transition-colors">{title}</h3>
-  <p class="font-body-md text-body-md text-on-surface-variant mb-md">{company}</p>
-  <div class="flex flex-wrap items-center gap-md mb-lg">
-    <div class="flex items-center gap-xs text-outline">
-      <span class="material-symbols-outlined text-[18px]">location_on</span>
-      <span class="font-label-sm text-label-sm">{location}</span>
-    </div>
+  <h3 class="font-headline-sm text-headline-sm text-on-surface mb-xs group-hover:text-primary transition-colors line-clamp-2 min-h-[56px]">{title}</h3>
+  <div class="flex flex-wrap items-center gap-sm text-on-surface-variant text-body-sm font-body-sm mb-lg">
+    <span class="flex items-center gap-xs"><span class="material-symbols-outlined text-[18px]">business</span>{company}</span>
+    <span class="text-outline-variant">•</span>
+    <span class="flex items-center gap-xs"><span class="material-symbols-outlined text-[18px]">location_on</span>{location}</span>
     {salary && (
-      <div class="flex items-center gap-xs text-outline">
-        <span class="material-symbols-outlined text-[18px]">payments</span>
-        <span class="font-label-sm text-label-sm">{salary}</span>
-      </div>
+      <>
+        <span class="text-outline-variant">•</span>
+        <span class="flex items-center gap-xs"><span class="material-symbols-outlined text-[18px]">payments</span>{salary}</span>
+      </>
     )}
   </div>
-  <button class="w-full bg-primary-container text-on-primary font-label-md text-label-md py-md rounded-lg hover:brightness-105 active:scale-[0.98] transition-all">
-    Candidatar-se
-  </button>
+  <div class="mt-auto pt-md border-t border-outline-variant/30 flex flex-wrap justify-between items-center gap-md">
+    <span class="text-label-sm font-label-sm text-outline">{Astro.props.publishedAt || 'Recente'}</span>
+    <button class="bg-primary text-on-primary px-lg py-2.5 rounded-lg font-label-md text-label-md hover:bg-primary-container transition-all active:scale-95 whitespace-nowrap">
+      Candidatar-se
+    </button>
+  </div>
 </a>

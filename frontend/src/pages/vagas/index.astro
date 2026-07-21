@@ -1,60 +1,65 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import JobCard from '../../components/JobCard.astro';
-import FilterSidebar from '../../components/FilterSidebar.astro';
 
 const jobs = [
   {
     id: "p1",
-    title: "Product Design Intern",
+    title: "Estágio em Product Design",
     company: "Lumina Tech",
-    location: "San Francisco, CA",
+    location: "São Paulo, SP",
+    salary: "Bolsa: R$ 2.500",
+    modality: "Remoto",
+    publishedAt: "há 2 dias",
     logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuA9huf1HcbKfxiH4BFvY4X6loBmJcxLH0XHCxyca542d652b61oFKoOFUKc31zbTLRNG5ZSd43V4tXqkhkKo_cWxRUj7CqnBOHJ17HNGblFs-cOxc_N6459lOGv8qXay9SrXbq-m8EmGt5dkjUCUziWu31grbI-0UKXfpp49-o0xR7mhaUYRfe1f5OyV49mV-zSKS7HtXE6plN-g_Ua6eSq5Zd7BAUNjqHwcORI8aJK0exmUu3d2kPhtg"
   },
   {
     id: "p2",
-    title: "Data Science Intern",
+    title: "Estágio em Data Science",
     company: "Zenith Capital",
-    location: "New York, NY",
+    location: "Rio de Janeiro, RJ",
+    salary: "Bolsa: R$ 3.200",
+    modality: "Híbrido",
+    publishedAt: "há 4 horas",
     logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuBYGl9MpFGVWQipq8pe4jvYP9SJW_VnwlOUkIQPy6hV9l0hfIM_PcTSHdeaKIJ_wNt3In8MfL8zJHS6eae6QkV-2N9qa_OMAIHYEJyHtXf5s0-p3Z7xj_cxfC1k09PBGmLFkV32ico7pVbK-VAPJViW00xzqfYXoBWc5tg0OAXIZ6seovcla4xhltmg7k4aJIWR6XjqGPfUgLWHKhnH5ZgB-SZEYUQyFPV7xVADyT8I_kfDpHybc-uKDg"
   },
   {
     id: "p3",
-    title: "Growth Marketing Intern",
+    title: "Estágio em Growth Marketing",
     company: "EcoFlow",
-    location: "Austin, TX",
+    location: "Belo Horizonte, MG",
+    salary: "Bolsa: R$ 2.000",
+    modality: "Remoto",
+    publishedAt: "Agora",
     logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuAoz5JJpWuKS_sqcl8O5ovEXMxRjSDmt6SVpu1nIRpDL_w5k8h89xjrtHTU9A6444W7kDter452bmOf9bot4RQrQsBKDcWhU_uykmAQBxhHbq2fu8nxxvqOmgX6xYXsqc_HuLU5ysJr_ckqsN5jlt12AaUwMoODHglBoGh7Lc6Eq6ypNL6LLe4y6gnG4drVHsQ_mKXUNhC4iH7K8_HkEzd3BSKRhcUgLTLoqwQW5jYBvTJi9CYononu4Q"
   },
   {
     id: "p4",
-    title: "Operations Intern",
+    title: "Estágio em Operações",
     company: "RapidX",
-    location: "Chicago, IL",
+    location: "Curitiba, PR",
+    salary: "Bolsa: R$ 1.800",
+    modality: "Presencial",
+    publishedAt: "há 1 semana",
     logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuD5WTXg3BqQLoOWfxxvY8RXL0k5bngnhHKl6khVyYQwqRn_MxmTzkFyF4OiAksiVj7W2di7-7GRpfMgum24Wce8k9iDAGv_j6rAL3z_MfnKDTJWRwT_ksybHLU723m0E7-2ppMpl0YmofyOnesTWSSe9NEGgphQ6aw431Akj1cEuSzLW-3RLlguHIPeNkJG64Uf3Sx6qc-311_dp4SOMTZ5Pk3Pt-T1tXF1QhpODL-K4VmN4v_gyDqTww"
   },
   {
     id: "p5",
-    title: "Fullstack Developer Intern",
+    title: "Estágio em Dev Fullstack",
     company: "TechFlow",
-    location: "Seattle, WA"
+    location: "Florianópolis, SC",
+    salary: "Bolsa: R$ 2.800",
+    modality: "Remoto",
+    publishedAt: "há 3 dias"
   },
   {
     id: "p6",
-    title: "UX Research Intern",
+    title: "Estágio em UX Research",
     company: "CreativePulse",
-    location: "London, UK"
-  },
-  {
-    id: "p7",
-    title: "Mobile Engineering Intern",
-    company: "Streamline",
-    location: "Berlin, DE"
-  },
-  {
-    id: "p8",
-    title: "Finance Intern",
-    company: "Visionary",
-    location: "New York, NY"
+    location: "Porto Alegre, RS",
+    salary: "A combinar",
+    modality: "Híbrido",
+    publishedAt: "há 5 horas"
   }
 ];
 ---
@@ -65,41 +70,86 @@ const jobs = [
 >
   <div class="pt-24 pb-xl px-gutter max-w-container-max mx-auto w-full">
     <!-- Search Section -->
-    <section class="mb-xl">
-      <form action="/vagas" method="GET" class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
-        <div class="flex flex-col md:flex-row gap-md">
-          <div class="flex-grow relative">
+    <section class="mb-lg">
+      <form action="/vagas" method="GET" class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant filter-shadow">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-md items-center">
+          <div class="md:col-span-6 relative">
             <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
-            <input name="q" class="w-full pl-12 pr-4 py-3 bg-surface border-outline-variant border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-md text-on-surface-variant" placeholder="Cargo, palavra-chave ou empresa..." type="text">
+            <input name="q" class="w-full pl-12 pr-4 py-3 bg-surface border-outline-variant border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-md text-on-surface-variant" placeholder="Pesquise por títulos, palavras-chave ou empresas..." type="text"/>
           </div>
-          <div class="relative min-w-[200px]">
+          <div class="md:col-span-3 relative">
             <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">location_on</span>
-            <input name="location" class="w-full pl-12 pr-4 py-3 bg-surface border-outline-variant border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-md text-on-surface-variant" placeholder="Cidade ou remoto" type="text">
+            <input name="location" class="w-full pl-12 pr-4 py-3 bg-surface border-outline-variant border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-md text-on-surface-variant" placeholder="Cidade ou remoto" type="text"/>
           </div>
-          <button type="submit" class="bg-primary text-on-primary px-xl py-3 rounded-lg font-label-md text-label-md hover:bg-primary-container transition-all flex items-center justify-center gap-sm">
-            <span>Buscar</span>
-          </button>
+          <div class="md:col-span-3">
+            <button type="submit" class="w-full bg-primary text-on-primary px-xl py-3 rounded-lg font-label-md text-label-md hover:bg-primary-container transition-all flex items-center justify-center gap-sm whitespace-nowrap">
+              <span>Buscar Vagas</span>
+            </button>
+          </div>
         </div>
       </form>
     </section>
 
-    <div class="flex flex-col lg:flex-row gap-xl">
-      <FilterSidebar />
-      
+    <!-- Horizontal Filter Bar -->
+    <section class="mb-xl">
+      <div class="flex flex-wrap items-center gap-md">
+        <div class="relative group">
+          <select class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
+            <option disabled="" selected="">Área de Atuação</option>
+            <option>Engenharia &amp; Tech</option>
+            <option>Design &amp; UX</option>
+            <option>Marketing</option>
+            <option>Vendas</option>
+          </select>
+          <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">expand_more</span>
+        </div>
+        <div class="relative group">
+          <select class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
+            <option disabled="" selected="">Tipo de Estágio</option>
+            <option>Meio Período</option>
+            <option>Período Integral</option>
+          </select>
+          <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">expand_more</span>
+        </div>
+        <div class="relative group">
+          <select class="appearance-none bg-none bg-primary-container/20 border border-primary/30 rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-primary focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
+            <option disabled="">Modalidade</option>
+            <option selected="">Remoto</option>
+            <option>Híbrido</option>
+            <option>Presencial</option>
+          </select>
+          <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none text-[20px]">expand_more</span>
+        </div>
+        <div class="relative group">
+          <select class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
+            <option disabled="" selected="">Empresa</option>
+            <option>Google</option>
+            <option>Nubank</option>
+            <option>Stripe</option>
+            <option>Lumina Tech</option>
+          </select>
+          <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">expand_more</span>
+        </div>
+        <button class="text-primary font-label-md hover:underline px-sm py-2">Limpar filtros</button>
+      </div>
+    </section>
+
+    <div class="flex flex-col gap-xl">
       <!-- Main Job Feed -->
       <div class="flex-grow">
-        <div class="flex justify-between items-center mb-lg">
-          <p class="font-body-sm text-body-sm text-on-surface-variant">Mostrando <span class="font-bold text-on-surface">{jobs.length}</span> oportunidades</p>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-lg gap-md">
+          <p class="font-body-sm text-body-sm text-on-surface-variant">Mostrando <span class="font-bold text-on-surface">{jobs.length}</span> oportunidades de estágio</p>
           <div class="flex items-center gap-sm">
             <span class="text-label-sm font-label-sm text-outline">Ordenar por:</span>
-            <select class="bg-transparent border-none focus:ring-0 font-label-md text-label-md text-primary cursor-pointer pr-8 outline-none">
+            <select class="appearance-none bg-none bg-transparent border-none focus:ring-0 font-label-md text-label-md text-primary cursor-pointer pr-8 py-0 outline-none">
               <option>Mais recentes</option>
-              <option>Relevância</option>
+              <option>Popularidade</option>
+              <option>Bolsa Auxílio</option>
             </select>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
           {jobs.map((job) => (
             <JobCard {...job} />
           ))}
