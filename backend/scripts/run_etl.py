@@ -14,6 +14,7 @@ from app.services.scrapers.gupy import run_gupy_scraper
 from app.services.scrapers.eureca import run_eureca_scraper
 from app.services.scrapers.estagios import scrape_secondary_platforms
 from app.services.dedup import is_duplicate
+from app.services.job_validator import validate_job
 from app.core.taxonomy import JobStatus
 
 async def get_or_create_gupy_source(session) -> Source:
@@ -64,12 +65,17 @@ async def run_pipeline():
         # Busca vagas na Gupy
         print("Buscando vagas na Gupy...")
         new_jobs_data = await run_gupy_scraper(limit=2000)
-        print(f"Foram encontradas {len(new_jobs_data)} vagas na Gupy.")
+        print(f"Foram encontradas {len(new_jobs_data)} vagas válidas na Gupy.")
         
         jobs_added = 0
         
         # Processa vagas Gupy
         for job_data in new_jobs_data:
+            is_valid, reason = validate_job(job_data)
+            if not is_valid:
+                print(f"[ETL] Ignorando vaga Gupy inválida '{job_data.get('title')}': {reason}")
+                continue
+
             if not is_duplicate(job_data, existing_jobs):
                 new_job = Job(
                     title=job_data["title"],
@@ -78,6 +84,7 @@ async def run_pipeline():
                     modality=job_data["modality"],
                     area=job_data["area"],
                     description=job_data["description"],
+                    salary=job_data.get("salary"),
                     company_logo=job_data.get("company_logo"),
                     source_url=job_data["source_url"],
                     source_id=job_data["source_id"],
@@ -93,10 +100,15 @@ async def run_pipeline():
         # Busca vagas na Eureca
         print("Buscando vagas na Eureca...")
         eureca_jobs_data = await run_eureca_scraper(limit=2000)
-        print(f"Foram encontradas {len(eureca_jobs_data)} vagas na Eureca.")
+        print(f"Foram encontradas {len(eureca_jobs_data)} vagas válidas na Eureca.")
         
         # Processa vagas Eureca
         for job_data in eureca_jobs_data:
+            is_valid, reason = validate_job(job_data)
+            if not is_valid:
+                print(f"[ETL] Ignorando vaga Eureca inválida '{job_data.get('title')}': {reason}")
+                continue
+
             if not is_duplicate(job_data, existing_jobs):
                 new_job = Job(
                     title=job_data["title"],
@@ -105,6 +117,7 @@ async def run_pipeline():
                     modality=job_data["modality"],
                     area=job_data["area"],
                     description=job_data["description"],
+                    salary=job_data.get("salary"),
                     company_logo=job_data.get("company_logo"),
                     source_url=job_data["source_url"],
                     source_id=job_data["source_id"],
@@ -134,6 +147,11 @@ async def run_pipeline():
                 await session.flush()
                 
             for job_data in sec_jobs:
+                is_valid, reason = validate_job(job_data)
+                if not is_valid:
+                    print(f"[ETL] Ignorando vaga {platform_name} inválida '{job_data.get('title')}': {reason}")
+                    continue
+
                 if not is_duplicate(job_data, existing_jobs):
                     new_job = Job(
                         title=job_data["title"],
@@ -142,6 +160,7 @@ async def run_pipeline():
                         modality=job_data["modality"],
                         area=job_data["area"],
                         description=job_data["description"],
+                        salary=job_data.get("salary"),
                         company_logo=job_data.get("company_logo"),
                         source_url=job_data["source_url"],
                         source_id=job_data.get("source_id", ""),
@@ -158,7 +177,8 @@ async def run_pipeline():
             await session.commit()
             print(f"Sucesso! {jobs_added} novas vagas salvas no banco de dados.")
         else:
-            print("Nenhuma nova vaga encontrada (todas foram deduplicadas).")
+            print("Nenhuma nova vaga encontrada (todas foram deduplicadas ou filtradas).")
 
 if __name__ == "__main__":
     asyncio.run(run_pipeline())
+

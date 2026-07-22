@@ -42,7 +42,7 @@ Dado um texto bruto de uma página de vaga, retorne SOMENTE um objeto JSON váli
   "modalidade": "Presencial | Remoto | Híbrido | Não informado",
   "tipo_contrato": "CLT | PJ | Estágio | Freelance | Temporário | Não informado",
   "salario": "faixa salarial ou 'Não informado'",
-  "descricao_resumida": "resumo da vaga em até 2 frases",
+  "descricao_resumida": "descrição completa e detalhada da vaga",
   "url": "URL original da vaga",
   "data_extracao": "data/hora da extração no formato ISO 8601"
 }

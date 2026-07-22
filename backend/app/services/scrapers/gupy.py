@@ -77,8 +77,13 @@ def parse_gupy_job(raw_job: dict) -> dict:
     if modality == JobModality.REMOTE:
         location = "Remoto"
         
-    description = raw_job.get("description", "")
+    description = raw_job.get("description", "").strip()
     
+    # Extração de salário caso fornecido na API da Gupy
+    salary = raw_job.get("salary") or raw_job.get("salaryRange") or None
+    if isinstance(salary, dict):
+        salary = salary.get("name") or salary.get("label") or str(salary)
+
     # URL da vaga no portal da Gupy
     source_url = raw_job.get("jobUrl", "")
     
@@ -99,7 +104,8 @@ def parse_gupy_job(raw_job: dict) -> dict:
         "location": location,
         "modality": modality,
         "area": _guess_area(title, description),
-        "description": description[:500],
+        "description": description[:4000] if len(description) > 4000 else description,
+        "salary": salary,
         "company_logo": raw_job.get("careerPageLogo"),
         "source_url": source_url,
         "source_id": source_id,
@@ -107,5 +113,15 @@ def parse_gupy_job(raw_job: dict) -> dict:
     }
 
 async def run_gupy_scraper(limit: int = 50) -> list[dict]:
+    from app.services.job_validator import validate_job
     raw_jobs = await fetch_gupy_jobs(limit=limit)
-    return [parse_gupy_job(job) for job in raw_jobs]
+    parsed_jobs = [parse_gupy_job(job) for job in raw_jobs]
+    valid_jobs = []
+    for j in parsed_jobs:
+        is_valid, reason = validate_job(j)
+        if is_valid:
+            valid_jobs.append(j)
+        else:
+            print(f"[Gupy Scraper] Vaga '{j.get('title')}' descartada: {reason}")
+    return valid_jobs
+

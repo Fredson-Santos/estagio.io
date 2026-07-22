@@ -23,7 +23,7 @@ com exatamente as duas chaves abaixo: 'job_data' (os dados extraídos limpos) e 
     "location": "cidade, estado (ou null se for remoto)",
     "modality": "um dos valores exatos: 'REMOTE', 'HYBRID', 'ONSITE'. Se não informado, deduzir pelo texto ou usar 'ONSITE' como padrão",
     "area": "um dos valores exatos da taxonomia: 'TI_SOFTWARE', 'DADOS', 'DESIGN', 'MARKETING', 'NEGOCIOS', 'RH', 'FINANCAS', 'ENGENHARIA_OUTRAS', 'DIREITO', 'OUTROS'",
-    "description": "resumo limpo da descrição da vaga (max 500 caracteres)",
+    "description": "descrição completa e limpa da vaga, com os requisitos e atividades principal",
     "company_logo": "url da imagem do logo da empresa se existir, ou null caso não exista na página"
   },
   "selectors": {
@@ -117,9 +117,8 @@ def extract_via_rules(soup: BeautifulSoup, rules: dict) -> dict:
     
     # Formatação limpa
     job_data["title"] = title_el.get_text(strip=True).title()
-    job_data["company"] = company_el.get_text(strip=True).title() if company_el else "Não informado"
-    job_data["location"] = location_el.get_text(strip=True).title() if location_el else "Não informado"
-    job_data["description"] = desc_el.get_text(strip=True)[:500] if desc_el else ""
+    raw_desc = desc_el.get_text(strip=True) if desc_el else ""
+    job_data["description"] = raw_desc[:4000] if len(raw_desc) > 4000 else raw_desc
     job_data["company_logo"] = logo_el.get("src") if logo_el and logo_el.has_attr("src") else None
     
     # Se conseguiu o básico, tenta inferir a área e modalidade localmente via regex (como fizemos na Gupy)

@@ -75,6 +75,11 @@ def parse_eureca_job(raw_job: dict) -> dict:
         soup = BeautifulSoup(raw_description, "html.parser")
         description = soup.get_text(separator=" ", strip=True)
         
+    # Extração de bolsa auxílio / remuneração da Eureca caso presente
+    salary = raw_job.get("stipend") or raw_job.get("salary") or raw_job.get("remuneration") or None
+    if isinstance(salary, dict):
+        salary = salary.get("name") or salary.get("value") or str(salary)
+
     # URL da vaga na Eureca
     source_url = f"https://oportunidades.eureca.me/oportunidade/{raw_job.get('id', '')}"
     
@@ -95,7 +100,8 @@ def parse_eureca_job(raw_job: dict) -> dict:
         "location": location,
         "modality": modality,
         "area": _guess_area(title, description),
-        "description": description[:500],
+        "description": description[:4000] if len(description) > 4000 else description,
+        "salary": salary,
         "company_logo": raw_job.get("companyLogoUrl"),
         "source_url": source_url,
         "source_id": source_id,
@@ -103,5 +109,15 @@ def parse_eureca_job(raw_job: dict) -> dict:
     }
 
 async def run_eureca_scraper(limit: int = 50) -> list[dict]:
+    from app.services.job_validator import validate_job
     raw_jobs = await fetch_eureca_jobs(limit=limit)
-    return [parse_eureca_job(job) for job in raw_jobs]
+    parsed_jobs = [parse_eureca_job(job) for job in raw_jobs]
+    valid_jobs = []
+    for j in parsed_jobs:
+        is_valid, reason = validate_job(j)
+        if is_valid:
+            valid_jobs.append(j)
+        else:
+            print(f"[Eureca Scraper] Vaga '{j.get('title')}' descartada: {reason}")
+    return valid_jobs
+
