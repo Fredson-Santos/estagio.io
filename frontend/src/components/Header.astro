@@ -5,22 +5,96 @@ const isVagas = pathname.startsWith('/vagas');
 const isSobre = pathname.startsWith('/sobre');
 ---
 
-<nav class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30">
-<div class="flex justify-between items-center h-16 px-gutter max-w-container-max mx-auto relative">
-<div class="flex items-center gap-sm">
-<a href="/" class="font-headline-sm text-headline-sm font-bold text-on-surface tracking-tight">estagio.io</a>
-</div>
-<div class="hidden md:flex items-center gap-lg absolute left-1/2 -translate-x-1/2">
-<a class={`font-label-md text-label-md transition-colors duration-200 ${isHome ? 'text-primary border-b-2 border-primary pb-1' : 'text-on-surface-variant hover:text-primary'}`} href="/">Início</a>
-<a class={`font-label-md text-label-md transition-colors duration-200 ${isVagas ? 'text-primary border-b-2 border-primary pb-1' : 'text-on-surface-variant hover:text-primary'}`} href="/vagas">Vagas</a>
-<a class={`font-label-md text-label-md transition-colors duration-200 ${isSobre ? 'text-primary border-b-2 border-primary pb-1' : 'text-on-surface-variant hover:text-primary'}`} href="/sobre">Sobre</a>
-</div>
+<nav class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-md border-b border-outline-variant/30">
+  <div class="flex justify-between items-center h-16 px-gutter max-w-container-max mx-auto relative">
+    <div class="flex items-center gap-sm">
+      <a href="/" class="font-headline-sm text-headline-sm font-bold text-on-surface tracking-tight">estagio.io</a>
+    </div>
 
-<div class="flex items-center gap-md">
-  <button aria-label="Alternar Tema" class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">
-    <span class="material-symbols-outlined text-[22px]">dark_mode</span>
-  </button>
+    <!-- Desktop Navigation Links -->
+    <div class="hidden md:flex items-center gap-lg absolute left-1/2 -translate-x-1/2">
+      <a class={`font-label-md text-label-md transition-colors duration-200 ${isHome ? 'text-primary border-b-2 border-primary pb-1 font-semibold' : 'text-on-surface-variant hover:text-primary'}`} href="/">Início</a>
+      <a class={`font-label-md text-label-md transition-colors duration-200 ${isVagas ? 'text-primary border-b-2 border-primary pb-1 font-semibold' : 'text-on-surface-variant hover:text-primary'}`} href="/vagas">Vagas</a>
+      <a class={`font-label-md text-label-md transition-colors duration-200 ${isSobre ? 'text-primary border-b-2 border-primary pb-1 font-semibold' : 'text-on-surface-variant hover:text-primary'}`} href="/sobre">Sobre</a>
+    </div>
 
-</div>
-</div>
+    <!-- Action Buttons -->
+    <div class="flex items-center gap-sm">
+      <!-- Dark Mode Toggle Button -->
+      <button 
+        id="theme-toggle-btn"
+        aria-label="Alternar Tema" 
+        class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high active:scale-95 transition-all"
+      >
+        <span id="theme-toggle-icon" class="material-symbols-outlined text-[22px]">dark_mode</span>
+      </button>
+
+      <!-- Mobile Menu Hamburger Button -->
+      <button 
+        id="mobile-menu-btn"
+        aria-label="Abrir menu de navegação" 
+        class="md:hidden w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high active:scale-95 transition-all"
+      >
+        <span id="mobile-menu-icon" class="material-symbols-outlined text-[24px]">menu</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile Drawer Menu -->
+  <div id="mobile-menu" class="hidden md:hidden bg-surface-container-lowest border-b border-outline-variant/30 px-gutter py-md shadow-lg transition-all duration-300">
+    <div class="flex flex-col gap-sm">
+      <a class={`px-md py-sm rounded-lg font-label-md text-label-md transition-colors ${isHome ? 'bg-primary/10 text-primary font-bold' : 'text-on-surface-variant hover:bg-surface-container-low'}`} href="/">Início</a>
+      <a class={`px-md py-sm rounded-lg font-label-md text-label-md transition-colors ${isVagas ? 'bg-primary/10 text-primary font-bold' : 'text-on-surface-variant hover:bg-surface-container-low'}`} href="/vagas">Vagas</a>
+      <a class={`px-md py-sm rounded-lg font-label-md text-label-md transition-colors ${isSobre ? 'bg-primary/10 text-primary font-bold' : 'text-on-surface-variant hover:bg-surface-container-low'}`} href="/sobre">Sobre</a>
+    </div>
+  </div>
 </nav>
+
+<script>
+  // Mobile Menu Toggle
+  const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
+  const mobileMenuIcon = document.getElementById('mobile-menu-icon');
+
+  if (mobileMenuBtn && mobileMenu && mobileMenuIcon) {
+    mobileMenuBtn.addEventListener('click', () => {
+      const isExpanded = !mobileMenu.classList.contains('hidden');
+      if (isExpanded) {
+        mobileMenu.classList.add('hidden');
+        mobileMenuIcon.textContent = 'menu';
+        mobileMenuBtn.setAttribute('aria-expanded', 'false');
+      } else {
+        mobileMenu.classList.remove('hidden');
+        mobileMenuIcon.textContent = 'close';
+        mobileMenuBtn.setAttribute('aria-expanded', 'true');
+      }
+    });
+  }
+
+  // Dark Mode Toggle
+  const themeToggleBtn = document.getElementById('theme-toggle-btn');
+  const themeToggleIcon = document.getElementById('theme-toggle-icon');
+
+  function updateThemeUI(isDark: boolean) {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      if (themeToggleIcon) themeToggleIcon.textContent = 'light_mode';
+    } else {
+      document.documentElement.classList.remove('dark');
+      if (themeToggleIcon) themeToggleIcon.textContent = 'dark_mode';
+    }
+  }
+
+  // Carrega preferência salva ou do sistema
+  const savedTheme = localStorage.getItem('theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDarkMode = savedTheme === 'dark' || (!savedTheme && prefersDark);
+  updateThemeUI(isDarkMode);
+
+  themeToggleBtn?.addEventListener('click', () => {
+    const currentlyDark = document.documentElement.classList.contains('dark');
+    const newTheme = !currentlyDark;
+    localStorage.setItem('theme', newTheme ? 'dark' : 'light');
+    updateThemeUI(newTheme);
+  });
+</script>

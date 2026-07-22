@@ -142,3 +142,17 @@ body {
   grid-template-columns: repeat(12, 1fr);
   gap: 24px;
 }
+
+.dark {
+  --color-background: #0f172a;
+  --color-surface: #0f172a;
+  --color-on-surface: #f8fafc;
+  --color-on-surface-variant: #94a3b8;
+  --color-surface-container-lowest: #1e293b;
+  --color-surface-container-low: #1e293b;
+  --color-surface-container: #334155;
+  --color-surface-container-high: #475569;
+  --color-outline-variant: #334155;
+  --color-outline: #64748b;
+  color-scheme: dark;
+}
