@@ -86,7 +86,7 @@ try {
       </div>
       
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg fade-in-group">
-        {featuredJobs.map(job => (
+        {featuredJobs.map((job: any) => (
           <JobCard {...job} />
         ))}
       </div>
@@ -128,7 +128,7 @@ try {
           <div class="max-w-[320px]">
             <h3 class="font-headline-md text-headline-md text-on-surface mb-sm">Para Recrutadores</h3>
             <p class="font-body-md text-body-md text-on-surface-variant">Publique seu programa de estágio e alcance milhares de estudantes qualificados.</p>
-            <button class="mt-md font-label-md text-label-md text-primary font-bold">Saiba mais &rarr;</button>
+            <a href="/sobre" class="mt-md inline-block font-label-md text-label-md text-primary font-bold hover:underline">Saiba mais &rarr;</a>
           </div>
           <div class="hidden lg:block">
             <div class="w-48 h-48 bg-white/50 rounded-full border border-white flex items-center justify-center -mr-16">
