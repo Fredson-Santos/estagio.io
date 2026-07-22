@@ -70,10 +70,7 @@ def parse_eureca_job(raw_job: dict) -> dict:
         location = "Remoto"
         
     raw_description = raw_job.get("description", "")
-    description = ""
-    if raw_description:
-        soup = BeautifulSoup(raw_description, "html.parser")
-        description = soup.get_text(separator=" ", strip=True)
+    description = raw_description.strip() if raw_description else ""
         
     # Extração de bolsa auxílio / remuneração da Eureca caso presente
     from app.services.job_validator import parse_salary

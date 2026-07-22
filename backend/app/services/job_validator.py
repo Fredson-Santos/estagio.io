@@ -3,6 +3,7 @@ job_validator.py - Módulo de validação de qualidade de vagas.
 Garante que apenas vagas com informações completas e de qualidade sejam aceitas.
 """
 
+import re
 from typing import Tuple, Dict, Any
 from app.core.taxonomy import JobModality
 
@@ -96,7 +97,8 @@ def validate_job(job: Dict[str, Any]) -> Tuple[bool, str]:
 
     # 4. Descrição
     description = str(job.get("description") or "").strip()
-    if not description or description.lower() in INVALID_PLACEHOLDERS or len(description) < 30:
+    plain_desc = re.sub(r'<[^>]+>', '', description).strip()
+    if not plain_desc or plain_desc.lower() in INVALID_PLACEHOLDERS or len(plain_desc) < 30:
         return False, "Descrição da vaga ausente, insuficiente ou inválida (mínimo 30 caracteres)"
 
     # 5. Modalidade & Localização

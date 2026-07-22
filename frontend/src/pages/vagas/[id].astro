@@ -1,18 +1,14 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import JobPostingSchema from '../../components/JobPostingSchema.astro';
+import { formatModality } from '../../utils/modality';
+import { formatJobDescription } from '../../utils/formatDescription';
 
 export const prerender = false;
 
 const { id } = Astro.params;
 
 let job: any = null;
-
-const MODALITY_LABELS: Record<string, string> = {
-  REMOTE: 'Remoto',
-  HYBRID: 'Híbrido',
-  ONSITE: 'Presencial',
-};
 
 const AREA_LABELS: Record<string, string> = {
   TI_SOFTWARE: 'TI & Software',
@@ -50,7 +46,7 @@ try {
       title: data.title,
       company: data.company,
       location: data.location || 'Remoto',
-      modality: MODALITY_LABELS[data.modality] || data.modality || 'Presencial',
+      modality: formatModality(data.modality),
       area: AREA_LABELS[data.area] || data.area || 'Outros',
       description: data.description || '',
       salary: data.salary || null,
@@ -70,6 +66,8 @@ try {
 if (!job) {
   return Astro.redirect('/404');
 }
+
+const formattedDescription = formatJobDescription(job.description);
 
 const schemaData = {
   title: job.title,
@@ -223,9 +221,7 @@ const schemaData = {
                 <span class="material-symbols-outlined text-[22px] text-primary">description</span>
                 Descrição da vaga
               </h2>
-              <div class="text-on-surface-variant font-body-md text-body-md leading-relaxed whitespace-pre-wrap description-content">
-                {job.description}
-              </div>
+              <div class="text-on-surface-variant font-body-md text-body-md leading-relaxed description-content" set:html={job.description} />
             </div>
           )}
 
@@ -267,23 +263,50 @@ const schemaData = {
     to   { opacity: 1; transform: translateY(0);    }
   }
 
-  /* Estilização para o texto da descrição */
+  /* Estilização para o HTML da descrição vinda de fontes como Gupy/Eureca */
   .description-content {
     line-height: 1.75;
+  }
+  .description-content :global(p) {
+    margin-bottom: 1rem;
+    line-height: 1.75;
+  }
+  .description-content :global(h1),
+  .description-content :global(h2),
+  .description-content :global(h3),
+  .description-content :global(h4),
+  .description-content :global(h5),
+  .description-content :global(h6) {
+    color: var(--color-on-surface);
+    font-weight: 700;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.05rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
   }
   .description-content :global(ul),
   .description-content :global(ol) {
     margin-left: 1.25rem;
     margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    list-style-type: disc;
+  }
+  .description-content :global(ol) {
+    list-style-type: decimal;
   }
   .description-content :global(li) {
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.35rem;
+    line-height: 1.6;
   }
   .description-content :global(strong),
   .description-content :global(b) {
     color: var(--color-on-surface);
     font-weight: 600;
+  }
+  .description-content :global(a) {
+    color: var(--color-primary);
+    text-decoration: underline;
   }
 </style>
 
