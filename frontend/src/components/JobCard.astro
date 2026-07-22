@@ -1,30 +1,55 @@
 ---
+import { formatModality } from '../utils/modality';
+
 interface Props {
   id: string;
   title: string;
   company: string;
   location: string;
+  modality?: string;
   salary?: string;
   logo?: string;
   isNew?: boolean;
+  publishedAt?: string;
 }
 
-const { id, title, company, location, salary, logo, isNew = false } = Astro.props;
+const { id, title, company, location, modality, salary, logo, isNew = false, publishedAt } = Astro.props;
+const displayModality = formatModality(modality);
+
+// Sanitiza visualmente o salário para ignorar objetos stringificados
+const isValidSalary = salary && 
+  typeof salary === 'string' && 
+  !salary.startsWith('{') && 
+  !salary.toLowerCase().includes('undisclosed') && 
+  !salary.toLowerCase().includes('display') &&
+  salary.trim() !== '';
+
+const companyInitials = (company || 'VA').substring(0, 2).toUpperCase();
 ---
 
 <a href={`/vagas/${id}`} class="block bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col transition-all hover:filter-shadow group cursor-pointer h-full relative" style="transform: translateY(0px);">
   <div class="flex justify-between items-start mb-md">
-    <div class="w-10 h-10 rounded-full border border-outline-variant overflow-hidden flex-shrink-0">
+    <div class="w-10 h-10 rounded-full border border-outline-variant overflow-hidden flex-shrink-0 bg-primary/10 flex items-center justify-center relative">
       {logo ? (
-        <img class="w-full h-full object-cover" alt={`Logo ${company}`} src={logo} />
+        <>
+          <img 
+            class="w-full h-full object-cover" 
+            alt={`Logo ${company}`} 
+            src={logo} 
+            onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" 
+          />
+          <div class="w-full h-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm hidden">
+            {companyInitials}
+          </div>
+        </>
       ) : (
         <div class="w-full h-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-          {company.substring(0, 2).toUpperCase()}
+          {companyInitials}
         </div>
       )}
     </div>
     <span class="bg-secondary-container/50 text-on-secondary-container px-sm py-xs rounded-full text-label-sm font-label-sm">
-      {Astro.props.modality || (isNew ? 'Novo' : 'Presencial')}
+      {displayModality}
     </span>
   </div>
   <h3 class="font-headline-sm text-headline-sm text-on-surface mb-sm group-hover:text-primary transition-colors line-clamp-2 min-h-[56px]">{title}</h3>
@@ -37,7 +62,7 @@ const { id, title, company, location, salary, logo, isNew = false } = Astro.prop
       <span class="material-symbols-outlined text-[16px]">location_on</span>
       <span class="line-clamp-1">{location}</span>
     </span>
-    {salary && (
+    {isValidSalary && (
       <span class="flex items-center gap-xs">
         <span class="material-symbols-outlined text-[16px]">payments</span>
         <span>{salary}</span>
