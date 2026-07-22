@@ -72,7 +72,7 @@ try {
         <!-- Filtros dentro do form para serem enviados na busca -->
         <div class="flex flex-wrap items-center gap-md pt-md border-t border-outline-variant/30">
           <div class="relative group">
-            <select name="area" class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
+            <select id="select-area" name="area" class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
               <option value="" selected={!searchParams.get('area')}>Área de Atuação</option>
               <option value="TI_SOFTWARE"      selected={searchParams.get('area') === 'TI_SOFTWARE'}>Engenharia &amp; Tech</option>
               <option value="DESIGN"           selected={searchParams.get('area') === 'DESIGN'}>Design &amp; UX</option>
@@ -87,7 +87,7 @@ try {
             <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">expand_more</span>
           </div>
           <div class="relative group">
-            <select name="type" class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
+            <select id="select-type" name="type" class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
               <option value="" selected={!searchParams.get('type')}>Tipo de Estágio</option>
               <option value="PART_TIME" selected={searchParams.get('type') === 'PART_TIME'}>Meio Período</option>
               <option value="FULL_TIME" selected={searchParams.get('type') === 'FULL_TIME'}>Período Integral</option>
@@ -95,7 +95,7 @@ try {
             <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">expand_more</span>
           </div>
           <div class="relative group">
-            <select name="modality" class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
+            <select id="select-modality" name="modality" class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
               <option value="" selected={!searchParams.get('modality')}>Modalidade</option>
               <option value="REMOTE"  selected={searchParams.get('modality') === 'REMOTE'}>Remoto</option>
               <option value="HYBRID"  selected={searchParams.get('modality') === 'HYBRID'}>Híbrido</option>
@@ -147,3 +147,22 @@ try {
     </div>
   </div>
 </Layout>
+
+<script>
+  // Auto-submete o form ao mudar qualquer filtro (area, type, modality)
+  const form = document.getElementById('filter-form') as HTMLFormElement | null;
+  const filterSelects = ['select-area', 'select-type', 'select-modality'];
+  const submitBtn = form?.querySelector('button[type="submit"]');
+
+  filterSelects.forEach((id) => {
+    const select = document.getElementById(id) as HTMLSelectElement | null;
+    select?.addEventListener('change', () => {
+      // Feedback visual no botão
+      if (submitBtn) {
+        submitBtn.textContent = 'Filtrando...';
+        submitBtn.setAttribute('disabled', 'true');
+      }
+      form?.submit();
+    });
+  });
+</script>
