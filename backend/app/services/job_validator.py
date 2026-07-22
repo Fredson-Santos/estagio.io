@@ -12,6 +12,60 @@ INVALID_PLACEHOLDERS = {
     "empresa confidencial"
 }
 
+def safe_str(text: Any) -> str:
+    """Converte o texto para string e remove caracteres que falham no print do console Windows (CP1252)."""
+    if text is None:
+        return ""
+    return str(text).encode("ascii", errors="replace").decode("ascii")
+
+
+def parse_salary(salary_obj: Any) -> Any:
+    """
+    Normaliza e formata a informação de salário.
+    Retorna uma string amigável (ex: 'R$ 1.500,00') ou None se for undisclosed/inválido.
+    """
+    if not salary_obj:
+        return None
+
+    if isinstance(salary_obj, str):
+        salary_str = salary_obj.strip()
+        if not salary_str or salary_str.lower() in ["none", "null", "undisclosed", "a combinar", "não informado", "nao informado"]:
+            return None
+        if salary_str.startswith("{") or "undisclosed" in salary_str.lower() or "'display'" in salary_str:
+            return None
+        return salary_str
+
+    if isinstance(salary_obj, dict):
+        display = str(salary_obj.get("display", "")).lower()
+        if display == "undisclosed" or "undisclosed" in str(salary_obj):
+            return None
+
+        label = salary_obj.get("name") or salary_obj.get("label") or salary_obj.get("text")
+        if label and isinstance(label, str) and not label.startswith("{"):
+            return label.strip()
+
+        min_cents = salary_obj.get("minCents")
+        max_cents = salary_obj.get("maxCents")
+        cents = salary_obj.get("cents") or salary_obj.get("value")
+
+        if cents and isinstance(cents, (int, float)) and cents > 0:
+            val = cents / 100 if cents > 100 else cents
+            return f"R$ {val:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
+
+        if min_cents and max_cents and isinstance(min_cents, (int, float)) and min_cents > 0:
+            min_val = min_cents / 100
+            max_val = max_cents / 100
+            return f"R$ {min_val:,.0f} - R$ {max_val:,.0f}".replace(",", ".")
+        elif min_cents and isinstance(min_cents, (int, float)) and min_cents > 0:
+            min_val = min_cents / 100
+            return f"A partir de R$ {min_val:,.0f}".replace(",", ".")
+
+        return None
+
+    return None
+
+
+
 def validate_job(job: Dict[str, Any]) -> Tuple[bool, str]:
     """
     Valida se uma vaga possui todas as informações necessárias exigidas pelo frontend.
