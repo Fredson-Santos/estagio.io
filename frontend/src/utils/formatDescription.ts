@@ -21,60 +21,58 @@ export function formatJobDescription(rawText: string): string {
 
   let text = unescapeHtml(rawText);
 
-  // 1. Se contiver tags de parágrafo/lista ricas do HTML original, sanitiza e limpa apenas quebras
-  const hasRichHtml = /<(p|ul|ol|li|h1|h2|h3)\b/i.test(text);
-
-  if (!hasRichHtml) {
-    // Substituir tags soltas de quebra de linha por \n
-    text = text.replace(/<br\s*\/?>/gi, '\n');
-    text = text.replace(/<\/(p|div|li|h1|h2|h3|h4|h5|h6|tr)>/gi, '\n');
-    text = text.replace(/<[^>]+>/g, '');
-
-    // 2. Limpar títulos duplicados grudados (ex: "Requisitos e qualificaçõesRequisitos e qualificações")
-    text = text.replace(/(Responsabilidades e atribuições){2,}/gi, 'Responsabilidades e atribuições');
-    text = text.replace(/(Requisitos e qualificações){2,}/gi, 'Requisitos e qualificações');
-    text = text.replace(/(Informações adicionais){2,}/gi, 'Informações adicionais');
-
-    // Cabeçalhos de seção padrão (priorizando títulos completos da Gupy)
-    const sectionHeaders = [
-      'Responsabilidades e atribuições',
-      'Requisitos e qualificações',
-      'Informações adicionais',
-      'Principais atividades',
-      'Principais responsabilidades',
-      'O que buscamos',
-      'O que você precisa ter',
-      'Perfil desejado',
-      'Como será o seu dia a dia?',
-      'O que você vai encontrar por aqui?',
-      'O que oferecemos',
-      'Nossos benefícios',
-      'Sobre a empresa',
-      'Sobre nós',
-      'Quem somos',
-      'Diferenciais',
-      'Desejável',
-      'Benefícios',
-      'Atividades',
-      'Pré-requisitos',
-    ];
-    sectionHeaders.sort((a, b) => b.length - a.length);
-
-    sectionHeaders.forEach((header) => {
-      const regexBefore = new RegExp(`([^\\n])\\s*(${header})`, 'gi');
-      text = text.replace(regexBefore, '$1\n\n$2');
-
-      const regexAfter = new RegExp(`(${header})\\s*([A-ZÁÉÍÓÚÀÈÌÒÙÂÊÎÔÛÃÕÇ])`, 'gi');
-      text = text.replace(regexAfter, '$1\n\n$2');
-    });
-
-    // 4. Separar frases grudadas onde uma minúscula/pontuação é colada em uma maiúscula (ex: NegóciosAplicar -> Negócios\n• Aplicar)
-    text = text.replace(/([a-z0-9à-ú\.\!\?\:\)\;])([A-ZÁÉÍÓÚÀÈÌÒÙÂÊÎÔÛÃÕÇ])/g, '$1\n• $2');
-
-    // 5. Normalizar marcadores de tópicos
-    text = text.replace(/;\s*([A-ZÁÉÍÓÚÀÈÌÒÙÂÊÎÔÛÃÕÇ])/g, ';\n• $1');
-    text = text.replace(/([^\n])\s*([•\-\*])\s*/g, '$1\n• ');
+  // 1. Se contiver tags de parágrafo/lista/div ricas do HTML original, retorna o HTML limpo diretamente
+  const hasRichHtml = /<(p|ul|ol|li|h1|h2|h3|div|section)\b/i.test(text);
+  if (hasRichHtml) {
+    return text;
   }
+
+  // Substituir tags soltas de quebra de linha por \n
+  text = text.replace(/<br\s*\/?>/gi, '\n');
+  text = text.replace(/<\/(p|div|li|h1|h2|h3|h4|h5|h6|tr)>/gi, '\n');
+  text = text.replace(/<[^>]+>/g, '');
+
+  // 2. Limpar títulos duplicados grudados (ex: "Requisitos e qualificaçõesRequisitos e qualificações")
+  text = text.replace(/(Responsabilidades e atribuições){2,}/gi, 'Responsabilidades e atribuições');
+  text = text.replace(/(Requisitos e qualificações){2,}/gi, 'Requisitos e qualificações');
+  text = text.replace(/(Informações adicionais){2,}/gi, 'Informações adicionais');
+
+  // Cabeçalhos de seção padrão (priorizando títulos completos da Gupy)
+  const sectionHeaders = [
+    'Responsabilidades e atribuições',
+    'Requisitos e qualificações',
+    'Informações adicionais',
+    'Principais atividades',
+    'Principais responsabilidades',
+    'O que buscamos',
+    'O que você precisa ter',
+    'Perfil desejado',
+    'Como será o seu dia a dia?',
+    'O que você vai encontrar por aqui?',
+    'O que oferecemos',
+    'Nossos benefícios',
+    'Sobre a empresa',
+    'Sobre nós',
+    'Quem somos',
+    'Diferenciais',
+    'Desejável',
+    'Benefícios',
+    'Atividades',
+    'Pré-requisitos',
+  ];
+  sectionHeaders.sort((a, b) => b.length - a.length);
+
+  sectionHeaders.forEach((header) => {
+    const regexBefore = new RegExp(`([^\\n])\\s*(${header})`, 'gi');
+    text = text.replace(regexBefore, '$1\n\n$2');
+
+    const regexAfter = new RegExp(`(${header})\\s*([A-ZÁÉÍÓÚÀÈÌÒÙÂÊÎÔÛÃÕÇ])`, 'gi');
+    text = text.replace(regexAfter, '$1\n\n$2');
+  });
+
+  // 5. Normalizar marcadores de tópicos
+  text = text.replace(/;\s*([A-ZÁÉÍÓÚÀÈÌÒÙÂÊÎÔÛÃÕÇ])/g, ';\n• $1');
+  text = text.replace(/([^\n])\s*([•\-\*])\s*/g, '$1\n• ');
 
   // 6. Dividir em linhas para gerar HTML bem estruturado
   const lines = text.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
