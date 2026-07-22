@@ -14,7 +14,7 @@ from app.services.scrapers.gupy import run_gupy_scraper
 from app.services.scrapers.eureca import run_eureca_scraper
 from app.services.scrapers.estagios import scrape_secondary_platforms
 from app.services.dedup import is_duplicate
-from app.services.job_validator import validate_job
+from app.services.job_validator import validate_job, safe_str
 from app.core.taxonomy import JobStatus
 
 async def get_or_create_gupy_source(session) -> Source:
@@ -73,7 +73,7 @@ async def run_pipeline():
         for job_data in new_jobs_data:
             is_valid, reason = validate_job(job_data)
             if not is_valid:
-                print(f"[ETL] Ignorando vaga Gupy inválida '{job_data.get('title')}': {reason}")
+                print(f"[ETL] Ignorando vaga Gupy inválida '{safe_str(job_data.get('title'))}': {reason}")
                 continue
 
             if not is_duplicate(job_data, existing_jobs):
@@ -106,7 +106,7 @@ async def run_pipeline():
         for job_data in eureca_jobs_data:
             is_valid, reason = validate_job(job_data)
             if not is_valid:
-                print(f"[ETL] Ignorando vaga Eureca inválida '{job_data.get('title')}': {reason}")
+                print(f"[ETL] Ignorando vaga Eureca inválida '{safe_str(job_data.get('title'))}': {reason}")
                 continue
 
             if not is_duplicate(job_data, existing_jobs):
@@ -149,7 +149,7 @@ async def run_pipeline():
             for job_data in sec_jobs:
                 is_valid, reason = validate_job(job_data)
                 if not is_valid:
-                    print(f"[ETL] Ignorando vaga {platform_name} inválida '{job_data.get('title')}': {reason}")
+                    print(f"[ETL] Ignorando vaga {platform_name} inválida '{safe_str(job_data.get('title'))}': {reason}")
                     continue
 
                 if not is_duplicate(job_data, existing_jobs):
