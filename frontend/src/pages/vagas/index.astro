@@ -63,21 +63,6 @@ function pageUrl(page: number): string {
   const qs = params.toString();
   return `/vagas${qs ? `?${qs}` : ''}`;
 }
-
-// Gerar lista de páginas a exibir (janela de 5 ao redor da página atual)
-function getPageWindow(current: number, total: number): (number | '...')[] {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-  const pages: (number | '...')[] = [1];
-  const start = Math.max(2, current - 2);
-  const end   = Math.min(total - 1, current + 2);
-  if (start > 2) pages.push('...');
-  for (let i = start; i <= end; i++) pages.push(i);
-  if (end < total - 1) pages.push('...');
-  pages.push(total);
-  return pages;
-}
-
-const pageWindow = getPageWindow(currentPage, totalPages);
 ---
 
 <Layout 
@@ -164,56 +149,43 @@ const pageWindow = getPageWindow(currentPage, totalPages);
           ))}
         </div>
 
-        <!-- Paginação dinâmica -->
+        <!-- Paginação simples: Anterior | Página X de Y | Próxima -->
         {totalPages > 1 && (
-          <nav class="mt-xl flex items-center justify-center gap-xs" aria-label="Paginação">
+          <nav class="mt-xl flex items-center justify-center gap-md" aria-label="Paginação">
 
-            <!-- Anterior -->
             {currentPage > 1 ? (
               <a
                 href={pageUrl(currentPage - 1)}
-                class="pagination-link w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-colors"
+                class="pagination-link inline-flex items-center gap-xs px-md py-2.5 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-all active:scale-95"
                 aria-label="Página anterior"
               >
-                <span class="material-symbols-outlined">chevron_left</span>
+                <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                Anterior
               </a>
             ) : (
-              <span class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant/30 text-outline/40 cursor-not-allowed">
-                <span class="material-symbols-outlined">chevron_left</span>
+              <span class="inline-flex items-center gap-xs px-md py-2.5 rounded-lg border border-outline-variant/30 text-outline/40 font-label-md text-label-md cursor-not-allowed select-none">
+                <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                Anterior
               </span>
             )}
 
-            <!-- Páginas -->
-            {pageWindow.map((p) =>
-              p === '...' ? (
-                <span class="px-xs text-outline select-none">...</span>
-              ) : (
-                <a
-                  href={pageUrl(p as number)}
-                  class={`pagination-link w-10 h-10 flex items-center justify-center rounded-lg font-label-md text-label-md transition-all ${
-                    p === currentPage
-                      ? 'bg-primary text-on-primary shadow-sm pointer-events-none'
-                      : 'border border-outline-variant text-on-surface-variant hover:bg-surface-container-low'
-                  }`}
-                  aria-current={p === currentPage ? 'page' : undefined}
-                >
-                  {p}
-                </a>
-              )
-            )}
+            <span class="font-body-sm text-body-sm text-on-surface-variant px-sm">
+              Página <strong class="text-on-surface">{currentPage}</strong> de <strong class="text-on-surface">{totalPages}</strong>
+            </span>
 
-            <!-- Próxima -->
             {currentPage < totalPages ? (
               <a
                 href={pageUrl(currentPage + 1)}
-                class="pagination-link w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-colors"
+                class="pagination-link inline-flex items-center gap-xs px-md py-2.5 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-all active:scale-95"
                 aria-label="Próxima página"
               >
-                <span class="material-symbols-outlined">chevron_right</span>
+                Próxima
+                <span class="material-symbols-outlined text-[18px]">chevron_right</span>
               </a>
             ) : (
-              <span class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant/30 text-outline/40 cursor-not-allowed">
-                <span class="material-symbols-outlined">chevron_right</span>
+              <span class="inline-flex items-center gap-xs px-md py-2.5 rounded-lg border border-outline-variant/30 text-outline/40 font-label-md text-label-md cursor-not-allowed select-none">
+                Próxima
+                <span class="material-symbols-outlined text-[18px]">chevron_right</span>
               </span>
             )}
 
