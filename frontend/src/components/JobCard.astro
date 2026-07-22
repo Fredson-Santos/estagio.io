@@ -48,9 +48,16 @@ const companyInitials = (company || 'VA').substring(0, 2).toUpperCase();
         </div>
       )}
     </div>
-    <span class="bg-secondary-container/50 text-on-secondary-container px-sm py-xs rounded-full text-label-sm font-label-sm">
-      {displayModality}
-    </span>
+    <div class="flex items-center gap-xs">
+      {isNew && (
+        <span class="bg-primary/10 text-primary text-label-sm font-label-sm px-sm py-xs rounded-full font-semibold">
+          Novo
+        </span>
+      )}
+      <span class="bg-secondary-container/50 text-on-secondary-container px-sm py-xs rounded-full text-label-sm font-label-sm">
+        {displayModality}
+      </span>
+    </div>
   </div>
   <h3 class="font-headline-sm text-headline-sm text-on-surface mb-sm group-hover:text-primary transition-colors line-clamp-2 min-h-[56px]">{title}</h3>
   <div class="flex flex-col gap-xs text-on-surface-variant text-body-sm font-body-sm mb-lg">
@@ -70,9 +77,9 @@ const companyInitials = (company || 'VA').substring(0, 2).toUpperCase();
     )}
   </div>
   <div class="mt-auto pt-md border-t border-outline-variant/30 flex flex-wrap justify-between items-center gap-md">
-    <span class="text-label-sm font-label-sm text-outline">{Astro.props.publishedAt || 'Recente'}</span>
-    <button class="bg-primary text-on-primary px-lg py-2.5 rounded-lg font-label-md text-label-md hover:bg-primary-container transition-all active:scale-95 whitespace-nowrap">
+    <span class="text-label-sm font-label-sm text-outline">{publishedAt || 'Recente'}</span>
+    <span class="bg-primary text-on-primary px-lg py-2.5 rounded-lg font-label-md text-label-md group-hover:bg-primary-container transition-all active:scale-95 whitespace-nowrap inline-block text-center">
       Candidatar-se
-    </button>
+    </span>
   </div>
 </a>

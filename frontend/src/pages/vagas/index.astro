@@ -13,6 +13,7 @@ const searchParams = url.searchParams;
 const LIMIT = 21; // 3 colunas x 7 linhas
 const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
 const skip = (currentPage - 1) * LIMIT;
+const sortParam = searchParams.get('sort') || 'recent';
 
 // Mapear parâmetros do frontend para o backend
 const query = new URLSearchParams();
@@ -24,10 +25,12 @@ if (searchParams.get('modality')) query.append('modality', searchParams.get('mod
 if (searchParams.get('company'))  query.append('company',  searchParams.get('company') || '');
 
 // Fetch jobs do backend
-let jobs = [];
+let jobs: any[] = [];
 let total = 0;
+let hasBackendError = false;
+
 try {
-  const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
+  const backendUrl = import.meta.env.BACKEND_URL || 'http://localhost:8000';
   const response = await fetch(`${backendUrl}/api/v1/jobs?${query.toString()}&limit=${LIMIT}&skip=${skip}`);
   if (response.ok) {
     const data = await response.json();
@@ -38,13 +41,40 @@ try {
       modality: formatModality(job.modality),
     }));
     total = data.total;
+  } else {
+    hasBackendError = true;
   }
 } catch (e) {
   console.error("Erro ao buscar vagas do backend", e);
+  hasBackendError = true;
+}
+
+// Ordenação cliente/fallback se solicitada
+if (sortParam === 'company') {
+  jobs.sort((a, b) => (a.company || '').localeCompare(b.company || ''));
+} else if (sortParam === 'title') {
+  jobs.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
 }
 
 // Cálculo de páginas
 const totalPages = Math.max(1, Math.ceil(total / LIMIT));
+
+let pagesToShow: number[] = [];
+if (totalPages <= 3) {
+  for (let i = 1; i <= totalPages; i++) pagesToShow.push(i);
+} else if (currentPage === 1) {
+  pagesToShow = [1, 2, totalPages];
+} else if (currentPage === totalPages) {
+  pagesToShow = [1, totalPages - 1, totalPages];
+} else {
+  pagesToShow = [1, currentPage, totalPages];
+}
+
+const btnBase = "w-10 h-10 flex items-center justify-center rounded-xl font-label-md text-label-md transition-all active:scale-95 select-none";
+const btnInactive = `${btnBase} bg-surface-container-low text-on-surface-variant hover:bg-surface-container border border-transparent`;
+const btnActive  = `${btnBase} bg-on-surface text-surface shadow-sm pointer-events-none`;
+const btnArrow   = `${btnBase} bg-surface-container-low text-on-surface-variant hover:bg-surface-container border border-transparent`;
+const btnArrowDisabled = `${btnBase} bg-surface-container-low/50 text-outline/30 cursor-not-allowed`;
 
 // Função para gerar URL de uma página preservando todos os filtros ativos
 function pageUrl(page: number): string {
@@ -86,7 +116,7 @@ function pageUrl(page: number): string {
         <!-- Filtros dentro do form para serem enviados na busca -->
         <div class="flex flex-wrap items-center gap-md pt-md border-t border-outline-variant/30">
           <div class="relative group">
-            <select id="select-area" name="area" class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
+            <select id="select-area" name="area" aria-label="Área de Atuação" class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
               <option value="" selected={!searchParams.get('area')}>Área de Atuação</option>
               <option value="TI_SOFTWARE"      selected={searchParams.get('area') === 'TI_SOFTWARE'}>Engenharia &amp; Tech</option>
               <option value="DESIGN"           selected={searchParams.get('area') === 'DESIGN'}>Design &amp; UX</option>
@@ -101,7 +131,7 @@ function pageUrl(page: number): string {
             <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">expand_more</span>
           </div>
           <div class="relative group">
-            <select id="select-type" name="type" class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
+            <select id="select-type" name="type" aria-label="Tipo de Estágio" class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
               <option value="" selected={!searchParams.get('type')}>Tipo de Estágio</option>
               <option value="PART_TIME" selected={searchParams.get('type') === 'PART_TIME'}>Meio Período</option>
               <option value="FULL_TIME" selected={searchParams.get('type') === 'FULL_TIME'}>Período Integral</option>
@@ -109,7 +139,7 @@ function pageUrl(page: number): string {
             <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">expand_more</span>
           </div>
           <div class="relative group">
-            <select id="select-modality" name="modality" class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
+            <select id="select-modality" name="modality" aria-label="Modalidade" class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
               <option value="" selected={!searchParams.get('modality')}>Modalidade</option>
               <option value="REMOTE"  selected={searchParams.get('modality') === 'REMOTE'}>Remoto</option>
               <option value="HYBRID"  selected={searchParams.get('modality') === 'HYBRID'}>Híbrido</option>
@@ -129,76 +159,80 @@ function pageUrl(page: number): string {
           <p class="font-body-sm text-body-sm text-on-surface-variant">Mostrando <span class="font-bold text-on-surface">{total}</span> oportunidades de estágio</p>
           <div class="flex items-center gap-sm">
             <span class="text-label-sm font-label-sm text-outline">Ordenar por:</span>
-            <select class="appearance-none bg-none bg-transparent border-none focus:ring-0 font-label-md text-label-md text-primary cursor-pointer pr-8 py-0 outline-none">
-              <option>Mais recentes</option>
-              <option>Popularidade</option>
-              <option>Bolsa Auxílio</option>
-            </select>
+            <div class="relative">
+              <select id="select-sort" aria-label="Ordenar vagas por" class="appearance-none bg-none bg-transparent border-none focus:ring-0 font-label-md text-label-md text-primary cursor-pointer pr-8 py-0 outline-none">
+                <option value="recent" selected={sortParam === 'recent'}>Mais recentes</option>
+                <option value="company" selected={sortParam === 'company'}>Empresa (A-Z)</option>
+                <option value="title" selected={sortParam === 'title'}>Título (A-Z)</option>
+              </select>
+              <span class="material-symbols-outlined absolute right-0 top-1/2 -translate-y-1/2 text-primary pointer-events-none text-[18px]">expand_more</span>
+            </div>
           </div>
         </div>
 
-        <div id="job-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
-          {jobs.map((job) => (
-            <JobCard {...job} />
-          ))}
-        </div>
+        {hasBackendError ? (
+          <div class="bg-error-container/20 border border-error/30 rounded-xl p-xl text-center my-lg">
+            <span class="material-symbols-outlined text-4xl text-error mb-sm">error_outline</span>
+            <h3 class="font-headline-sm text-headline-sm text-on-surface mb-xs">Não foi possível carregar as vagas</h3>
+            <p class="font-body-md text-body-md text-on-surface-variant mb-md">Ocorreu um erro de conexão com o servidor. Por favor, tente novamente.</p>
+            <a href="/vagas" class="inline-flex items-center gap-xs bg-primary text-on-primary px-lg py-md rounded-lg font-label-md hover:bg-primary-container transition-all">
+              <span class="material-symbols-outlined text-[18px]">refresh</span>
+              Tentar novamente
+            </a>
+          </div>
+        ) : jobs.length === 0 ? (
+          <div class="bg-surface-container-low border border-outline-variant/50 rounded-xl p-xl text-center my-lg">
+            <span class="material-symbols-outlined text-5xl text-outline mb-md">search_off</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mb-xs">Nenhuma vaga encontrada</h3>
+            <p class="font-body-md text-body-md text-on-surface-variant mb-lg max-w-md mx-auto">Não encontramos oportunidades que correspondam aos filtros selecionados. Tente ajustar os termos ou limpar os filtros.</p>
+            <a href="/vagas" class="inline-flex items-center gap-xs bg-primary text-on-primary px-lg py-md rounded-lg font-label-md hover:bg-primary-container transition-all">
+              <span class="material-symbols-outlined text-[18px]">filter_alt_off</span>
+              Limpar todos os filtros
+            </a>
+          </div>
+        ) : (
+          <div id="job-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
+            {jobs.map((job: any) => (
+              <JobCard {...job} />
+            ))}
+          </div>
+        )}
 
-        <!-- Paginação: < 1 [Página Atual] Última > -->
-        {totalPages > 1 && (() => {
-          let pagesToShow: number[] = [];
-          if (totalPages <= 3) {
-            for (let i = 1; i <= totalPages; i++) pagesToShow.push(i);
-          } else if (currentPage === 1) {
-            pagesToShow = [1, 2, totalPages];
-          } else if (currentPage === totalPages) {
-            pagesToShow = [1, totalPages - 1, totalPages];
-          } else {
-            pagesToShow = [1, currentPage, totalPages];
-          }
+        <!-- Paginação -->
+        {totalPages > 1 && (
+          <nav class="mt-xl flex items-center justify-center gap-sm" aria-label="Paginação">
+            {/* Seta esquerda */}
+            {currentPage > 1 ? (
+              <a href={pageUrl(currentPage - 1)} class={`pagination-link ${btnArrow}`} aria-label="Página anterior">
+                <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+              </a>
+            ) : (
+              <span class={btnArrowDisabled}>
+                <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+              </span>
+            )}
 
-          const btnBase = "w-10 h-10 flex items-center justify-center rounded-xl font-label-md text-label-md transition-all active:scale-95 select-none";
-          const btnInactive = `${btnBase} bg-surface-container-low text-on-surface-variant hover:bg-surface-container border border-transparent`;
-          const btnActive  = `${btnBase} bg-on-surface text-surface shadow-sm pointer-events-none`;
-          const btnArrow   = `${btnBase} bg-surface-container-low text-on-surface-variant hover:bg-surface-container border border-transparent`;
-          const btnArrowDisabled = `${btnBase} bg-surface-container-low/50 text-outline/30 cursor-not-allowed`;
-
-          return (
-            <nav class="mt-xl flex items-center justify-center gap-sm" aria-label="Paginação">
-
-              {/* Seta esquerda */}
-              {currentPage > 1 ? (
-                <a href={pageUrl(currentPage - 1)} class={`pagination-link ${btnArrow}`} aria-label="Página anterior">
-                  <span class="material-symbols-outlined text-[20px]">chevron_left</span>
-                </a>
+            {/* Botões numerados */}
+            {pagesToShow.map((p) =>
+              p === currentPage ? (
+                <span class={btnActive}>{p}</span>
               ) : (
-                <span class={btnArrowDisabled}>
-                  <span class="material-symbols-outlined text-[20px]">chevron_left</span>
-                </span>
-              )}
+                <a href={pageUrl(p)} class={`pagination-link ${btnInactive}`}>{p}</a>
+              )
+            )}
 
-              {/* Botões numerados */}
-              {pagesToShow.map((p) =>
-                p === currentPage ? (
-                  <span class={btnActive}>{p}</span>
-                ) : (
-                  <a href={pageUrl(p)} class={`pagination-link ${btnInactive}`}>{p}</a>
-                )
-              )}
-
-              {/* Seta direita */}
-              {currentPage < totalPages ? (
-                <a href={pageUrl(currentPage + 1)} class={`pagination-link ${btnArrow}`} aria-label="Próxima página">
-                  <span class="material-symbols-outlined text-[20px]">chevron_right</span>
-                </a>
-              ) : (
-                <span class={btnArrowDisabled}>
-                  <span class="material-symbols-outlined text-[20px]">chevron_right</span>
-                </span>
-              )}
-
-            </nav>
-          );
-        })()}
+            {/* Seta direita */}
+            {currentPage < totalPages ? (
+              <a href={pageUrl(currentPage + 1)} class={`pagination-link ${btnArrow}`} aria-label="Próxima página">
+                <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+              </a>
+            ) : (
+              <span class={btnArrowDisabled}>
+                <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+              </span>
+            )}
+          </nav>
+        )}
 
       </div>
     </div>
@@ -258,6 +292,20 @@ function pageUrl(page: number): string {
         form?.submit();
       }
     });
+  });
+
+  // Listener para ordenação
+  const sortSelect = document.getElementById('select-sort') as HTMLSelectElement | null;
+  sortSelect?.addEventListener('change', () => {
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('sort', sortSelect.value);
+    const grid = document.getElementById('job-grid');
+    if (grid) {
+      grid.classList.add('leaving');
+      setTimeout(() => { window.location.href = currentUrl.toString(); }, 200);
+    } else {
+      window.location.href = currentUrl.toString();
+    }
   });
 
   // Animação de saída ao clicar em links de paginação

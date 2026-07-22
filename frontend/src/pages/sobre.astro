@@ -69,7 +69,7 @@ import Layout from '../layouts/Layout.astro';
     <div class="bg-on-secondary-fixed rounded-2xl p-xl md:p-24 text-on-primary relative overflow-hidden fade-in-section">
       <!-- Abstract pattern overlay -->
       <div class="absolute top-0 right-0 w-1/2 h-full opacity-10 pointer-events-none">
-        <svg fill="none" viewbox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+        <svg fill="none" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
           <circle cx="200" cy="200" r="180" stroke="white" stroke-dasharray="10 10" stroke-width="2"></circle>
           <circle cx="200" cy="200" r="140" stroke="white" stroke-width="2"></circle>
           <circle cx="200" cy="200" r="100" stroke="white" stroke-dasharray="5 5" stroke-width="2"></circle>
@@ -99,11 +99,21 @@ import Layout from '../layouts/Layout.astro';
     <h2 class="font-headline-lg text-headline-lg mb-md">Pronto para dar o próximo passo?</h2>
     <div class="flex flex-col sm:flex-row gap-md justify-center items-center">
       <a class="w-full sm:w-auto px-8 py-3 bg-primary text-white rounded-lg font-label-md text-label-md hover:bg-primary/90 transition-colors shadow-lg" href="/vagas">Ver vagas disponíveis</a>
-      <a class="w-full sm:w-auto px-8 py-3 bg-white border border-outline-variant text-secondary rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-all" href="#">Assinar Newsletter</a>
+      <button id="newsletter-btn" class="w-full sm:w-auto px-8 py-3 bg-surface-container border border-outline-variant text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-container-high active:scale-95 transition-all">Assinar Newsletter</button>
     </div>
   </section>
 
   <script>
+    const newsletterBtn = document.getElementById('newsletter-btn');
+    newsletterBtn?.addEventListener('click', () => {
+      const email = prompt('Digite seu e-mail para receber alertas de vagas de estágio:');
+      if (email && email.includes('@')) {
+        alert('Obrigado! Seu e-mail foi cadastrado com sucesso para receber novas vagas.');
+      } else if (email) {
+        alert('Por favor, informe um e-mail válido.');
+      }
+    });
+
     const observerOptions = {
       threshold: 0.1
     };
