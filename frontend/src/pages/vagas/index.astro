@@ -2,6 +2,8 @@
 import Layout from '../../layouts/Layout.astro';
 import JobCard from '../../components/JobCard.astro';
 
+export const prerender = false;
+
 // Pegar os parâmetros de busca da URL para repassar ao backend
 const url = new URL(Astro.request.url);
 const searchParams = url.searchParams;
