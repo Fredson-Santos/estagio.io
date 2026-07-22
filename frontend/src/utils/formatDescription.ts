@@ -35,28 +35,28 @@ export function formatJobDescription(rawText: string): string {
     text = text.replace(/(Requisitos e qualificações){2,}/gi, 'Requisitos e qualificações');
     text = text.replace(/(Informações adicionais){2,}/gi, 'Informações adicionais');
 
-    // 3. Destacar cabeçalhos conhecidos
+    // Cabeçalhos de seção padrão (priorizando títulos completos da Gupy)
     const sectionHeaders = [
       'Responsabilidades e atribuições',
-      'Responsabilidades',
-      'Atividades',
+      'Requisitos e qualificações',
+      'Informações adicionais',
       'Principais atividades',
       'Principais responsabilidades',
-      'Requisitos e qualificações',
-      'Requisitos',
-      'Pré-requisitos',
       'O que buscamos',
       'O que você precisa ter',
       'Perfil desejado',
-      'Diferenciais',
-      'Desejável',
-      'Informações adicionais',
-      'Benefícios',
+      'Como será o seu dia a dia?',
+      'O que você vai encontrar por aqui?',
       'O que oferecemos',
       'Nossos benefícios',
       'Sobre a empresa',
       'Sobre nós',
       'Quem somos',
+      'Diferenciais',
+      'Desejável',
+      'Benefícios',
+      'Atividades',
+      'Pré-requisitos',
     ];
     sectionHeaders.sort((a, b) => b.length - a.length);
 
@@ -80,9 +80,11 @@ export function formatJobDescription(rawText: string): string {
   const lines = text.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
 
   const sectionHeadersLower = [
-    'responsabilidades e atribuições', 'responsabilidades', 'atividades', 'principais atividades', 'principais responsabilidades',
-    'requisitos e qualificações', 'requisitos', 'pré-requisitos', 'o que buscamos', 'o que você precisa ter', 'perfil desejado',
-    'diferenciais', 'desejável', 'informações adicionais', 'benefícios', 'o que oferecemos', 'nossos benefícios', 'sobre a empresa', 'sobre nós', 'quem somos'
+    'responsabilidades e atribuições', 'requisitos e qualificações', 'informações adicionais',
+    'principais atividades', 'principais responsabilidades', 'o que buscamos', 'o que você precisa ter',
+    'perfil desejado', 'como será o seu dia a dia?', 'o que você vai encontrar por aqui?',
+    'o que oferecemos', 'nossos benefícios', 'sobre a empresa', 'sobre nós', 'quem somos',
+    'diferenciais', 'desejável', 'benefícios', 'atividades', 'pré-requisitos'
   ];
 
   let htmlResult = '';
