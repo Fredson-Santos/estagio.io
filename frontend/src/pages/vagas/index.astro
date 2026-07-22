@@ -127,6 +127,23 @@ try {
           {jobs.map((job) => (
             <JobCard {...job} />
           ))}
+
+          {/* Card CTA para preencher slots vazios na última linha (grid de 3 colunas) */}
+          {jobs.length % 3 !== 0 && Array.from({ length: 3 - (jobs.length % 3) }).map(() => (
+            <div class="bg-gradient-to-br from-primary/5 to-secondary/5 border-2 border-dashed border-primary/20 rounded-xl p-md flex flex-col items-center justify-center text-center gap-md min-h-[200px] group hover:border-primary/40 hover:from-primary/10 hover:to-secondary/10 transition-all">
+              <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <span class="material-symbols-outlined text-[24px] text-primary">notifications_active</span>
+              </div>
+              <div>
+                <p class="font-label-md text-label-md text-on-surface mb-xs">Quer ser o primeiro a saber?</p>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">Ative alertas e receba novas vagas no seu e-mail.</p>
+              </div>
+              <a href="#" class="inline-flex items-center gap-xs px-md py-2 bg-primary text-on-primary rounded-full font-label-sm text-label-sm hover:brightness-110 transition-all active:scale-95">
+                <span class="material-symbols-outlined text-[16px]">add_alert</span>
+                Criar alerta
+              </a>
+            </div>
+          ))}
         </div>
 
         <!-- Pagination -->
