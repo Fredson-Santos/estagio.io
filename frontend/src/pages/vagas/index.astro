@@ -149,48 +149,69 @@ function pageUrl(page: number): string {
           ))}
         </div>
 
-        <!-- Paginação simples: Anterior | Página X de Y | Próxima -->
-        {totalPages > 1 && (
-          <nav class="mt-xl flex items-center justify-center gap-md" aria-label="Paginação">
+        <!-- Paginação: < [N-1] [N] [N+1] > -->
+        {totalPages > 1 && (() => {
+          // Calcular os 3 números a exibir, ajustando nas bordas
+          const p1 = Math.max(1, Math.min(currentPage - 1, totalPages - 2));
+          const p2 = p1 + 1;
+          const p3 = p1 + 2;
+          const btnBase = "w-10 h-10 flex items-center justify-center rounded-xl font-label-md text-label-md transition-all active:scale-95 select-none";
+          const btnInactive = `${btnBase} bg-surface-container-low text-on-surface-variant hover:bg-surface-container border border-transparent`;
+          const btnActive  = `${btnBase} bg-on-surface text-surface shadow-sm pointer-events-none`;
+          const btnArrow   = `${btnBase} bg-surface-container-low text-on-surface-variant hover:bg-surface-container border border-transparent`;
+          const btnArrowDisabled = `${btnBase} bg-surface-container-low/50 text-outline/30 cursor-not-allowed`;
+          return (
+            <nav class="mt-xl flex items-center justify-center gap-sm" aria-label="Paginação">
 
-            {currentPage > 1 ? (
-              <a
-                href={pageUrl(currentPage - 1)}
-                class="pagination-link inline-flex items-center gap-xs px-md py-2.5 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-all active:scale-95"
-                aria-label="Página anterior"
-              >
-                <span class="material-symbols-outlined text-[18px]">chevron_left</span>
-                Anterior
-              </a>
-            ) : (
-              <span class="inline-flex items-center gap-xs px-md py-2.5 rounded-lg border border-outline-variant/30 text-outline/40 font-label-md text-label-md cursor-not-allowed select-none">
-                <span class="material-symbols-outlined text-[18px]">chevron_left</span>
-                Anterior
-              </span>
-            )}
+              {/* Seta esquerda */}
+              {currentPage > 1 ? (
+                <a href={pageUrl(currentPage - 1)} class={`pagination-link ${btnArrow}`} aria-label="Página anterior">
+                  <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                </a>
+              ) : (
+                <span class={btnArrowDisabled}>
+                  <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                </span>
+              )}
 
-            <span class="font-body-sm text-body-sm text-on-surface-variant px-sm">
-              Página <strong class="text-on-surface">{currentPage}</strong> de <strong class="text-on-surface">{totalPages}</strong>
-            </span>
+              {/* Botão página p1 */}
+              {p1 === currentPage ? (
+                <span class={btnActive}>{p1}</span>
+              ) : (
+                <a href={pageUrl(p1)} class={`pagination-link ${btnInactive}`}>{p1}</a>
+              )}
 
-            {currentPage < totalPages ? (
-              <a
-                href={pageUrl(currentPage + 1)}
-                class="pagination-link inline-flex items-center gap-xs px-md py-2.5 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-all active:scale-95"
-                aria-label="Próxima página"
-              >
-                Próxima
-                <span class="material-symbols-outlined text-[18px]">chevron_right</span>
-              </a>
-            ) : (
-              <span class="inline-flex items-center gap-xs px-md py-2.5 rounded-lg border border-outline-variant/30 text-outline/40 font-label-md text-label-md cursor-not-allowed select-none">
-                Próxima
-                <span class="material-symbols-outlined text-[18px]">chevron_right</span>
-              </span>
-            )}
+              {/* Botão página p2 */}
+              {p2 === currentPage ? (
+                <span class={btnActive}>{p2}</span>
+              ) : (
+                <a href={pageUrl(p2)} class={`pagination-link ${btnInactive}`}>{p2}</a>
+              )}
 
-          </nav>
-        )}
+              {/* Botão página p3 — só exibe se existir */}
+              {p3 <= totalPages && (
+                p3 === currentPage ? (
+                  <span class={btnActive}>{p3}</span>
+                ) : (
+                  <a href={pageUrl(p3)} class={`pagination-link ${btnInactive}`}>{p3}</a>
+                )
+              )}
+
+              {/* Seta direita */}
+              {currentPage < totalPages ? (
+                <a href={pageUrl(currentPage + 1)} class={`pagination-link ${btnArrow}`} aria-label="Próxima página">
+                  <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                </a>
+              ) : (
+                <span class={btnArrowDisabled}>
+                  <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                </span>
+              )}
+
+            </nav>
+          );
+        })()}
+
       </div>
     </div>
   </div>
