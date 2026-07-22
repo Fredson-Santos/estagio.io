@@ -15,6 +15,11 @@ const MODALITY_LABELS: Record<string, string> = {
   ONSITE: 'Presencial',
 };
 
+// Paginação
+const LIMIT = 21; // 3 colunas x 7 linhas
+const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+const skip = (currentPage - 1) * LIMIT;
+
 // Mapear parâmetros do frontend para o backend
 const query = new URLSearchParams();
 if (searchParams.get('q'))        query.append('q',        searchParams.get('q') || '');
@@ -29,7 +34,7 @@ let jobs = [];
 let total = 0;
 try {
   const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
-  const response = await fetch(`${backendUrl}/api/v1/jobs?${query.toString()}&limit=21`);
+  const response = await fetch(`${backendUrl}/api/v1/jobs?${query.toString()}&limit=${LIMIT}&skip=${skip}`);
   if (response.ok) {
     const data = await response.json();
     jobs = data.items.map((job: any) => ({
@@ -43,6 +48,36 @@ try {
 } catch (e) {
   console.error("Erro ao buscar vagas do backend", e);
 }
+
+// Cálculo de páginas
+const totalPages = Math.max(1, Math.ceil(total / LIMIT));
+
+// Função para gerar URL de uma página preservando todos os filtros ativos
+function pageUrl(page: number): string {
+  const params = new URLSearchParams(searchParams.toString());
+  if (page === 1) {
+    params.delete('page');
+  } else {
+    params.set('page', String(page));
+  }
+  const qs = params.toString();
+  return `/vagas${qs ? `?${qs}` : ''}`;
+}
+
+// Gerar lista de páginas a exibir (janela de 5 ao redor da página atual)
+function getPageWindow(current: number, total: number): (number | '...')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | '...')[] = [1];
+  const start = Math.max(2, current - 2);
+  const end   = Math.min(total - 1, current + 2);
+  if (start > 2) pages.push('...');
+  for (let i = start; i <= end; i++) pages.push(i);
+  if (end < total - 1) pages.push('...');
+  pages.push(total);
+  return pages;
+}
+
+const pageWindow = getPageWindow(currentPage, totalPages);
 ---
 
 <Layout 
@@ -123,30 +158,101 @@ try {
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
+        <div id="job-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
           {jobs.map((job) => (
             <JobCard {...job} />
           ))}
         </div>
 
-        <!-- Pagination -->
-        <div class="mt-xl flex items-center justify-center gap-sm">
-          <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-colors">
-            <span class="material-symbols-outlined">chevron_left</span>
-          </button>
-          <button class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-on-primary font-label-md text-label-md">1</button>
-          <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-colors">2</button>
-          <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-colors">3</button>
-          <span class="px-xs text-outline">...</span>
-          <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-colors">12</button>
-          <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-colors">
-            <span class="material-symbols-outlined">chevron_right</span>
-          </button>
-        </div>
+        <!-- Paginação dinâmica -->
+        {totalPages > 1 && (
+          <nav class="mt-xl flex items-center justify-center gap-xs" aria-label="Paginação">
+
+            <!-- Anterior -->
+            {currentPage > 1 ? (
+              <a
+                href={pageUrl(currentPage - 1)}
+                class="pagination-link w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-colors"
+                aria-label="Página anterior"
+              >
+                <span class="material-symbols-outlined">chevron_left</span>
+              </a>
+            ) : (
+              <span class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant/30 text-outline/40 cursor-not-allowed">
+                <span class="material-symbols-outlined">chevron_left</span>
+              </span>
+            )}
+
+            <!-- Páginas -->
+            {pageWindow.map((p) =>
+              p === '...' ? (
+                <span class="px-xs text-outline select-none">...</span>
+              ) : (
+                <a
+                  href={pageUrl(p as number)}
+                  class={`pagination-link w-10 h-10 flex items-center justify-center rounded-lg font-label-md text-label-md transition-all ${
+                    p === currentPage
+                      ? 'bg-primary text-on-primary shadow-sm pointer-events-none'
+                      : 'border border-outline-variant text-on-surface-variant hover:bg-surface-container-low'
+                  }`}
+                  aria-current={p === currentPage ? 'page' : undefined}
+                >
+                  {p}
+                </a>
+              )
+            )}
+
+            <!-- Próxima -->
+            {currentPage < totalPages ? (
+              <a
+                href={pageUrl(currentPage + 1)}
+                class="pagination-link w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-colors"
+                aria-label="Próxima página"
+              >
+                <span class="material-symbols-outlined">chevron_right</span>
+              </a>
+            ) : (
+              <span class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant/30 text-outline/40 cursor-not-allowed">
+                <span class="material-symbols-outlined">chevron_right</span>
+              </span>
+            )}
+
+          </nav>
+        )}
       </div>
     </div>
   </div>
 </Layout>
+
+<style>
+  /* Animação de entrada dos cards */
+  #job-grid > * {
+    animation: cardIn 0.35s ease both;
+  }
+  #job-grid > *:nth-child(1)  { animation-delay: 0.00s; }
+  #job-grid > *:nth-child(2)  { animation-delay: 0.03s; }
+  #job-grid > *:nth-child(3)  { animation-delay: 0.06s; }
+  #job-grid > *:nth-child(4)  { animation-delay: 0.09s; }
+  #job-grid > *:nth-child(5)  { animation-delay: 0.12s; }
+  #job-grid > *:nth-child(6)  { animation-delay: 0.15s; }
+  #job-grid > *:nth-child(7)  { animation-delay: 0.18s; }
+  #job-grid > *:nth-child(8)  { animation-delay: 0.21s; }
+  #job-grid > *:nth-child(9)  { animation-delay: 0.24s; }
+  #job-grid > *:nth-child(n+10) { animation-delay: 0.27s; }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0);    }
+  }
+
+  /* Animação de saída da grid ao navegar entre páginas */
+  #job-grid.leaving {
+    animation: gridOut 0.2s ease forwards;
+  }
+  @keyframes gridOut {
+    to { opacity: 0; transform: translateY(-8px); }
+  }
+</style>
 
 <script>
   // Auto-submete o form ao mudar qualquer filtro (area, type, modality)
@@ -162,7 +268,26 @@ try {
         submitBtn.textContent = 'Filtrando...';
         submitBtn.setAttribute('disabled', 'true');
       }
-      form?.submit();
+      // Anima saída da grid antes de submeter
+      const grid = document.getElementById('job-grid');
+      if (grid) {
+        grid.classList.add('leaving');
+        setTimeout(() => form?.submit(), 200);
+      } else {
+        form?.submit();
+      }
+    });
+  });
+
+  // Animação de saída ao clicar em links de paginação
+  document.querySelectorAll('.pagination-link').forEach((link) => {
+    link.addEventListener('click', (e) => {
+      const grid = document.getElementById('job-grid');
+      if (!grid) return;
+      e.preventDefault();
+      const href = (link as HTMLAnchorElement).href;
+      grid.classList.add('leaving');
+      setTimeout(() => { window.location.href = href; }, 210);
     });
   });
 </script>
