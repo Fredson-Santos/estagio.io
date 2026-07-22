@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import JobCard from '../components/JobCard.astro';
+import { formatModality } from '../utils/modality';
 
 let featuredJobs = [];
 try {
@@ -11,6 +12,7 @@ try {
       ...job,
       publishedAt: job.posted_at ? new Date(job.posted_at).toLocaleDateString('pt-BR') : 'Recente',
       logo: job.company_logo || undefined,
+      modality: formatModality(job.modality),
       isNew: job.is_new
     }));
   }

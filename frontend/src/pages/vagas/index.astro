@@ -1,19 +1,13 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import JobCard from '../../components/JobCard.astro';
+import { formatModality } from '../../utils/modality';
 
 export const prerender = false;
 
 // Pegar os parâmetros de busca da URL para repassar ao backend
 const url = new URL(Astro.request.url);
 const searchParams = url.searchParams;
-
-// Mapa de tradução de modalidade
-const MODALITY_LABELS: Record<string, string> = {
-  REMOTE: 'Remoto',
-  HYBRID: 'Híbrido',
-  ONSITE: 'Presencial',
-};
 
 // Paginação
 const LIMIT = 21; // 3 colunas x 7 linhas
@@ -41,7 +35,7 @@ try {
       ...job,
       publishedAt: job.posted_at ? new Date(job.posted_at).toLocaleDateString('pt-BR') : 'Recente',
       logo: job.company_logo || undefined,
-      modality: MODALITY_LABELS[job.modality] || job.modality || 'Presencial',
+      modality: formatModality(job.modality),
     }));
     total = data.total;
   }
