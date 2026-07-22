@@ -131,7 +131,46 @@ def _detect_platform(url: str) -> str:
     return parts[-2].capitalize() if len(parts) >= 2 else host or "Desconhecida"
 
 
-def _scrape_page(url: str) -> str:
+try:
+    from crawl4ai import AsyncWebCrawler
+    CRAWL4AI_AVAILABLE = True
+except ImportError:
+    CRAWL4AI_AVAILABLE = False
+
+
+def _scrape_with_crawl4ai(url: str) -> str | None:
+    if not CRAWL4AI_AVAILABLE:
+        return None
+    try:
+        import asyncio
+        from crawl4ai import AsyncWebCrawler
+
+        async def _crawl():
+            async with AsyncWebCrawler(verbose=False) as crawler:
+                res = await crawler.arun(url=url)
+                if res and getattr(res, "success", False) and getattr(res, "markdown", None):
+                    return str(res.markdown).strip()
+                return None
+
+        try:
+            markdown = asyncio.run(_crawl())
+        except RuntimeError:
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(lambda: asyncio.run(_crawl()))
+                markdown = future.result()
+
+        if markdown:
+            if len(markdown) > MAX_TEXT_CHARS:
+                markdown = markdown[:MAX_TEXT_CHARS] + "\n\n[... conteúdo truncado ...]"
+            return f"[Conteúdo Crawl4AI - Markdown]\n{markdown}"
+        return None
+    except Exception as exc:
+        print(f"[job-extractor] Crawl4AI falhou ({exc}), usando fallback estático...")
+        return None
+
+
+def _scrape_page_legacy(url: str) -> str:
     try:
         resp = requests.get(url, headers=HEADERS, timeout=15, allow_redirects=True)
         resp.raise_for_status()
@@ -182,6 +221,14 @@ def _scrape_page(url: str) -> str:
     if len(full_text) > MAX_TEXT_CHARS:
         full_text = full_text[:MAX_TEXT_CHARS] + "\n\n[... conteúdo truncado ...]"
     return full_text
+
+
+def _scrape_page(url: str) -> str:
+    crawl_result = _scrape_with_crawl4ai(url)
+    if crawl_result:
+        return crawl_result
+    return _scrape_page_legacy(url)
+
 
 
 # ---------------------------------------------------------------------------

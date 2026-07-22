@@ -60,3 +60,24 @@ def test_extract_job_scrape_failure(mocker):
     
     assert result["erro"] == "HTTP 404 ao acessar a URL"
     assert result["cargo"] == "N/A"
+
+
+def test_scrape_with_crawl4ai_success(mocker):
+    mocker.patch("job_extractor._scrape_with_crawl4ai", return_value="[Conteúdo Crawl4AI - Markdown]\n# Vaga de Estágio")
+    result = _scrape_page("https://example.com/vaga-dinamica")
+    assert "[Conteúdo Crawl4AI - Markdown]" in result
+    assert "# Vaga de Estágio" in result
+
+
+def test_scrape_with_crawl4ai_fallback(mocker):
+    mock_response = mocker.Mock()
+    mock_response.text = "<html><head><title>Vaga Fallback</title></head><body><h1>Estágio Python</h1></body></html>"
+    mock_response.raise_for_status = mocker.Mock()
+    
+    mocker.patch("job_extractor._scrape_with_crawl4ai", return_value=None)
+    mocker.patch("requests.get", return_value=mock_response)
+    
+    result = _scrape_page("https://example.com/vaga-estatica")
+    assert "Vaga Fallback" in result
+    assert "Estágio Python" in result
+
