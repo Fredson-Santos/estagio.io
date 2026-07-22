@@ -149,17 +149,25 @@ function pageUrl(page: number): string {
           ))}
         </div>
 
-        <!-- Paginação: < [N-1] [N] [N+1] > -->
+        <!-- Paginação: < 1 [Página Atual] Última > -->
         {totalPages > 1 && (() => {
-          // Calcular os 3 números a exibir, ajustando nas bordas
-          const p1 = Math.max(1, Math.min(currentPage - 1, totalPages - 2));
-          const p2 = p1 + 1;
-          const p3 = p1 + 2;
+          let pagesToShow: number[] = [];
+          if (totalPages <= 3) {
+            for (let i = 1; i <= totalPages; i++) pagesToShow.push(i);
+          } else if (currentPage === 1) {
+            pagesToShow = [1, 2, totalPages];
+          } else if (currentPage === totalPages) {
+            pagesToShow = [1, totalPages - 1, totalPages];
+          } else {
+            pagesToShow = [1, currentPage, totalPages];
+          }
+
           const btnBase = "w-10 h-10 flex items-center justify-center rounded-xl font-label-md text-label-md transition-all active:scale-95 select-none";
           const btnInactive = `${btnBase} bg-surface-container-low text-on-surface-variant hover:bg-surface-container border border-transparent`;
           const btnActive  = `${btnBase} bg-on-surface text-surface shadow-sm pointer-events-none`;
           const btnArrow   = `${btnBase} bg-surface-container-low text-on-surface-variant hover:bg-surface-container border border-transparent`;
           const btnArrowDisabled = `${btnBase} bg-surface-container-low/50 text-outline/30 cursor-not-allowed`;
+
           return (
             <nav class="mt-xl flex items-center justify-center gap-sm" aria-label="Paginação">
 
@@ -174,26 +182,12 @@ function pageUrl(page: number): string {
                 </span>
               )}
 
-              {/* Botão página p1 */}
-              {p1 === currentPage ? (
-                <span class={btnActive}>{p1}</span>
-              ) : (
-                <a href={pageUrl(p1)} class={`pagination-link ${btnInactive}`}>{p1}</a>
-              )}
-
-              {/* Botão página p2 */}
-              {p2 === currentPage ? (
-                <span class={btnActive}>{p2}</span>
-              ) : (
-                <a href={pageUrl(p2)} class={`pagination-link ${btnInactive}`}>{p2}</a>
-              )}
-
-              {/* Botão página p3 — só exibe se existir */}
-              {p3 <= totalPages && (
-                p3 === currentPage ? (
-                  <span class={btnActive}>{p3}</span>
+              {/* Botões numerados */}
+              {pagesToShow.map((p) =>
+                p === currentPage ? (
+                  <span class={btnActive}>{p}</span>
                 ) : (
-                  <a href={pageUrl(p3)} class={`pagination-link ${btnInactive}`}>{p3}</a>
+                  <a href={pageUrl(p)} class={`pagination-link ${btnInactive}`}>{p}</a>
                 )
               )}
 
