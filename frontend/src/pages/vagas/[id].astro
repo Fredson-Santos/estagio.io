@@ -215,13 +215,13 @@ const schemaData = {
         <div class="prose-job">
 
           <!-- Descrição da vaga -->
-          {job.description && (
+          {formattedDescription && (
             <div class="mb-8">
               <h2 class="text-headline-sm font-headline-sm text-on-surface mb-4 flex items-center gap-2">
                 <span class="material-symbols-outlined text-[22px] text-primary">description</span>
                 Descrição da vaga
               </h2>
-              <div class="text-on-surface-variant font-body-md text-body-md leading-relaxed description-content" set:html={job.description} />
+              <div class="text-on-surface-variant font-body-md text-body-md leading-relaxed description-content" set:html={formattedDescription} />
             </div>
           )}
 
