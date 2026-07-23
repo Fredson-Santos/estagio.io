@@ -2,22 +2,24 @@
 import Layout from '../layouts/Layout.astro';
 import JobCard from '../components/JobCard.astro';
 import { formatModality } from '../utils/modality';
+import { fetchJobs } from '../lib/api';
+import type { JobWithDisplay } from '../lib/types';
 
-let featuredJobs = [];
+let featuredJobs: JobWithDisplay[] = [];
+let backendError = false;
+
 try {
-  const response = await fetch(`http://localhost:8000/api/v1/jobs?limit=6&featured=true`);
-  if (response.ok) {
-    const data = await response.json();
-    featuredJobs = data.items.map((job: any) => ({
-      ...job,
-      publishedAt: job.posted_at ? new Date(job.posted_at).toLocaleDateString('pt-BR') : 'Recente',
-      logo: job.company_logo || undefined,
-      modality: formatModality(job.modality),
-      isNew: job.is_new
-    }));
-  }
+  const data = await fetchJobs('/jobs?limit=6&featured=true');
+  featuredJobs = data.items.map((job) => ({
+    ...job,
+    publishedAt: job.posted_at ? new Date(job.posted_at).toLocaleDateString('pt-BR') : 'Recente',
+    logo: job.company_logo || undefined,
+    modality: formatModality(job.modality),
+    isNew: job.is_new,
+  }));
 } catch (e) {
-  console.error("Erro ao buscar vagas do backend", e);
+  console.error('Erro ao buscar vagas do backend', e);
+  backendError = true;
 }
 ---
 
@@ -86,9 +88,20 @@ try {
       </div>
       
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg fade-in-group">
-        {featuredJobs.map((job: any) => (
-          <JobCard {...job} />
-        ))}
+        {backendError ? (
+          <div class="col-span-full text-center py-xl text-on-surface-variant">
+            <span class="material-symbols-outlined text-4xl text-outline mb-sm">cloud_off</span>
+            <p class="font-body-md">Não foi possível carregar as vagas em destaque. Tente novamente mais tarde.</p>
+          </div>
+        ) : featuredJobs.length === 0 ? (
+          <div class="col-span-full text-center py-xl text-on-surface-variant">
+            <p class="font-body-md">Nenhuma vaga em destaque no momento. <a href="/vagas" class="text-primary hover:underline">Ver todas as vagas &rarr;</a></p>
+          </div>
+        ) : (
+          featuredJobs.map((job: JobWithDisplay) => (
+            <JobCard {...job} />
+          ))
+        )}
       </div>
       
       <div class="mt-xl text-center md:hidden">

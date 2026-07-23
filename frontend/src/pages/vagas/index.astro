@@ -2,6 +2,9 @@
 import Layout from '../../layouts/Layout.astro';
 import JobCard from '../../components/JobCard.astro';
 import { formatModality } from '../../utils/modality';
+import { AREA_OPTIONS } from '../../utils/areas';
+import { fetchJobs } from '../../lib/api';
+import type { Job, JobWithDisplay } from '../../lib/types';
 
 export const prerender = false;
 
@@ -25,27 +28,23 @@ if (searchParams.get('modality')) query.append('modality', searchParams.get('mod
 if (searchParams.get('company'))  query.append('company',  searchParams.get('company') || '');
 
 // Fetch jobs do backend
-let jobs: any[] = [];
+let jobs: JobWithDisplay[] = [];
 let total = 0;
 let hasBackendError = false;
 
 try {
-  const backendUrl = import.meta.env.BACKEND_URL || 'http://localhost:8000';
-  const response = await fetch(`${backendUrl}/api/v1/jobs?${query.toString()}&limit=${LIMIT}&skip=${skip}`);
-  if (response.ok) {
-    const data = await response.json();
-    jobs = data.items.map((job: any) => ({
-      ...job,
-      publishedAt: job.posted_at ? new Date(job.posted_at).toLocaleDateString('pt-BR') : 'Recente',
-      logo: job.company_logo || undefined,
-      modality: formatModality(job.modality),
-    }));
-    total = data.total;
-  } else {
-    hasBackendError = true;
-  }
+  const data = await fetchJobs(`/jobs?${query.toString()}&limit=${LIMIT}&skip=${skip}`);
+  jobs = data.items.map((job: Job) => ({
+    ...job,
+    publishedAt: job.posted_at ? new Date(job.posted_at).toLocaleDateString('pt-BR') : 'Recente',
+    logo: job.company_logo || undefined,
+    modality: formatModality(job.modality),
+    sourceUrl: job.source_url,
+    sourceName: job.source_name || undefined,
+  }));
+  total = data.total;
 } catch (e) {
-  console.error("Erro ao buscar vagas do backend", e);
+  console.error('Erro ao buscar vagas do backend', e);
   hasBackendError = true;
 }
 
@@ -118,15 +117,9 @@ function pageUrl(page: number): string {
           <div class="relative group">
             <select id="select-area" name="area" aria-label="Área de Atuação" class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
               <option value="" selected={!searchParams.get('area')}>Área de Atuação</option>
-              <option value="TI_SOFTWARE"      selected={searchParams.get('area') === 'TI_SOFTWARE'}>Engenharia &amp; Tech</option>
-              <option value="DESIGN"           selected={searchParams.get('area') === 'DESIGN'}>Design &amp; UX</option>
-              <option value="MARKETING"        selected={searchParams.get('area') === 'MARKETING'}>Marketing</option>
-              <option value="NEGOCIOS"         selected={searchParams.get('area') === 'NEGOCIOS'}>Vendas &amp; Negócios</option>
-              <option value="DADOS"            selected={searchParams.get('area') === 'DADOS'}>Dados</option>
-              <option value="RH"               selected={searchParams.get('area') === 'RH'}>RH</option>
-              <option value="FINANCAS"         selected={searchParams.get('area') === 'FINANCAS'}>Finanças</option>
-              <option value="DIREITO"          selected={searchParams.get('area') === 'DIREITO'}>Direito</option>
-              <option value="OUTROS"           selected={searchParams.get('area') === 'OUTROS'}>Outros</option>
+              {AREA_OPTIONS.map((opt) => (
+                <option value={opt.value} selected={searchParams.get('area') === opt.value}>{opt.label}</option>
+              ))}
             </select>
             <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">expand_more</span>
           </div>
@@ -147,7 +140,7 @@ function pageUrl(page: number): string {
             </select>
             <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">expand_more</span>
           </div>
-          <a href="/vagas" class="text-primary font-label-md hover:underline px-sm py-2">Limpar filtros</a>
+          <a href="/vagas" id="clear-filters-btn" class="text-primary font-label-md hover:underline px-sm py-2">Limpar filtros</a>
         </div>
       </form>
     </section>
@@ -171,29 +164,37 @@ function pageUrl(page: number): string {
         </div>
 
         {hasBackendError ? (
-          <div class="bg-error-container/20 border border-error/30 rounded-xl p-xl text-center my-lg">
-            <span class="material-symbols-outlined text-4xl text-error mb-sm">error_outline</span>
-            <h3 class="font-headline-sm text-headline-sm text-on-surface mb-xs">Não foi possível carregar as vagas</h3>
-            <p class="font-body-md text-body-md text-on-surface-variant mb-md">Ocorreu um erro de conexão com o servidor. Por favor, tente novamente.</p>
-            <a href="/vagas" class="inline-flex items-center gap-xs bg-primary text-on-primary px-lg py-md rounded-lg font-label-md hover:bg-primary-container transition-all">
-              <span class="material-symbols-outlined text-[18px]">refresh</span>
+          <div class="bg-error-container/20 border border-error/30 rounded-2xl p-8 sm:p-12 text-center my-lg max-w-[640px] mx-auto shadow-sm">
+            <div class="w-16 h-16 rounded-full bg-error-container/40 border border-error/30 flex items-center justify-center mx-auto mb-4">
+              <span class="material-symbols-outlined text-3xl text-error">error_outline</span>
+            </div>
+            <h3 class="font-headline-md text-headline-md text-on-surface mb-2 font-bold">Não foi possível carregar as vagas</h3>
+            <p class="font-body-md text-body-md text-on-surface-variant mb-6 max-w-[460px] mx-auto leading-relaxed">
+              Ocorreu um erro de conexão com o servidor. Por favor, tente novamente.
+            </p>
+            <a href="/vagas" class="inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-xl font-label-md hover:bg-primary-container active:scale-95 transition-all shadow-sm">
+              <span class="material-symbols-outlined text-[20px]">refresh</span>
               Tentar novamente
             </a>
           </div>
         ) : jobs.length === 0 ? (
-          <div class="bg-surface-container-low border border-outline-variant/50 rounded-xl p-xl text-center my-lg">
-            <span class="material-symbols-outlined text-5xl text-outline mb-md">search_off</span>
-            <h3 class="font-headline-md text-headline-md text-on-surface mb-xs">Nenhuma vaga encontrada</h3>
-            <p class="font-body-md text-body-md text-on-surface-variant mb-lg max-w-md mx-auto">Não encontramos oportunidades que correspondam aos filtros selecionados. Tente ajustar os termos ou limpar os filtros.</p>
-            <a href="/vagas" class="inline-flex items-center gap-xs bg-primary text-on-primary px-lg py-md rounded-lg font-label-md hover:bg-primary-container transition-all">
-              <span class="material-symbols-outlined text-[18px]">filter_alt_off</span>
+          <div class="bg-surface-container-low border border-outline-variant/50 rounded-2xl p-8 sm:p-12 text-center my-lg max-w-[640px] mx-auto shadow-sm">
+            <div class="w-16 h-16 rounded-full bg-surface-container-high border border-outline-variant/40 flex items-center justify-center mx-auto mb-4">
+              <span class="material-symbols-outlined text-3xl text-outline">search_off</span>
+            </div>
+            <h3 class="font-headline-md text-headline-md text-on-surface mb-2 font-bold">Nenhuma vaga encontrada</h3>
+            <p class="font-body-md text-body-md text-on-surface-variant mb-6 max-w-[460px] mx-auto leading-relaxed">
+              Não encontramos oportunidades que correspondam aos filtros selecionados. Tente ajustar os termos ou limpar os filtros.
+            </p>
+            <a id="clear-filters-card-btn" href="/vagas" class="inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-xl font-label-md hover:bg-primary-container active:scale-95 transition-all shadow-sm">
+              <span class="material-symbols-outlined text-[20px]">filter_alt_off</span>
               Limpar todos os filtros
             </a>
           </div>
         ) : (
           <div id="job-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
-            {jobs.map((job: any) => (
-              <JobCard {...job} />
+            {jobs.map((job: JobWithDisplay) => (
+              <JobCard {...job} searchParams={searchParams.toString()} />
             ))}
           </div>
         )}
@@ -270,6 +271,16 @@ function pageUrl(page: number): string {
 </style>
 
 <script>
+  // Salva a URL atual com filtros no sessionStorage para navegação de retorno
+  if (window.location.search) {
+    sessionStorage.setItem('last_vagas_filter_url', window.location.href);
+  }
+
+  // Listener para limpar filtros
+  const clearFilters = () => sessionStorage.removeItem('last_vagas_filter_url');
+  document.getElementById('clear-filters-btn')?.addEventListener('click', clearFilters);
+  document.getElementById('clear-filters-card-btn')?.addEventListener('click', clearFilters);
+
   // Auto-submete o form ao mudar qualquer filtro (area, type, modality)
   const form = document.getElementById('filter-form') as HTMLFormElement | null;
   const filterSelects = ['select-area', 'select-type', 'select-modality'];

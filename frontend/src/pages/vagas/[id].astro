@@ -2,72 +2,65 @@
 import Layout from '../../layouts/Layout.astro';
 import JobPostingSchema from '../../components/JobPostingSchema.astro';
 import { formatModality } from '../../utils/modality';
-import { formatJobDescription } from '../../utils/formatDescription';
+import { getAreaLabel } from '../../utils/areas';
+import { getPlatformName } from '../../utils/platform';
+import { fetchJob } from '../../lib/api';
+import type { JobWithDisplay } from '../../lib/types';
 
 export const prerender = false;
 
 const { id } = Astro.params;
 
-let job: any = null;
-
-const AREA_LABELS: Record<string, string> = {
-  TI_SOFTWARE: 'TI & Software',
-  DADOS: 'Dados',
-  DESIGN: 'Design',
-  MARKETING: 'Marketing',
-  NEGOCIOS: 'Negócios',
-  RH: 'RH',
-  FINANCAS: 'Finanças',
-  ENGENHARIA_OUTRAS: 'Engenharia',
-  DIREITO: 'Direito',
-  OUTROS: 'Outros',
-};
+let job: (JobWithDisplay & { platformName: string }) | null = null;
+let jobNotFound = false;
 
 try {
-  const backendUrl = (import.meta as any).env?.BACKEND_URL || 'http://localhost:8000';
-  const response = await fetch(`${backendUrl}/api/v1/jobs/${id}`);
-  if (response.ok) {
-    const data = await response.json();
+  const data = await fetchJob(id as string);
 
-    const postedAt = data.posted_at ? new Date(data.posted_at) : null;
-    const now = new Date();
-    let postedLabel = 'Recente';
-    if (postedAt) {
-      const diffMs = now.getTime() - postedAt.getTime();
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      if (diffDays === 0) postedLabel = 'Hoje';
-      else if (diffDays === 1) postedLabel = 'Ontem';
-      else if (diffDays < 7) postedLabel = `Há ${diffDays} dias`;
-      else postedLabel = postedAt.toLocaleDateString('pt-BR');
-    }
-
-    job = {
-      id: data.id,
-      title: data.title,
-      company: data.company,
-      location: data.location || 'Remoto',
-      modality: formatModality(data.modality),
-      area: AREA_LABELS[data.area] || data.area || 'Outros',
-      description: data.description || '',
-      salary: data.salary || null,
-      logo: data.company_logo || null,
-      sourceUrl: data.source_url || '#',
-      postedLabel,
-      isNew: data.is_new || false,
-      datePosted: data.posted_at || new Date().toISOString(),
-    };
-  } else if (response.status === 404) {
-    return Astro.redirect('/404');
+  const postedAt = data.posted_at ? new Date(data.posted_at) : null;
+  const now = new Date();
+  let postedLabel = 'Recente';
+  if (postedAt) {
+    const diffMs = now.getTime() - postedAt.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) postedLabel = 'Hoje';
+    else if (diffDays === 1) postedLabel = 'Ontem';
+    else if (diffDays < 7) postedLabel = `Há ${diffDays} dias`;
+    else postedLabel = postedAt.toLocaleDateString('pt-BR');
   }
+
+  const platformName = getPlatformName(data.source_url, data.source_name);
+
+  job = {
+    id: data.id,
+    title: data.title,
+    company: data.company,
+    location: data.location || 'Remoto',
+    modality: formatModality(data.modality),
+    area: getAreaLabel(data.area),
+    description: data.description || '',
+    salary: data.salary || null,
+    logo: data.company_logo || undefined,
+    sourceUrl: data.source_url || '#',
+    postedLabel,
+    isNew: data.is_new || false,
+    datePosted: data.posted_at || new Date().toISOString(),
+    platformName,
+  };
 } catch (e) {
-  console.error('Erro ao buscar detalhes da vaga', e);
+  const err = e as Error;
+  if (err.message === 'Backend 404') {
+    jobNotFound = true;
+  } else {
+    console.error('Erro ao buscar detalhes da vaga', e);
+    jobNotFound = true;
+  }
 }
 
-if (!job) {
-  return Astro.redirect('/404');
+if (jobNotFound || !job) {
+  return Astro.redirect('/404', 302);
 }
 
-const formattedDescription = formatJobDescription(job.description);
 
 const schemaData = {
   title: job.title,
@@ -84,6 +77,8 @@ const schemaData = {
     addressCountry: 'BR',
   },
 };
+const currentQuery = Astro.url.searchParams.toString();
+const vagasUrl = `/vagas${currentQuery ? `?${currentQuery}` : ''}`;
 ---
 
 <Layout
@@ -99,9 +94,9 @@ const schemaData = {
       <nav class="mb-6 flex items-center gap-2 text-body-sm font-body-sm text-on-surface-variant" aria-label="Breadcrumb">
         <a href="/" class="hover:text-primary transition-colors">Início</a>
         <span class="material-symbols-outlined text-[16px] text-outline">chevron_right</span>
-        <a href="/vagas" class="hover:text-primary transition-colors">Vagas</a>
+        <a href={vagasUrl} id="breadcrumb-vagas-link" class="hover:text-primary transition-colors">Vagas</a>
         <span class="material-symbols-outlined text-[16px] text-outline">chevron_right</span>
-        <span class="text-on-surface line-clamp-1 max-w-[200px] md:max-w-xs">{job.title}</span>
+        <span class="text-on-surface truncate flex-1 min-w-0">{job.title}</span>
       </nav>
 
       <!-- Job Header Card -->
@@ -109,140 +104,105 @@ const schemaData = {
         <!-- Accent bar -->
         <div class="h-1.5 bg-primary w-full"></div>
 
-        <div class="p-6 md:p-8">
-          <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+        <div class="p-5 sm:p-6 md:p-8 relative">
+          <!-- Share button (top-right corner) -->
+          <button
+            id="share-btn"
+            aria-label="Compartilhar vaga"
+            class="absolute top-4 right-4 p-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors"
+          >
+            <span class="material-symbols-outlined text-[20px]">share</span>
+          </button>
 
-            <!-- Left: title, company, meta -->
-            <div class="space-y-3 flex-1">
+          <!-- Main Layout Container -->
+          <div class="flex flex-col gap-5">
 
-              <!-- Title row -->
-              <div class="flex flex-wrap items-start gap-3">
-                {job.logo ? (
-                  <img
-                    src={job.logo}
-                    alt={`Logo ${job.company}`}
-                    class="w-14 h-14 object-contain rounded-full border border-outline-variant/40 p-1 bg-white flex-shrink-0"
-                  />
-                ) : (
-                  <div class="w-14 h-14 rounded-full border border-outline-variant/40 bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <span class="font-bold text-primary text-xl">{job.company.substring(0, 2).toUpperCase()}</span>
-                  </div>
-                )}
-                <div class="flex-1 min-w-0">
-                  <div class="flex flex-wrap items-center gap-2 mb-1">
-                    <h1 class="text-headline-lg font-headline-lg text-on-surface leading-tight">{job.title}</h1>
+            <!-- Top Row: Logo + Title & Company -->
+            <div class="flex items-start gap-3.5 pr-8">
+              {job.logo ? (
+                <img
+                  src={job.logo}
+                  alt={`Logo ${job.company}`}
+                  class="w-12 h-12 sm:w-14 sm:h-14 object-contain rounded-xl border border-outline-variant/40 p-1.5 bg-white flex-shrink-0"
+                />
+              ) : (
+                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl border border-outline-variant/40 bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <span class="font-bold text-primary text-lg sm:text-xl">{job.company.substring(0, 2).toUpperCase()}</span>
+                </div>
+              )}
 
-                    <!-- Share button -->
-                    <button
-                      id="share-btn"
-                      aria-label="Compartilhar vaga"
-                      class="p-1.5 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors flex-shrink-0"
-                    >
-                      <span class="material-symbols-outlined text-[20px]">share</span>
-                    </button>
+              <div class="flex-1 min-w-0">
+                <!-- Title -->
+                <h1 class="text-lg sm:text-2xl font-bold text-on-surface leading-snug mb-1.5">
+                  {job.title}
+                </h1>
 
-                    <!-- Area badge -->
-                    <span class="bg-secondary-container/60 text-on-secondary-container text-label-sm font-label-sm px-sm py-xs rounded-full flex items-center gap-1">
-                      <span class="material-symbols-outlined text-[14px]">label</span>
-                      {job.area}
-                    </span>
-
-                    {job.isNew && (
-                      <span class="bg-primary/10 text-primary text-label-sm font-label-sm px-sm py-xs rounded-full font-semibold">
-                        Novo
-                      </span>
-                    )}
-                  </div>
-
-                  <!-- Company -->
-                  <p class="text-on-surface-variant font-body-md text-body-md flex items-center gap-1.5">
-                    <span class="material-symbols-outlined text-[18px]">business</span>
+                <!-- Company & Badges -->
+                <div class="flex flex-wrap items-center gap-2 text-body-sm">
+                  <span class="font-medium text-on-surface-variant flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[16px] text-outline">business</span>
                     {job.company}
-                  </p>
-                </div>
-              </div>
-
-              <!-- Metadata chips row -->
-              <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-body-sm font-body-sm text-on-surface-variant pt-1">
-                <div class="flex items-center gap-1.5">
-                  <span class="material-symbols-outlined text-[18px] text-primary">apartment</span>
-                  <span>{job.modality}</span>
-                </div>
-                <div class="flex items-center gap-1.5">
-                  <span class="material-symbols-outlined text-[18px] text-primary">location_on</span>
-                  <span>{job.location}</span>
-                </div>
-                {job.salary && (
-                  <div class="flex items-center gap-1.5">
-                    <span class="material-symbols-outlined text-[18px] text-primary">payments</span>
-                    <span>{job.salary}</span>
-                  </div>
-                )}
-                <div class="flex items-center gap-1.5">
-                  <span class="material-symbols-outlined text-[18px] text-primary">schedule</span>
-                  <span>{job.postedLabel}</span>
+                  </span>
+                  <span class="text-outline/30">•</span>
+                  <span class="bg-secondary-container/60 text-on-secondary-container text-xs px-2.5 py-0.5 rounded-full font-medium inline-flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[12px]">label</span>
+                    {job.area}
+                  </span>
+                  {job.isNew && (
+                    <span class="bg-primary/10 text-primary text-xs px-2.5 py-0.5 rounded-full font-semibold">
+                      Novo
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Divider + CTA -->
-          <hr class="my-6 border-outline-variant/30" />
-          <div class="flex flex-wrap gap-3 justify-center md:justify-start">
-            <a
-              id="apply-btn"
-              href={job.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:brightness-110 active:scale-95 transition-all shadow-sm"
-            >
-              <span class="material-symbols-outlined text-[20px]">open_in_new</span>
-              Candidatar-se agora
-            </a>
-            <button
-              id="copy-link-btn"
-              class="inline-flex items-center gap-2 px-5 py-3 bg-surface-container border border-outline-variant text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-container-high active:scale-95 transition-all"
-            >
-              <span class="material-symbols-outlined text-[20px]">link</span>
-              Copiar link
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Description Card -->
-      <section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 md:p-8 shadow-sm job-desc-card">
-        <div class="prose-job">
-
-          <!-- Descrição da vaga -->
-          {formattedDescription && (
-            <div class="mb-8">
-              <h2 class="text-headline-sm font-headline-sm text-on-surface mb-4 flex items-center gap-2">
-                <span class="material-symbols-outlined text-[22px] text-primary">description</span>
-                Descrição da vaga
-              </h2>
-              <div class="text-on-surface-variant font-body-md text-body-md leading-relaxed description-content" set:html={formattedDescription} />
+            <!-- Metadata Pills Row -->
+            <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 text-body-sm text-on-surface-variant pt-3 border-t border-outline-variant/20">
+              <div class="flex items-center gap-2 bg-surface-container-low/60 px-3 py-2 rounded-lg border border-outline-variant/30">
+                <span class="material-symbols-outlined text-[18px] text-primary flex-shrink-0">apartment</span>
+                <span class="font-medium text-xs sm:text-sm truncate">{job.modality}</span>
+              </div>
+              <div class="flex items-center gap-2 bg-surface-container-low/60 px-3 py-2 rounded-lg border border-outline-variant/30">
+                <span class="material-symbols-outlined text-[18px] text-primary flex-shrink-0">location_on</span>
+                <span class="font-medium text-xs sm:text-sm truncate">{job.location}</span>
+              </div>
+              <div class="flex items-center gap-2 bg-surface-container-low/60 px-3 py-2 rounded-lg border border-outline-variant/30 col-span-2 sm:col-auto">
+                <span class="font-medium text-xs sm:text-sm truncate">Via {job.platformName}</span>
+              </div>
+              {job.salary && (
+                <div class="flex items-center gap-2 bg-surface-container-low/60 px-3 py-2 rounded-lg border border-outline-variant/30 col-span-2 sm:col-auto">
+                  <span class="material-symbols-outlined text-[18px] text-primary flex-shrink-0">payments</span>
+                  <span class="font-medium text-xs sm:text-sm truncate">{job.salary}</span>
+                </div>
+              )}
+              <div class="flex items-center gap-2 bg-surface-container-low/60 px-3 py-2 rounded-lg border border-outline-variant/30 col-span-2 sm:col-auto">
+                <span class="material-symbols-outlined text-[18px] text-primary flex-shrink-0">schedule</span>
+                <span class="font-medium text-xs sm:text-sm truncate">{job.postedLabel}</span>
+              </div>
             </div>
-          )}
 
-          <!-- Back to list -->
-          <div class="pt-6 border-t border-outline-variant/30 flex flex-col sm:flex-row gap-3">
-            <a
-              href={job.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:brightness-110 active:scale-95 transition-all"
-            >
-              <span class="material-symbols-outlined text-[20px]">open_in_new</span>
-              Candidatar-se agora
-            </a>
-            <a
-              href="/vagas"
-              class="inline-flex items-center justify-center gap-2 px-5 py-3 bg-surface-container border border-outline-variant text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-container-high active:scale-95 transition-all"
-            >
-              <span class="material-symbols-outlined text-[20px]">arrow_back</span>
-              Ver outras vagas
-            </a>
+            <!-- Action Buttons (Full width on mobile) -->
+            <div class="pt-2 border-t border-outline-variant/30 flex flex-col sm:flex-row gap-3 w-full">
+              <a
+                id="apply-btn"
+                href={job.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-primary text-on-primary rounded-xl font-medium text-body-md hover:brightness-110 active:scale-[0.98] transition-all shadow-sm"
+              >
+                <span class="material-symbols-outlined text-[20px]">open_in_new</span>
+                Candidatar-se na {job.platformName}
+              </a>
+              <button
+                id="copy-link-btn"
+                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-surface-container border border-outline-variant text-on-surface rounded-xl font-medium text-body-md hover:bg-surface-container-high active:scale-[0.98] transition-all"
+              >
+                <span class="material-symbols-outlined text-[20px]">link</span>
+                Copiar link
+              </button>
+            </div>
+
           </div>
         </div>
       </section>
@@ -311,6 +271,15 @@ const schemaData = {
 </style>
 
 <script>
+  // Restaura URL de busca salva no breadcrumb se o link padrão estiver sem params
+  const savedVagasUrl = sessionStorage.getItem('last_vagas_filter_url');
+  if (savedVagasUrl) {
+    const breadcrumbLink = document.getElementById('breadcrumb-vagas-link') as HTMLAnchorElement | null;
+    if (breadcrumbLink && (breadcrumbLink.getAttribute('href') === '/vagas' || !breadcrumbLink.href.includes('?'))) {
+      breadcrumbLink.href = savedVagasUrl;
+    }
+  }
+
   // Share button
   const shareBtn = document.getElementById('share-btn');
   const copyLinkBtn = document.getElementById('copy-link-btn');
