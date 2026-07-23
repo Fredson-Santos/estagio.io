@@ -1,0 +1,13 @@
+.git
+.venv
+node_modules
+__pycache__
+*.pyc
+.pytest_cache
+.astro
+dist
+*.db
+.env
+.env.local
+.env.prod
+~~

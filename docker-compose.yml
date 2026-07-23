@@ -22,8 +22,8 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     command: sh -c "python scripts/wait_for_db.py && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     ports:
       - "8000:8000"
@@ -33,13 +33,6 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:${POSTGRES_PASSWORD}@db:5432/estagio
       - CORS_ORIGINS=${CORS_ORIGINS}
-      - LLM_PROVIDER=${LLM_PROVIDER:-groq}
-      - LLM_MODEL=${LLM_MODEL:-llama-3.1-8b-instant}
-      - GROQ_API_KEY=${GROQ_API_KEY}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - ETL_INTERVAL_HOURS=${ETL_INTERVAL_HOURS:-6}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 15s
@@ -52,8 +45,8 @@ services:
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
     command: node ./dist/server/entry.mjs
     environment:
       - BACKEND_URL=http://backend:8000
@@ -68,8 +61,32 @@ services:
     networks:
       - estagio_net
 
+  scraper:
+    build:
+      context: .
+      dockerfile: scraper/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:${POSTGRES_PASSWORD}@db:5432/estagio
+      - LLM_PROVIDER=${LLM_PROVIDER:-groq}
+      - LLM_MODEL=${LLM_MODEL:-llama-3.1-8b-instant}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - ETL_INTERVAL_HOURS=${ETL_INTERVAL_HOURS:-6}
+      - RULES_FILE=/app/data/scraper_rules.json
+    volumes:
+      - scraper_rules:/app/data
+    restart: always
+    networks:
+      - estagio_net
+
 volumes:
   postgres_data:
+  scraper_rules:
 
 networks:
   estagio_net:
