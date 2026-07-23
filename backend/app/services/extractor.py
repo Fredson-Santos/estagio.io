@@ -1,5 +1,4 @@
 import json
-import os
 import re
 from datetime import datetime, timezone
 from urllib.parse import urlparse
@@ -8,6 +7,7 @@ import httpx
 from bs4 import BeautifulSoup
 from openai import AsyncOpenAI
 
+from app.core.config import settings
 from app.core.taxonomy import JobArea, JobModality
 from app.services.scrapers.rules_manager import load_rules, save_rules
 
@@ -53,28 +53,31 @@ HEADERS = {
 MAX_HTML_CHARS = 12000
 
 def _get_llm_client() -> tuple[AsyncOpenAI, str]:
-    provider = os.getenv("LLM_PROVIDER", "openai").lower()
-    model = os.getenv("LLM_MODEL", "")
-    
-    # Suporte para GROQ (Usa API compatível com OpenAI)
-    groq_api_key = os.getenv("GROQ_API_KEY")
-    if groq_api_key:
+    provider = settings.LLM_PROVIDER.lower()
+    model = settings.LLM_MODEL
+
+    groq_key = settings.GROQ_API_KEY.get_secret_value() if settings.GROQ_API_KEY else None
+    if groq_key:
         return AsyncOpenAI(
-            api_key=groq_api_key,
+            api_key=groq_key,
             base_url="https://api.groq.com/openai/v1"
         ), model or "llama-3.1-8b-instant"
 
-    api_key = os.getenv("OPENAI_API_KEY") or os.getenv("GEMINI_API_KEY")
-    
+    openai_key = settings.OPENAI_API_KEY.get_secret_value() if settings.OPENAI_API_KEY else None
+    gemini_key = settings.GEMINI_API_KEY.get_secret_value() if settings.GEMINI_API_KEY else None
+    api_key = openai_key or gemini_key
+
     if not api_key:
-        raise ValueError("Chave de API não definida. Configure GROQ_API_KEY ou OPENAI_API_KEY no .env")
+        raise ValueError(
+            "Chave de API não configurada. Defina GROQ_API_KEY, OPENAI_API_KEY ou GEMINI_API_KEY."
+        )
 
     if provider == "gemini":
         return AsyncOpenAI(
             api_key=api_key,
             base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
         ), model or "gemini-1.5-flash"
-    
+
     # default to openai
     return AsyncOpenAI(api_key=api_key), model or "gpt-4o-mini"
 
