@@ -1,63 +1,76 @@
-version: '3.8'
+name: estagio
 
 services:
   db:
-    image: postgres:15
+    image: postgres:15-alpine
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: estagio
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d estagio"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: always
+    networks:
+      - estagio_net
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: sh -c "python scripts/wait_for_db.py && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    command: sh -c "python scripts/wait_for_db.py && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     ports:
       - "8000:8000"
     depends_on:
-      - db
-    env_file:
-      - ./backend/.env
+      db:
+        condition: service_healthy
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/estagio
-      - CORS_ORIGINS=["http://localhost:4321","http://127.0.0.1:4321","http://localhost:3000","http://127.0.0.1:3000"]
-    volumes:
-      - ./backend:/app
+      - DATABASE_URL=postgresql+asyncpg://postgres:${POSTGRES_PASSWORD}@db:5432/estagio
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - LLM_PROVIDER=${LLM_PROVIDER:-groq}
+      - LLM_MODEL=${LLM_MODEL:-llama-3.1-8b-instant}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - ETL_INTERVAL_HOURS=${ETL_INTERVAL_HOURS:-6}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     restart: always
-
-  job-extractor:
-    build:
-      context: ./job-extractor
-      dockerfile: Dockerfile
-    ports:
-      - "8002:8001"
-    env_file:
-      - ./job-extractor/.env
-    volumes:
-      - ./job-extractor:/app
-    restart: always
+    networks:
+      - estagio_net
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    command: node ./dist/server/entry.mjs
+    environment:
+      - BACKEND_URL=http://backend:8000
+      - HOST=0.0.0.0
+      - PORT=4321
     ports:
       - "4321:4321"
     depends_on:
-      - backend
-    environment:
-      - BACKEND_URL=http://backend:8000
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      backend:
+        condition: service_healthy
     restart: always
+    networks:
+      - estagio_net
 
 volumes:
   postgres_data:
+
+networks:
+  estagio_net:
+    driver: bridge
