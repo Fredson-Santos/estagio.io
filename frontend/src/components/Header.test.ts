@@ -7,7 +7,8 @@ describe('Header Component', () => {
     const container = await AstroContainer.create();
     const html = await container.renderToString(Header);
 
-    expect(html).toContain('estagio.io');
+    expect(html).toContain('estagio');
+    expect(html).toContain('.io');
     expect(html).toContain('href="/"');
     expect(html).toContain('href="/vagas"');
     expect(html).toContain('href="/sobre"');

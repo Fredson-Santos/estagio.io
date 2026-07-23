@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 
 from app.core.taxonomy import JobArea, JobModality
 from app.services.scrapers.gupy import _guess_area
+from app.services.job_validator import trunc
 
 EURECA_API_URL = "https://candidate-api.eureca.me/v2/opportunities"
 
@@ -91,17 +92,17 @@ def parse_eureca_job(raw_job: dict) -> dict:
             pass
             
     return {
-        "title": title,
-        "company": company,
-        "location": location,
-        "modality": modality,
-        "area": _guess_area(title, description),
-        "description": description[:4000] if len(description) > 4000 else description,
-        "salary": salary,
-        "company_logo": raw_job.get("companyLogoUrl"),
-        "source_url": source_url,
-        "source_id": source_id,
-        "posted_at": posted_at,
+        "title":        trunc(title, 255),
+        "company":      trunc(company, 255),
+        "location":     trunc(location, 255),
+        "modality":     modality,
+        "area":         _guess_area(title, description),
+        "description":  description[:4000] if len(description) > 4000 else description,
+        "salary":       trunc(salary, 255),
+        "company_logo": trunc(raw_job.get("companyLogoUrl"), 1000),
+        "source_url":   trunc(source_url, 1000),
+        "source_id":    trunc(source_id, 255),
+        "posted_at":    posted_at,
     }
 
 async def run_eureca_scraper(limit: int = 50) -> list[dict]:

@@ -16,6 +16,7 @@ class JobBase(BaseModel):
     company_logo: Optional[str] = None
     source_url: str
     posted_at: Optional[datetime] = None
+    source_name: Optional[str] = None
 
 from datetime import datetime, timezone, timedelta
 
@@ -36,6 +37,9 @@ class JobResponse(JobBase):
             self.is_new = (now - posted_at_utc) <= timedelta(days=3)
         else:
             self.is_new = False
+
+        if not self.source_name and hasattr(self, 'source') and getattr(self, 'source', None):
+            self.source_name = getattr(self.source, 'name', None)
         return self
 
     model_config = ConfigDict(from_attributes=True)

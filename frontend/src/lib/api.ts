@@ -1,7 +1,7 @@
 import type { Job, JobListResponse } from './types';
 
 const DEFAULT_BACKEND_URL = 'http://localhost:8000';
-const BACKEND_URL = (typeof process !== 'undefined' && process.env.BACKEND_URL) || DEFAULT_BACKEND_URL;
+const BACKEND_URL = import.meta.env.BACKEND_URL || DEFAULT_BACKEND_URL;
 
 const REQUEST_TIMEOUT_MS = 8000;
 

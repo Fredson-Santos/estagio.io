@@ -13,6 +13,14 @@ INVALID_PLACEHOLDERS = {
     "empresa confidencial"
 }
 
+def trunc(value: Any, maxlen: int) -> str | None:
+    """Trunca uma string para o limite máximo do campo VARCHAR, evitando StringDataRightTruncation."""
+    if value is None:
+        return None
+    s = str(value)
+    return s[:maxlen] if len(s) > maxlen else s
+
+
 def safe_str(text: Any) -> str:
     """Converte o texto para string e remove caracteres que falham no print do console Windows (CP1252)."""
     if text is None:
