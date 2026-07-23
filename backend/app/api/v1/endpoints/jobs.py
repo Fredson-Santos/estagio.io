@@ -47,8 +47,7 @@ async def list_jobs(
         
     # Get total count
     count_query = select(func.count()).select_from(query.subquery())
-    total_result = await db.execute(count_query)
-    total = total_result.scalar_one()
+    total = await db.scalar(count_query) or 0
     
     # Get items
     if featured:
@@ -88,8 +87,7 @@ async def get_job(
     job_id: UUID,
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(Job).options(joinedload(Job.source)).where(Job.id == job_id))
-    job = result.scalar_one_or_none()
+    job = await db.scalar(select(Job).options(joinedload(Job.source)).where(Job.id == job_id))
     
     if not job:
         raise HTTPException(status_code=404, detail="Vaga não encontrada")
