@@ -1,12 +1,17 @@
 import type { Job, JobListResponse } from './types';
 
-const DEFAULT_BACKEND_URL = 'http://localhost:8000';
-const BACKEND_URL = import.meta.env.BACKEND_URL || DEFAULT_BACKEND_URL;
+export function getBackendUrl(): string {
+  if (typeof process !== 'undefined' && process.env && process.env.BACKEND_URL) {
+    return process.env.BACKEND_URL;
+  }
+  return import.meta.env.BACKEND_URL || 'http://backend:8000';
+}
 
 const REQUEST_TIMEOUT_MS = 8000;
 
 export async function fetchJobs(path: string): Promise<JobListResponse> {
-  const url = `${BACKEND_URL}/api/v1${path}`;
+  const backendUrl = getBackendUrl();
+  const url = `${backendUrl}/api/v1${path}`;
   const response = await fetch(url, {
     headers: { Accept: 'application/json' },
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
@@ -18,7 +23,8 @@ export async function fetchJobs(path: string): Promise<JobListResponse> {
 }
 
 export async function fetchJob(id: string): Promise<Job> {
-  const url = `${BACKEND_URL}/api/v1/jobs/${id}`;
+  const backendUrl = getBackendUrl();
+  const url = `${backendUrl}/api/v1/jobs/${id}`;
   const response = await fetch(url, {
     headers: { Accept: 'application/json' },
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
@@ -28,5 +34,3 @@ export async function fetchJob(id: string): Promise<Job> {
   }
   return (await response.json()) as Job;
 }
-
-export { BACKEND_URL };
