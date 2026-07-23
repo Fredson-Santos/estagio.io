@@ -99,21 +99,11 @@ import Layout from '../layouts/Layout.astro';
     <h2 class="font-headline-lg text-headline-lg mb-md">Pronto para dar o próximo passo?</h2>
     <div class="flex flex-col sm:flex-row gap-md justify-center items-center">
       <a class="w-full sm:w-auto px-8 py-3 bg-primary text-white rounded-lg font-label-md text-label-md hover:bg-primary/90 transition-colors shadow-lg" href="/vagas">Ver vagas disponíveis</a>
-      <button id="newsletter-btn" class="w-full sm:w-auto px-8 py-3 bg-surface-container border border-outline-variant text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-container-high active:scale-95 transition-all">Assinar Newsletter</button>
+      <a href="mailto:contato@estagio.io?subject=Quero receber alertas de vagas" class="w-full sm:w-auto px-8 py-3 bg-surface-container border border-outline-variant text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-container-high active:scale-95 transition-all">Assinar Newsletter</a>
     </div>
   </section>
 
   <script>
-    const newsletterBtn = document.getElementById('newsletter-btn');
-    newsletterBtn?.addEventListener('click', () => {
-      const email = prompt('Digite seu e-mail para receber alertas de vagas de estágio:');
-      if (email && email.includes('@')) {
-        alert('Obrigado! Seu e-mail foi cadastrado com sucesso para receber novas vagas.');
-      } else if (email) {
-        alert('Por favor, informe um e-mail válido.');
-      }
-    });
-
     const observerOptions = {
       threshold: 0.1
     };

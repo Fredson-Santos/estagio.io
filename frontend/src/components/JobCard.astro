@@ -1,5 +1,6 @@
 ---
 import { formatModality } from '../utils/modality';
+import { getPlatformName } from '../utils/platform';
 
 interface Props {
   id: string;
@@ -7,14 +8,18 @@ interface Props {
   company: string;
   location: string;
   modality?: string;
-  salary?: string;
-  logo?: string;
+  salary?: string | null;
+  logo?: string | null;
   isNew?: boolean;
   publishedAt?: string;
+  searchParams?: string;
+  sourceUrl?: string;
+  sourceName?: string;
 }
 
-const { id, title, company, location, modality, salary, logo, isNew = false, publishedAt } = Astro.props;
+const { id, title, company, location, modality, salary, logo, isNew = false, publishedAt, searchParams, sourceUrl, sourceName } = Astro.props;
 const displayModality = formatModality(modality);
+const platformName = getPlatformName(sourceUrl, sourceName);
 
 // Sanitiza visualmente o salário para ignorar objetos stringificados
 const isValidSalary = salary && 
@@ -25,22 +30,24 @@ const isValidSalary = salary &&
   salary.trim() !== '';
 
 const companyInitials = (company || 'VA').substring(0, 2).toUpperCase();
+const jobUrl = `/vagas/${id}${searchParams ? `?${searchParams}` : ''}`;
 ---
 
-<a href={`/vagas/${id}`} class="block bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col transition-all hover:filter-shadow group cursor-pointer h-full relative" style="transform: translateY(0px);">
+<a href={jobUrl} class="block bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col transition-all hover:filter-shadow group cursor-pointer h-full relative" style="transform: translateY(0px);">
   <div class="flex justify-between items-start mb-md">
     <div class="w-10 h-10 rounded-full border border-outline-variant overflow-hidden flex-shrink-0 bg-primary/10 flex items-center justify-center relative">
       {logo ? (
         <>
-          <img 
-            class="w-full h-full object-cover" 
-            alt={`Logo ${company}`} 
-            src={logo} 
-            onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" 
+          <img
+            class="w-full h-full object-cover"
+            alt={`Logo ${company}`}
+            src={logo}
+            width="40"
+            height="40"
+            loading="lazy"
+            decoding="async"
+            data-fallback-initials={companyInitials}
           />
-          <div class="w-full h-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm hidden">
-            {companyInitials}
-          </div>
         </>
       ) : (
         <div class="w-full h-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
@@ -48,7 +55,7 @@ const companyInitials = (company || 'VA').substring(0, 2).toUpperCase();
         </div>
       )}
     </div>
-    <div class="flex items-center gap-xs">
+    <div class="flex items-center gap-xs flex-wrap justify-end">
       {isNew && (
         <span class="bg-primary/10 text-primary text-label-sm font-label-sm px-sm py-xs rounded-full font-semibold">
           Novo
@@ -56,6 +63,9 @@ const companyInitials = (company || 'VA').substring(0, 2).toUpperCase();
       )}
       <span class="bg-secondary-container/50 text-on-secondary-container px-sm py-xs rounded-full text-label-sm font-label-sm">
         {displayModality}
+      </span>
+      <span class="bg-surface-container-low border border-outline-variant/40 text-on-surface-variant px-sm py-xs rounded-full text-label-sm font-label-sm">
+        {platformName}
       </span>
     </div>
   </div>
@@ -82,4 +92,21 @@ const companyInitials = (company || 'VA').substring(0, 2).toUpperCase();
       Candidatar-se
     </span>
   </div>
-</a>
+    </a>
+
+<script>
+  // Fallback de logo: se a imagem falhar, troca pelas iniciais da empresa
+  document.querySelectorAll('img[data-fallback-initials]').forEach((img) => {
+    img.addEventListener('error', () => {
+      const initials = img.getAttribute('data-fallback-initials') || 'VA';
+      const parent = img.parentElement;
+      if (parent) {
+        (img as HTMLElement).style.display = 'none';
+        const fallback = document.createElement('div');
+        fallback.className = 'w-full h-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm';
+        fallback.textContent = initials;
+        parent.appendChild(fallback);
+      }
+    });
+  });
+</script>

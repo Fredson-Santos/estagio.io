@@ -8,7 +8,7 @@ const isSobre = pathname.startsWith('/sobre');
 <nav class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-md border-b border-outline-variant/30">
   <div class="flex justify-between items-center h-16 px-gutter max-w-container-max mx-auto relative">
     <div class="flex items-center gap-sm">
-      <a href="/" class="font-headline-sm text-headline-sm font-bold text-on-surface tracking-tight">estagio.io</a>
+      <a href="/" class="font-headline-sm text-headline-sm font-bold text-on-surface tracking-tight">estagio<span class="text-primary">.io</span></a>
     </div>
 
     <!-- Desktop Navigation Links -->
@@ -21,9 +21,10 @@ const isSobre = pathname.startsWith('/sobre');
     <!-- Action Buttons -->
     <div class="flex items-center gap-sm">
       <!-- Dark Mode Toggle Button -->
-      <button 
+      <button
         id="theme-toggle-btn"
-        aria-label="Alternar Tema" 
+        aria-label="Alternar Tema"
+        aria-pressed="false"
         class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high active:scale-95 transition-all"
       >
         <span id="theme-toggle-icon" class="material-symbols-outlined text-[22px]">dark_mode</span>
@@ -83,6 +84,7 @@ const isSobre = pathname.startsWith('/sobre');
       document.documentElement.classList.remove('dark');
       if (themeToggleIcon) themeToggleIcon.textContent = 'dark_mode';
     }
+    if (themeToggleBtn) themeToggleBtn.setAttribute('aria-pressed', String(isDark));
   }
 
   // Carrega preferência salva ou do sistema
@@ -97,4 +99,12 @@ const isSobre = pathname.startsWith('/sobre');
     localStorage.setItem('theme', newTheme ? 'dark' : 'light');
     updateThemeUI(newTheme);
   });
+
+  // Restaura URL de busca salva nos links 'Vagas' do Header
+  const savedVagasFilterUrl = sessionStorage.getItem('last_vagas_filter_url');
+  if (savedVagasFilterUrl) {
+    document.querySelectorAll('a[href="/vagas"]').forEach((link) => {
+      (link as HTMLAnchorElement).href = savedVagasFilterUrl;
+    });
+  }
 </script>
