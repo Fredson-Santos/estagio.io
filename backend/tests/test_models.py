@@ -1,4 +1,4 @@
-from app.core.taxonomy import JobArea, JobModality, JobStatus, SourceStatus
+from estagio_shared.taxonomy import JobArea, JobModality, JobStatus, SourceStatus
 
 def test_job_areas_exist():
     assert hasattr(JobArea, "TI_SOFTWARE")

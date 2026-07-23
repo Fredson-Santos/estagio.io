@@ -3,7 +3,7 @@ from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
 
-from app.core.taxonomy import JobArea, JobModality, JobStatus
+from estagio_shared.taxonomy import JobArea, JobModality, JobStatus
 
 class JobBase(BaseModel):
     title: str
