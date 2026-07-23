@@ -3,16 +3,19 @@
 # ---- Stage 1: builder ----
 FROM python:3.12-slim AS builder
 ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PATH="/install/bin:${PATH}" \
+    PYTHONPATH="/install/lib/python3.12/site-packages:${PYTHONPATH}"
 
-WORKDIR /app
+WORKDIR /app/scraper
 
-COPY shared /shared
-COPY scraper/requirements.txt scraper/
+COPY shared /app/shared
+COPY scraper/requirements.txt /app/scraper/requirements.txt
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential libpq-dev curl \
     && rm -rf /var/lib/apt/lists/* \
-    && pip install --prefix=/install --no-cache-dir -r scraper/requirements.txt
+    && pip install --prefix=/install --no-cache-dir /app/shared \
+    && pip install --prefix=/install --no-cache-dir -r requirements.txt
 
 RUN playwright install --with-deps chromium
 
@@ -29,10 +32,10 @@ WORKDIR /app
 COPY --from=builder /install /usr/local
 COPY --from=builder /root/.cache/ms-playwright /home/app/.cache/ms-playwright
 
-COPY scraper/ scraper/
-COPY shared/ shared/
+COPY scraper/ /app/scraper/
+COPY shared/ /app/shared/
 
-RUN pip install --no-deps -e /shared
+RUN pip install --no-deps --force-reinstall /app/shared
 
 USER app
 
