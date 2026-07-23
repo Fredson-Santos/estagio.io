@@ -2,9 +2,9 @@ import httpx
 from datetime import datetime
 from bs4 import BeautifulSoup
 
-from app.core.taxonomy import JobArea, JobModality
-from app.services.scrapers.gupy import _guess_area
-from app.services.job_validator import trunc
+from estagio_shared.taxonomy import JobArea, JobModality
+from estagio_shared.services.scrapers.gupy import _guess_area
+from estagio_shared.services.job_validator import trunc
 
 EURECA_API_URL = "https://candidate-api.eureca.me/v2/opportunities"
 
@@ -74,7 +74,7 @@ def parse_eureca_job(raw_job: dict) -> dict:
     description = raw_description.strip() if raw_description else ""
         
     # Extração de bolsa auxílio / remuneração da Eureca caso presente
-    from app.services.job_validator import parse_salary
+    from estagio_shared.services.job_validator import parse_salary
     salary = parse_salary(raw_job.get("stipend") or raw_job.get("salary") or raw_job.get("remuneration"))
 
     # URL da vaga na Eureca
@@ -106,7 +106,7 @@ def parse_eureca_job(raw_job: dict) -> dict:
     }
 
 async def run_eureca_scraper(limit: int = 50) -> list[dict]:
-    from app.services.job_validator import validate_job, safe_str
+    from estagio_shared.services.job_validator import validate_job, safe_str
     raw_jobs = await fetch_eureca_jobs(limit=limit)
     parsed_jobs = [parse_eureca_job(job) for job in raw_jobs]
     valid_jobs = []

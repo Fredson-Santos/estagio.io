@@ -1,9 +1,12 @@
 import json
-import os
 from pathlib import Path
 from typing import Dict, Optional
 
-RULES_FILE = Path(__file__).parent.parent.parent.parent / "data" / "scraper_rules.json"
+from estagio_shared.config import settings
+
+_DEFAULT_RULES_FILE = Path.home() / ".estagio" / "scraper_rules.json"
+RULES_FILE = Path(settings.RULES_FILE) if settings.RULES_FILE else _DEFAULT_RULES_FILE
+
 
 def _ensure_rules_file():
     if not RULES_FILE.parent.exists():

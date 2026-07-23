@@ -3,9 +3,9 @@ from bs4 import BeautifulSoup
 from typing import List, Dict
 from datetime import datetime, timezone
 import logging
-from app.services.extractor import process_job_url
-from app.core.config import settings
-from app.core.taxonomy import JobArea, JobModality
+from estagio_shared.services.extractor import process_job_url
+from estagio_shared.config import settings
+from estagio_shared.taxonomy import JobArea, JobModality
 
 logger = logging.getLogger(__name__)
 

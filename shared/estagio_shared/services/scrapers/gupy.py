@@ -2,8 +2,8 @@ import httpx
 import re
 from datetime import datetime, timezone
 
-from app.core.taxonomy import JobArea, JobModality
-from app.services.job_validator import trunc
+from estagio_shared.taxonomy import JobArea, JobModality
+from estagio_shared.services.job_validator import trunc
 
 GUPY_API_URL = "https://employability-portal.gupy.io/api/v1/jobs"
 
@@ -81,7 +81,7 @@ def parse_gupy_job(raw_job: dict) -> dict:
     description = raw_job.get("description", "").strip()
     
     # Extração de salário caso fornecido na API da Gupy
-    from app.services.job_validator import parse_salary
+    from estagio_shared.services.job_validator import parse_salary
     salary = parse_salary(raw_job.get("salary") or raw_job.get("salaryRange"))
 
     # URL da vaga no portal da Gupy
@@ -130,7 +130,7 @@ async def _enrich_job_html(client: httpx.AsyncClient, job: dict) -> dict:
 
 async def run_gupy_scraper(limit: int = 50) -> list[dict]:
     import asyncio
-    from app.services.job_validator import validate_job, safe_str
+    from estagio_shared.services.job_validator import validate_job, safe_str
     raw_jobs = await fetch_gupy_jobs(limit=limit)
     parsed_jobs = [parse_gupy_job(job) for job in raw_jobs]
     valid_jobs = []

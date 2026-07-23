@@ -7,9 +7,9 @@ import httpx
 from bs4 import BeautifulSoup
 from openai import AsyncOpenAI
 
-from app.core.config import settings
-from app.core.taxonomy import JobArea, JobModality
-from app.services.scrapers.rules_manager import load_rules, save_rules
+from estagio_shared.config import settings
+from estagio_shared.taxonomy import JobArea, JobModality
+from estagio_shared.services.scrapers.rules_manager import load_rules, save_rules
 
 SYSTEM_PROMPT = """\
 Você é um assistente especializado em extrair informações de vagas de emprego.
@@ -125,7 +125,7 @@ def extract_via_rules(soup: BeautifulSoup, rules: dict) -> dict:
     job_data["company_logo"] = logo_el.get("src") if logo_el and logo_el.has_attr("src") else None
     
     # Se conseguiu o básico, tenta inferir a área e modalidade localmente via regex (como fizemos na Gupy)
-    from app.services.scrapers.gupy import _guess_area, _map_modality
+    from estagio_shared.services.scrapers.gupy import _guess_area, _map_modality
     job_data["area"] = _guess_area(job_data["title"], job_data["description"])
     
     # Tenta descobrir modalidade lendo localizacao e titulo

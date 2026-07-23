@@ -2,8 +2,8 @@ import uuid
 from datetime import datetime, timezone
 from sqlalchemy import String, Text, DateTime, ForeignKey, Enum as SQLEnum, Integer, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.db.database import Base
-from app.core.taxonomy import JobArea, JobModality, JobStatus, SourceStatus
+from estagio_shared.db.database import Base
+from estagio_shared.taxonomy import JobArea, JobModality, JobStatus, SourceStatus
 
 def utcnow():
     return datetime.now(timezone.utc)

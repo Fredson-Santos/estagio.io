@@ -5,7 +5,7 @@ Garante que apenas vagas com informações completas e de qualidade sejam aceita
 
 import re
 from typing import Tuple, Dict, Any
-from app.core.taxonomy import JobModality
+from estagio_shared.taxonomy import JobModality
 
 INVALID_PLACEHOLDERS = {
     "n/a", "na", "não informado", "nao informado", "não especificado",
