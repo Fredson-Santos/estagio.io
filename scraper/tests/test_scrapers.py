@@ -1,8 +1,8 @@
 import pytest
-from app.services.scrapers.gupy import parse_gupy_job, _guess_area
-from app.services.scrapers.eureca import parse_eureca_job
-from app.services.dedup import is_duplicate
-from app.core.taxonomy import JobArea, JobModality
+from estagio_shared.services.scrapers.gupy import parse_gupy_job, _guess_area
+from estagio_shared.services.scrapers.eureca import parse_eureca_job
+from estagio_shared.services.dedup import is_duplicate
+from estagio_shared.taxonomy import JobArea, JobModality
 
 def test_guess_area():
     assert _guess_area("Desenvolvedor Python Backend", "Python, SQL, APIs") == JobArea.TI_SOFTWARE
