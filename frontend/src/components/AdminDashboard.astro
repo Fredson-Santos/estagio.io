@@ -11,6 +11,7 @@ const LIMIT = 25;
 const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
 const skip = (currentPage - 1) * LIMIT;
 const q = searchParams.get('q') || '';
+const featuredFilter = searchParams.get('featured') === '1';
 
 let stats: AdminStats | null = null;
 let jobs: Job[] = [];
@@ -26,6 +27,7 @@ try {
 try {
   const query = new URLSearchParams();
   if (q) query.append('q', q);
+  if (featuredFilter) query.append('featured', 'true');
   query.append('limit', String(LIMIT));
   query.append('skip', String(skip));
   const data = await fetchJobs(`/jobs?${query.toString()}`);
@@ -105,26 +107,39 @@ function pageUrl(page: number): string {
     <div class="rounded-xl bg-surface-container-lowest border border-outline-variant/30 overflow-hidden">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-md px-lg py-md border-b border-outline-variant/30">
         <h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Vagas</h2>
-        <form action="/admin" method="GET" class="flex items-center gap-sm w-full md:w-auto" id="admin-search-form">
-          <div class="relative flex-grow md:w-80">
-            <span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
-            <input
-              name="q"
-              value={q}
-              type="text"
-              placeholder="Buscar por título ou empresa..."
-              class="w-full pl-12 pr-4 py-2 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-sm text-on-surface-variant"
-            />
+        <div class="flex items-center gap-md">
+          <div class="relative">
+            <select
+              id="select-featured"
+              aria-label="Filtrar vagas em destaque"
+              class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all"
+            >
+              <option value="" selected={!featuredFilter}>Todas as vagas</option>
+              <option value="1" selected={featuredFilter}>Em destaque</option>
+            </select>
+            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">expand_more</span>
           </div>
-          <button type="submit" class="inline-flex items-center justify-center rounded-lg bg-primary text-on-primary px-md py-2 font-label-md text-label-md hover:opacity-90 active:scale-95 transition-all">
-            <span class="material-symbols-outlined text-[20px]">search</span>
-          </button>
-          {q && (
-            <a href="/admin" class="inline-flex items-center justify-center rounded-lg bg-surface-container-low text-on-surface-variant px-md py-2 font-label-md hover:bg-surface-container transition-all" aria-label="Limpar busca">
-              <span class="material-symbols-outlined text-[20px]">close</span>
-            </a>
-          )}
-        </form>
+          <form action="/admin" method="GET" class="flex items-center gap-sm" id="admin-search-form">
+            <div class="relative md:w-56">
+              <span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
+              <input
+                name="q"
+                value={q}
+                type="text"
+                placeholder="Buscar título ou empresa..."
+                class="w-full pl-12 pr-4 py-2 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-sm text-on-surface-variant"
+              />
+            </div>
+            <button type="submit" class="inline-flex items-center justify-center rounded-lg bg-primary text-on-primary px-md py-2 font-label-md text-label-md hover:opacity-90 active:scale-95 transition-all">
+              <span class="material-symbols-outlined text-[20px]">search</span>
+            </button>
+            {q && (
+              <a href="/admin" class="inline-flex items-center justify-center rounded-lg bg-surface-container-low text-on-surface-variant px-md py-2 font-label-md hover:bg-surface-container transition-all" aria-label="Limpar busca">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+              </a>
+            )}
+          </form>
+        </div>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left">
@@ -159,7 +174,7 @@ function pageUrl(page: number): string {
                     aria-label="Alternar destaque"
                     aria-pressed={job.is_featured ? 'true' : 'false'}
                   >
-                    <span class="featured-icon material-symbols-outlined text-[22px] {job.is_featured ? 'text-amber-400' : 'text-on-surface-variant'}">
+                    <span class={`featured-icon material-symbols-outlined text-[22px] ${job.is_featured ? 'text-amber-400' : 'text-on-surface-variant'}`}>
                       {job.is_featured ? 'star' : 'grade'}
                     </span>
                   </button>
@@ -233,6 +248,9 @@ function pageUrl(page: number): string {
 
   async function toggleFeatured(row: HTMLTableRowElement) {
     const jobId = row.dataset.jobId;
+    const btn = row.querySelector('.featured-toggle') as HTMLButtonElement | null;
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
     const current = row.dataset.featured === 'true';
     const next = !current;
     try {
@@ -244,16 +262,17 @@ function pageUrl(page: number): string {
       if (!res.ok) throw new Error(`status ${res.status}`);
       row.dataset.featured = String(next);
       const icon = row.querySelector('.featured-icon') as HTMLElement | null;
-      const btn = row.querySelector('.featured-toggle') as HTMLButtonElement | null;
       if (icon) {
         icon.textContent = next ? 'star' : 'grade';
         icon.classList.toggle('text-amber-400', next);
         icon.classList.toggle('text-on-surface-variant', !next);
       }
-      if (btn) btn.setAttribute('aria-pressed', String(next));
+      btn.setAttribute('aria-pressed', String(next));
       showToast(next ? 'Vaga destacada.' : 'Destaque removido.');
     } catch (err) {
       showToast('Falha ao alternar destaque.');
+    } finally {
+      btn.disabled = false;
     }
   }
 
