@@ -24,6 +24,7 @@ class JobResponse(JobBase):
     id: UUID
     scraped_at: datetime
     is_active: bool
+    is_featured: bool = False
     status: JobStatus
     is_new: Optional[bool] = None
     
@@ -49,3 +50,9 @@ class PaginatedJobResponse(BaseModel):
     total: int
     skip: int
     limit: int
+
+class JobUpdate(BaseModel):
+    is_featured: Optional[bool] = None
+    is_active: Optional[bool] = None
+
+    model_config = ConfigDict(from_attributes=True)

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
@@ -8,9 +8,10 @@ from uuid import UUID
 
 from estagio_shared.db.database import get_db
 from estagio_shared.db.models import Job
-from app.schemas.job import JobResponse, PaginatedJobResponse
+from app.schemas.job import JobResponse, PaginatedJobResponse, JobUpdate
 from estagio_shared.taxonomy import JobArea, JobModality
 from app.core.rate_limit import limiter
+from app.core.security import verify_admin_key
 
 router = APIRouter()
 
@@ -51,26 +52,11 @@ async def list_jobs(
     
     # Get items
     if featured:
-        from sqlalchemy import case
-        priority_cases = case(
-            (Job.title.ilike('%programa%'), 1),
-            (Job.company.ilike('%vivo%'), 1),
-            (Job.company.ilike('%bradesco%'), 1),
-            (Job.company.ilike('%itaú%'), 1),
-            (Job.company.ilike('%itau%'), 1),
-            (Job.company.ilike('%natura%'), 1),
-            (Job.company.ilike('%ambev%'), 1),
-            (Job.company.ilike('%vale%'), 1),
-            (Job.company.ilike('%globo%'), 1),
-            (Job.company.ilike('%google%'), 1),
-            (Job.company.ilike('%amazon%'), 1),
-            (Job.company.ilike('%microsoft%'), 1),
-            (Job.company.ilike('%nubank%'), 1),
-            else_=0
-        ).desc()
-        query = query.order_by(priority_cases, Job.posted_at.desc().nulls_last()).offset(skip).limit(limit)
-    else:
-        query = query.order_by(Job.posted_at.desc().nulls_last()).offset(skip).limit(limit)
+        query = query.where(Job.is_featured == True)
+    query = query.order_by(
+        Job.is_featured.desc().nulls_last(),
+        Job.posted_at.desc().nulls_last()
+    ).offset(skip).limit(limit)
         
     result = await db.execute(query)
     items = result.scalars().all()
@@ -93,3 +79,35 @@ async def get_job(
         raise HTTPException(status_code=404, detail="Vaga não encontrada")
         
     return job
+
+@router.patch("/{job_id}", response_model=JobResponse, dependencies=[Depends(verify_admin_key)])
+async def update_job(
+    job_id: UUID,
+    payload: JobUpdate,
+    db: AsyncSession = Depends(get_db)
+):
+    job = await db.scalar(select(Job).options(joinedload(Job.source)).where(Job.id == job_id))
+
+    if not job:
+        raise HTTPException(status_code=404, detail="Vaga não encontrada")
+
+    update_data = payload.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(job, field, value)
+
+    await db.commit()
+    await db.refresh(job)
+    return job
+
+@router.delete("/{job_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(verify_admin_key)])
+async def delete_job(
+    job_id: UUID,
+    db: AsyncSession = Depends(get_db)
+):
+    job = await db.scalar(select(Job).where(Job.id == job_id))
+
+    if not job:
+        raise HTTPException(status_code=404, detail="Vaga não encontrada")
+
+    job.is_active = False
+    await db.commit()
