@@ -11,10 +11,10 @@ const LIMIT = 25;
 const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
 const skip = (currentPage - 1) * LIMIT;
 const q = searchParams.get('q') || '';
-const featuredFilter = searchParams.get('featured') === '1';
 
 let stats: AdminStats | null = null;
-let jobs: Job[] = [];
+let featuredJobs: Job[] = [];
+let allJobs: Job[] = [];
 let total = 0;
 let statsError = false;
 
@@ -25,16 +25,22 @@ try {
 }
 
 try {
+  const featuredData = await fetchJobs('/jobs?featured=true&limit=100&skip=0');
+  featuredJobs = featuredData.items;
+} catch {
+  // mantém featuredJobs vazio
+}
+
+try {
   const query = new URLSearchParams();
   if (q) query.append('q', q);
-  if (featuredFilter) query.append('featured', 'true');
   query.append('limit', String(LIMIT));
   query.append('skip', String(skip));
   const data = await fetchJobs(`/jobs?${query.toString()}`);
-  jobs = data.items;
+  allJobs = data.items;
   total = data.total;
 } catch {
-  // mantém jobs vazio
+  // mantém allJobs vazio
 }
 
 const totalPages = Math.max(1, Math.ceil(total / LIMIT));
@@ -104,42 +110,91 @@ function pageUrl(page: number): string {
       </article>
     </div>
 
+    <!-- Seção: Vagas em Destaque -->
+    <div class="rounded-xl bg-amber-50 border border-amber-200/60 overflow-hidden mb-xl" id="featured-section">
+      <div class="flex items-center gap-sm px-lg py-md border-b border-amber-200/60 bg-amber-100/50">
+        <span class="material-symbols-outlined text-amber-500 text-[22px]">star</span>
+        <h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Vagas em Destaque</h2>
+        <span id="featured-count-badge" class="ml-auto inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full bg-amber-400 text-white font-label-sm text-label-sm">
+          {featuredJobs.length}
+        </span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead class="bg-amber-100/40 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wide">
+            <tr>
+              <th class="px-lg py-md font-medium">Vaga</th>
+              <th class="px-lg py-md font-medium hidden md:table-cell">Empresa</th>
+              <th class="px-lg py-md font-medium hidden md:table-cell">Área</th>
+              <th class="px-lg py-md font-medium text-center">Destaque</th>
+              <th class="px-lg py-md font-medium text-center">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="featured-tbody">
+            {featuredJobs.length === 0 ? (
+              <tr id="featured-empty-row">
+                <td colspan="5" class="px-lg py-xl text-center text-on-surface-variant font-body-md">
+                  Nenhuma vaga em destaque. Clique na estrela de uma vaga para destacá-la.
+                </td>
+              </tr>
+            ) : featuredJobs.map((job) => (
+              <tr class="border-t border-amber-200/40" data-job-id={job.id} data-featured="true">
+                <td class="px-lg py-md">
+                  <div class="font-body-md text-on-surface font-medium">{job.title}</div>
+                  <div class="font-body-sm text-body-sm text-on-surface-variant md:hidden">{job.company}</div>
+                </td>
+                <td class="px-lg py-md hidden md:table-cell text-on-surface-variant font-body-sm">{job.company}</td>
+                <td class="px-lg py-md hidden md:table-cell text-on-surface-variant font-body-sm">{job.area ?? '—'}</td>
+                <td class="px-lg py-md text-center">
+                  <button
+                    type="button"
+                    class="featured-toggle inline-flex items-center justify-center w-9 h-9 rounded-full hover:bg-amber-100 active:scale-95 transition-all"
+                    aria-label="Remover destaque"
+                    aria-pressed="true"
+                  >
+                    <span class="featured-icon material-symbols-outlined text-[22px] text-amber-400">star</span>
+                  </button>
+                </td>
+                <td class="px-lg py-md text-center">
+                  <button
+                    type="button"
+                    class="delete-job inline-flex items-center justify-center w-9 h-9 rounded-full text-error hover:bg-error-container/40 active:scale-95 transition-all"
+                    aria-label="Remover vaga"
+                  >
+                    <span class="material-symbols-outlined text-[22px]">delete</span>
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Seção: Todas as Vagas -->
     <div class="rounded-xl bg-surface-container-lowest border border-outline-variant/30 overflow-hidden">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-md px-lg py-md border-b border-outline-variant/30">
-        <h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Vagas</h2>
-        <div class="flex items-center gap-md">
-          <div class="relative">
-            <select
-              id="select-featured"
-              aria-label="Filtrar vagas em destaque"
-              class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all"
-            >
-              <option value="" selected={!featuredFilter}>Todas as vagas</option>
-              <option value="1" selected={featuredFilter}>Em destaque</option>
-            </select>
-            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">expand_more</span>
+        <h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Todas as Vagas</h2>
+        <form action="/admin" method="GET" class="flex items-center gap-sm" id="admin-search-form">
+          <div class="relative md:w-56">
+            <span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
+            <input
+              name="q"
+              value={q}
+              type="text"
+              placeholder="Buscar título ou empresa..."
+              class="w-full pl-12 pr-4 py-2 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-sm text-on-surface-variant"
+            />
           </div>
-          <form action="/admin" method="GET" class="flex items-center gap-sm" id="admin-search-form">
-            <div class="relative md:w-56">
-              <span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
-              <input
-                name="q"
-                value={q}
-                type="text"
-                placeholder="Buscar título ou empresa..."
-                class="w-full pl-12 pr-4 py-2 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-sm text-on-surface-variant"
-              />
-            </div>
-            <button type="submit" class="inline-flex items-center justify-center rounded-lg bg-primary text-on-primary px-md py-2 font-label-md text-label-md hover:opacity-90 active:scale-95 transition-all">
-              <span class="material-symbols-outlined text-[20px]">search</span>
-            </button>
-            {q && (
-              <a href="/admin" class="inline-flex items-center justify-center rounded-lg bg-surface-container-low text-on-surface-variant px-md py-2 font-label-md hover:bg-surface-container transition-all" aria-label="Limpar busca">
-                <span class="material-symbols-outlined text-[20px]">close</span>
-              </a>
-            )}
-          </form>
-        </div>
+          <button type="submit" class="inline-flex items-center justify-center rounded-lg bg-primary text-on-primary px-md py-2 font-label-md text-label-md hover:opacity-90 active:scale-95 transition-all">
+            <span class="material-symbols-outlined text-[20px]">search</span>
+          </button>
+          {q && (
+            <a href="/admin" class="inline-flex items-center justify-center rounded-lg bg-surface-container-low text-on-surface-variant px-md py-2 font-label-md hover:bg-surface-container transition-all" aria-label="Limpar busca">
+              <span class="material-symbols-outlined text-[20px]">close</span>
+            </a>
+          )}
+        </form>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left">
@@ -153,13 +208,13 @@ function pageUrl(page: number): string {
             </tr>
           </thead>
           <tbody id="jobs-tbody">
-            {jobs.length === 0 ? (
+            {allJobs.length === 0 ? (
               <tr>
                 <td colspan="5" class="px-lg py-xl text-center text-on-surface-variant font-body-md">
                   Nenhuma vaga encontrada.
                 </td>
               </tr>
-            ) : jobs.map((job) => (
+            ) : allJobs.map((job) => (
               <tr class="border-t border-outline-variant/30" data-job-id={job.id} data-featured={job.is_featured ? 'true' : 'false'}>
                 <td class="px-lg py-md">
                   <div class="font-body-md text-on-surface font-medium">{job.title}</div>
@@ -246,6 +301,53 @@ function pageUrl(page: number): string {
     }
   }
 
+  function updateFeaturedCount() {
+    const badge = document.getElementById('featured-count-badge');
+    const tbody = document.getElementById('featured-tbody');
+    if (!badge || !tbody) return;
+    const rows = tbody.querySelectorAll('tr[data-job-id]');
+    badge.textContent = String(rows.length);
+
+    // Mostra/oculta a linha de "nenhuma vaga em destaque"
+    let emptyRow = document.getElementById('featured-empty-row');
+    if (rows.length === 0) {
+      if (!emptyRow) {
+        emptyRow = document.createElement('tr');
+        emptyRow.id = 'featured-empty-row';
+        emptyRow.innerHTML = '<td colspan="5" class="px-lg py-xl text-center text-on-surface-variant font-body-md">Nenhuma vaga em destaque. Clique na estrela de uma vaga para destacá-la.</td>';
+        tbody.appendChild(emptyRow);
+      }
+    } else if (emptyRow) {
+      emptyRow.remove();
+    }
+  }
+
+  function buildFeaturedRow(jobId: string, title: string, company: string, area: string): HTMLTableRowElement {
+    const tr = document.createElement('tr');
+    tr.className = 'border-t border-amber-200/40';
+    tr.dataset.jobId = jobId;
+    tr.dataset.featured = 'true';
+    tr.innerHTML = `
+      <td class="px-lg py-md">
+        <div class="font-body-md text-on-surface font-medium">${title}</div>
+        <div class="font-body-sm text-body-sm text-on-surface-variant md:hidden">${company}</div>
+      </td>
+      <td class="px-lg py-md hidden md:table-cell text-on-surface-variant font-body-sm">${company}</td>
+      <td class="px-lg py-md hidden md:table-cell text-on-surface-variant font-body-sm">${area}</td>
+      <td class="px-lg py-md text-center">
+        <button type="button" class="featured-toggle inline-flex items-center justify-center w-9 h-9 rounded-full hover:bg-amber-100 active:scale-95 transition-all" aria-label="Remover destaque" aria-pressed="true">
+          <span class="featured-icon material-symbols-outlined text-[22px] text-amber-400">star</span>
+        </button>
+      </td>
+      <td class="px-lg py-md text-center">
+        <button type="button" class="delete-job inline-flex items-center justify-center w-9 h-9 rounded-full text-error hover:bg-error-container/40 active:scale-95 transition-all" aria-label="Remover vaga">
+          <span class="material-symbols-outlined text-[22px]">delete</span>
+        </button>
+      </td>
+    `;
+    return tr;
+  }
+
   async function toggleFeatured(row: HTMLTableRowElement) {
     const jobId = row.dataset.jobId;
     const btn = row.querySelector('.featured-toggle') as HTMLButtonElement | null;
@@ -260,14 +362,57 @@ function pageUrl(page: number): string {
         body: JSON.stringify({ is_featured: next }),
       });
       if (!res.ok) throw new Error(`status ${res.status}`);
+
       row.dataset.featured = String(next);
-      const icon = row.querySelector('.featured-icon') as HTMLElement | null;
-      if (icon) {
-        icon.textContent = next ? 'star' : 'grade';
-        icon.classList.toggle('text-amber-400', next);
-        icon.classList.toggle('text-on-surface-variant', !next);
+
+      const featuredTbody = document.getElementById('featured-tbody');
+      const allTbody = document.getElementById('jobs-tbody');
+
+      if (next) {
+        // Destacar: adiciona linha na seção de destaque
+        const title = row.querySelector('.font-body-md')?.textContent?.trim() ?? '';
+        const cells = row.querySelectorAll('td');
+        const company = cells[1]?.textContent?.trim() ?? '';
+        const area = cells[2]?.textContent?.trim() ?? '';
+        const newRow = buildFeaturedRow(jobId!, title, company, area);
+        attachRowListeners(newRow);
+        featuredTbody?.appendChild(newRow);
+
+        // Atualiza o botão na tabela de todas as vagas
+        const icon = row.querySelector('.featured-icon') as HTMLElement | null;
+        if (icon) {
+          icon.textContent = 'star';
+          icon.classList.replace('text-on-surface-variant', 'text-amber-400');
+        }
+        btn.setAttribute('aria-pressed', 'true');
+      } else {
+        // Remover destaque: remove da seção de destaque
+        const featuredRow = featuredTbody?.querySelector(`tr[data-job-id="${jobId}"]`);
+        featuredRow?.remove();
+
+        // Atualiza o botão na tabela de todas as vagas (se existir nela)
+        const allRow = allTbody?.querySelector(`tr[data-job-id="${jobId}"]`) as HTMLTableRowElement | null;
+        if (allRow) {
+          allRow.dataset.featured = 'false';
+          const icon = allRow.querySelector('.featured-icon') as HTMLElement | null;
+          if (icon) {
+            icon.textContent = 'grade';
+            icon.classList.replace('text-amber-400', 'text-on-surface-variant');
+          }
+          const allBtn = allRow.querySelector('.featured-toggle') as HTMLButtonElement | null;
+          allBtn?.setAttribute('aria-pressed', 'false');
+        }
+
+        // Atualiza o botão na própria row (se for a da seção de destaque)
+        const icon = row.querySelector('.featured-icon') as HTMLElement | null;
+        if (icon) {
+          icon.textContent = 'grade';
+          icon.classList.replace('text-amber-400', 'text-on-surface-variant');
+        }
+        btn.setAttribute('aria-pressed', 'false');
       }
-      btn.setAttribute('aria-pressed', String(next));
+
+      updateFeaturedCount();
       showToast(next ? 'Vaga destacada.' : 'Destaque removido.');
     } catch (err) {
       showToast('Falha ao alternar destaque.');
@@ -282,19 +427,23 @@ function pageUrl(page: number): string {
     try {
       const res = await fetch(`/admin/api/jobs/${jobId}`, { method: 'DELETE' });
       if (!res.ok && res.status !== 204) throw new Error(`status ${res.status}`);
-      row.remove();
+      // Remove de ambas as tabelas
+      document.querySelectorAll(`tr[data-job-id="${jobId}"]`).forEach((r) => r.remove());
+      updateFeaturedCount();
       showToast('Vaga removida.');
     } catch (err) {
       showToast('Falha ao remover vaga.');
     }
   }
 
-  document.querySelectorAll<HTMLTableRowElement>('#jobs-tbody tr[data-job-id]').forEach((row) => {
+  function attachRowListeners(row: HTMLTableRowElement) {
     const featBtn = row.querySelector('.featured-toggle') as HTMLButtonElement | null;
     const delBtn = row.querySelector('.delete-job') as HTMLButtonElement | null;
     featBtn?.addEventListener('click', () => void toggleFeatured(row));
     delBtn?.addEventListener('click', () => void deleteJob(row));
-  });
+  }
+
+  document.querySelectorAll<HTMLTableRowElement>('#featured-tbody tr[data-job-id], #jobs-tbody tr[data-job-id]').forEach(attachRowListeners);
 
   const runBtn = document.getElementById('run-scrapers-btn');
   runBtn?.addEventListener('click', async () => {

@@ -42,12 +42,10 @@ describe('AdminDashboard Component', () => {
       sources: 6,
       last_scraped_at: null,
     });
-    (api.fetchJobs as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
-      items: [FEATURED_JOB, REGULAR_JOB],
-      total: 2,
-      skip: 0,
-      limit: 100,
-    });
+    // fetchJobs é chamado duas vezes: uma para featured, uma para todas as vagas
+    (api.fetchJobs as unknown as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({ items: [FEATURED_JOB], total: 1, skip: 0, limit: 100 })
+      .mockResolvedValueOnce({ items: [FEATURED_JOB, REGULAR_JOB], total: 2, skip: 0, limit: 25 });
   });
 
   it('renders stat cards and job table', async () => {
@@ -60,64 +58,57 @@ describe('AdminDashboard Component', () => {
     expect(html).toContain('Estágio Frontend');
   });
 
-  it('renders the featured filter selector', async () => {
+  it('renders two separate sections: featured and all jobs', async () => {
     const html = await renderDashboard();
-    expect(html).toContain('Todas as vagas');
-    expect(html).toContain('Em destaque');
-    expect(html).toContain('id="select-featured"');
+    expect(html).toContain('id="featured-tbody"');
+    expect(html).toContain('id="jobs-tbody"');
+    expect(html).toContain('Vagas em Destaque');
+    expect(html).toContain('Todas as Vagas');
   });
 
-  it('shows the star badge for a featured job', async () => {
-    const api = await import('../lib/api');
-    (api.fetchJobs as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
-      items: [FEATURED_JOB],
-      total: 1,
-      skip: 0,
-      limit: 100,
-    });
+  it('does not render the featured filter select', async () => {
     const html = await renderDashboard();
-    // Linha da vaga em destaque
+    expect(html).not.toContain('id="select-featured"');
+    expect(html).not.toContain('Todas as vagas');
+  });
+
+  it('shows the featured job in the featured section with amber star', async () => {
+    const html = await renderDashboard();
+    // A seção de destaque deve ter data-featured="true" e ícone star com cor âmbar
+    expect(html).toContain('id="featured-tbody"');
     expect(html).toContain('data-featured="true"');
-    // Ícone de estrela preenchida + cor âmbar
     expect(html).toContain('text-amber-400');
     expect(html).toContain('>star<');
-    // Botão de toggle com aria-pressed verdadeiro
-    expect(html).toContain('aria-pressed="true"');
   });
 
-  it('shows the outline star for a non-featured job', async () => {
-    const api = await import('../lib/api');
-    (api.fetchJobs as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
-      items: [REGULAR_JOB],
-      total: 1,
-      skip: 0,
-      limit: 100,
-    });
+  it('shows the outline star for a non-featured job in the all-jobs section', async () => {
     const html = await renderDashboard();
+    expect(html).toContain('id="jobs-tbody"');
     expect(html).toContain('data-featured="false"');
     expect(html).toContain('text-on-surface-variant');
     expect(html).toContain('>grade<');
-    expect(html).toContain('aria-pressed="false"');
   });
 
-  it('passes featured=true to fetchJobs when filter is active', async () => {
+  it('renders featured count badge', async () => {
+    const html = await renderDashboard();
+    expect(html).toContain('id="featured-count-badge"');
+  });
+
+  it('passes featured=true to first fetchJobs call', async () => {
     const api = await import('../lib/api');
     const fetchJobsSpy = api.fetchJobs as unknown as ReturnType<typeof vi.fn>;
     fetchJobsSpy.mockClear();
-    fetchJobsSpy.mockResolvedValue({
-      items: [FEATURED_JOB],
-      total: 1,
-      skip: 0,
-      limit: 100,
-    });
+    fetchJobsSpy
+      .mockResolvedValueOnce({ items: [], total: 0, skip: 0, limit: 100 })
+      .mockResolvedValueOnce({ items: [], total: 0, skip: 0, limit: 25 });
 
     await renderDashboard();
 
-    expect(fetchJobsSpy).toHaveBeenCalledTimes(1);
-    const arg = fetchJobsSpy.mock.calls[0][0] as string;
-    // Sem query string no container, featured não deve estar presente
-    expect(arg).toContain('/jobs?');
-    expect(arg).not.toContain('featured=true');
+    expect(fetchJobsSpy).toHaveBeenCalledTimes(2);
+    const firstCall = fetchJobsSpy.mock.calls[0][0] as string;
+    const secondCall = fetchJobsSpy.mock.calls[1][0] as string;
+    expect(firstCall).toContain('featured=true');
+    expect(secondCall).not.toContain('featured=true');
   });
 
   it('toggleFeatured script contains double-click protection (btn.disabled guard)', async () => {
