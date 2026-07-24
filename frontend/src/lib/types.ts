@@ -13,6 +13,9 @@ export interface Job {
   posted_at?: string | null;
   company_logo?: string | null;
   is_new?: boolean;
+  is_featured?: boolean;
+  is_active?: boolean;
+  status?: string;
 }
 
 export interface JobListResponse {
@@ -32,4 +35,22 @@ export interface JobWithDisplay extends Job {
   datePosted?: string;
   sourceUrl?: string;
   sourceName?: string;
+}
+
+export interface JobUpdate {
+  is_featured?: boolean;
+  is_active?: boolean;
+}
+
+export interface AdminStats {
+  total_jobs: number;
+  active_jobs: number;
+  featured_jobs: number;
+  sources: number;
+  last_scraped_at: string | null;
+}
+
+export interface ScraperRunResponse {
+  message: string;
+  status: string;
 }

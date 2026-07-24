@@ -2,6 +2,7 @@
 
 interface ImportMetaEnv {
   readonly BACKEND_URL: string;
+  readonly ADMIN_API_KEY: string;
 }
 
 interface ImportMeta {
