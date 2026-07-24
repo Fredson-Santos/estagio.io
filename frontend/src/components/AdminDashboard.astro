@@ -159,7 +159,7 @@ function pageUrl(page: number): string {
                     aria-label="Alternar destaque"
                     aria-pressed={job.is_featured ? 'true' : 'false'}
                   >
-                    <span class="featured-icon material-symbols-outlined text-[22px] {job.is_featured ? 'text-primary' : 'text-on-surface-variant'}">
+                    <span class="featured-icon material-symbols-outlined text-[22px] {job.is_featured ? 'text-amber-400' : 'text-on-surface-variant'}">
                       {job.is_featured ? 'star' : 'grade'}
                     </span>
                   </button>
@@ -247,7 +247,7 @@ function pageUrl(page: number): string {
       const btn = row.querySelector('.featured-toggle') as HTMLButtonElement | null;
       if (icon) {
         icon.textContent = next ? 'star' : 'grade';
-        icon.classList.toggle('text-primary', next);
+        icon.classList.toggle('text-amber-400', next);
         icon.classList.toggle('text-on-surface-variant', !next);
       }
       if (btn) btn.setAttribute('aria-pressed', String(next));

@@ -53,5 +53,6 @@ describe('AdminDashboard Component', () => {
     expect(html).toContain('Rodar Scrapers');
     expect(html).toContain('Estágio Backend');
     expect(html).toContain('Estágio Frontend');
+    expect(html).toContain('text-amber-400');
   });
 });
