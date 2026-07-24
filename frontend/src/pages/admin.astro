@@ -1,0 +1,12 @@
+---
+import Layout from '../layouts/Layout.astro';
+import AdminDashboard from '../components/AdminDashboard.astro';
+
+export const prerender = false;
+---
+
+<Layout title="Admin · estagio.io" description="Painel administrativo do estagio.io">
+  <div class="pt-16">
+    <AdminDashboard />
+  </div>
+</Layout>

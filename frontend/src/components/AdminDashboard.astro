@@ -1,0 +1,295 @@
+---
+import { fetchAdminStats, fetchJobs } from '../lib/api';
+import type { AdminStats, Job } from '../lib/types';
+
+export const prerender = false;
+
+const url = new URL(Astro.request.url);
+const searchParams = url.searchParams;
+
+const LIMIT = 25;
+const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
+const skip = (currentPage - 1) * LIMIT;
+const q = searchParams.get('q') || '';
+
+let stats: AdminStats | null = null;
+let jobs: Job[] = [];
+let total = 0;
+let statsError = false;
+
+try {
+  stats = await fetchAdminStats();
+} catch {
+  statsError = true;
+}
+
+try {
+  const query = new URLSearchParams();
+  if (q) query.append('q', q);
+  query.append('limit', String(LIMIT));
+  query.append('skip', String(skip));
+  const data = await fetchJobs(`/jobs?${query.toString()}`);
+  jobs = data.items;
+  total = data.total;
+} catch {
+  // mantém jobs vazio
+}
+
+const totalPages = Math.max(1, Math.ceil(total / LIMIT));
+
+let pagesToShow: number[] = [];
+if (totalPages <= 5) {
+  for (let i = 1; i <= totalPages; i++) pagesToShow.push(i);
+} else if (currentPage <= 3) {
+  pagesToShow = [1, 2, 3, totalPages];
+} else if (currentPage >= totalPages - 2) {
+  pagesToShow = [1, totalPages - 2, totalPages - 1, totalPages];
+} else {
+  pagesToShow = [1, currentPage, totalPages];
+}
+
+function pageUrl(page: number): string {
+  const params = new URLSearchParams(searchParams.toString());
+  if (page === 1) {
+    params.delete('page');
+  } else {
+    params.set('page', String(page));
+  }
+  const qs = params.toString();
+  return `/admin${qs ? `?${qs}` : ''}`;
+}
+---
+
+<section class="w-full px-gutter py-xl">
+  <div class="max-w-container-max mx-auto">
+    <header class="flex flex-col md:flex-row md:items-end md:justify-between gap-md mb-xl">
+      <div>
+        <h1 class="font-headline-lg text-headline-lg font-bold text-on-surface tracking-tight">Painel Administrativo</h1>
+        <p class="font-body-md text-body-md text-on-surface-variant mt-sm">Gerencie vagas, destaques e o pipeline de scraping.</p>
+      </div>
+      <button
+        id="run-scrapers-btn"
+        type="button"
+        class="inline-flex items-center gap-sm rounded-full bg-primary text-on-primary px-lg py-md font-label-md text-label-md hover:opacity-90 active:scale-95 transition-all"
+      >
+        <span class="material-symbols-outlined text-[20px]">play_circle</span>
+        Rodar Scrapers
+      </button>
+    </header>
+
+    {statsError && (
+      <div class="rounded-lg bg-error-container text-on-error-container px-md py-md mb-xl font-body-md">
+        Não foi possível carregar as estatísticas. Verifique a chave de admin (ADMIN_API_KEY) e a conexão com o backend.
+      </div>
+    )}
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-lg mb-xl">
+      <article class="rounded-xl bg-surface-container-lowest border border-outline-variant/30 p-lg">
+        <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wide">Total de Vagas</p>
+        <p class="font-headline-md text-headline-md font-bold text-on-surface mt-sm">{stats?.total_jobs ?? '—'}</p>
+      </article>
+      <article class="rounded-xl bg-surface-container-lowest border border-outline-variant/30 p-lg">
+        <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wide">Ativas</p>
+        <p class="font-headline-md text-headline-md font-bold text-on-surface mt-sm">{stats?.active_jobs ?? '—'}</p>
+      </article>
+      <article class="rounded-xl bg-surface-container-lowest border border-outline-variant/30 p-lg">
+        <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wide">Em Destaque</p>
+        <p class="font-headline-md text-headline-md font-bold text-primary mt-sm">{stats?.featured_jobs ?? '—'}</p>
+      </article>
+      <article class="rounded-xl bg-surface-container-lowest border border-outline-variant/30 p-lg">
+        <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wide">Fontes</p>
+        <p class="font-headline-md text-headline-md font-bold text-on-surface mt-sm">{stats?.sources ?? '—'}</p>
+      </article>
+    </div>
+
+    <div class="rounded-xl bg-surface-container-lowest border border-outline-variant/30 overflow-hidden">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-md px-lg py-md border-b border-outline-variant/30">
+        <h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Vagas</h2>
+        <form action="/admin" method="GET" class="flex items-center gap-sm w-full md:w-auto" id="admin-search-form">
+          <div class="relative flex-grow md:w-80">
+            <span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
+            <input
+              name="q"
+              value={q}
+              type="text"
+              placeholder="Buscar por título ou empresa..."
+              class="w-full pl-12 pr-4 py-2 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-sm text-on-surface-variant"
+            />
+          </div>
+          <button type="submit" class="inline-flex items-center justify-center rounded-lg bg-primary text-on-primary px-md py-2 font-label-md text-label-md hover:opacity-90 active:scale-95 transition-all">
+            <span class="material-symbols-outlined text-[20px]">search</span>
+          </button>
+          {q && (
+            <a href="/admin" class="inline-flex items-center justify-center rounded-lg bg-surface-container-low text-on-surface-variant px-md py-2 font-label-md hover:bg-surface-container transition-all" aria-label="Limpar busca">
+              <span class="material-symbols-outlined text-[20px]">close</span>
+            </a>
+          )}
+        </form>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead class="bg-surface-container-low font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wide">
+            <tr>
+              <th class="px-lg py-md font-medium">Vaga</th>
+              <th class="px-lg py-md font-medium hidden md:table-cell">Empresa</th>
+              <th class="px-lg py-md font-medium hidden md:table-cell">Área</th>
+              <th class="px-lg py-md font-medium text-center">Destaque</th>
+              <th class="px-lg py-md font-medium text-center">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="jobs-tbody">
+            {jobs.length === 0 ? (
+              <tr>
+                <td colspan="5" class="px-lg py-xl text-center text-on-surface-variant font-body-md">
+                  Nenhuma vaga encontrada.
+                </td>
+              </tr>
+            ) : jobs.map((job) => (
+              <tr class="border-t border-outline-variant/30" data-job-id={job.id} data-featured={job.is_featured ? 'true' : 'false'}>
+                <td class="px-lg py-md">
+                  <div class="font-body-md text-on-surface font-medium">{job.title}</div>
+                  <div class="font-body-sm text-body-sm text-on-surface-variant md:hidden">{job.company}</div>
+                </td>
+                <td class="px-lg py-md hidden md:table-cell text-on-surface-variant font-body-sm">{job.company}</td>
+                <td class="px-lg py-md hidden md:table-cell text-on-surface-variant font-body-sm">{job.area ?? '—'}</td>
+                <td class="px-lg py-md text-center">
+                  <button
+                    type="button"
+                    class="featured-toggle inline-flex items-center justify-center w-9 h-9 rounded-full hover:bg-surface-container-high active:scale-95 transition-all"
+                    aria-label="Alternar destaque"
+                    aria-pressed={job.is_featured ? 'true' : 'false'}
+                  >
+                    <span class="featured-icon material-symbols-outlined text-[22px] {job.is_featured ? 'text-primary' : 'text-on-surface-variant'}">
+                      {job.is_featured ? 'star' : 'grade'}
+                    </span>
+                  </button>
+                </td>
+                <td class="px-lg py-md text-center">
+                  <button
+                    type="button"
+                    class="delete-job inline-flex items-center justify-center w-9 h-9 rounded-full text-error hover:bg-error-container/40 active:scale-95 transition-all"
+                    aria-label="Remover vaga"
+                  >
+                    <span class="material-symbols-outlined text-[22px]">delete</span>
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-md px-lg py-md border-t border-outline-variant/30">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">
+          {total} {total === 1 ? 'vaga' : 'vagas'} {q ? `para "${q}"` : ''}
+        </span>
+        {totalPages > 1 && (
+          <nav class="flex items-center gap-sm" aria-label="Paginação">
+            {currentPage > 1 ? (
+              <a href={pageUrl(currentPage - 1)} class="admin-pagination-link w-9 h-9 flex items-center justify-center rounded-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container border border-outline-variant/30 transition-all" aria-label="Página anterior">
+                <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+              </a>
+            ) : (
+              <span class="w-9 h-9 flex items-center justify-center rounded-lg bg-surface-container-low/50 text-outline/40 cursor-not-allowed">
+                <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+              </span>
+            )}
+            {pagesToShow.map((p) =>
+              p === currentPage ? (
+                <span class="w-9 h-9 flex items-center justify-center rounded-lg bg-on-surface text-surface font-label-md text-label-md shadow-sm pointer-events-none">{p}</span>
+              ) : (
+                <a href={pageUrl(p)} class="admin-pagination-link w-9 h-9 flex items-center justify-center rounded-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container border border-outline-variant/30 font-label-md text-label-md transition-all">{p}</a>
+              )
+            )}
+            {currentPage < totalPages ? (
+              <a href={pageUrl(currentPage + 1)} class="admin-pagination-link w-9 h-9 flex items-center justify-center rounded-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container border border-outline-variant/30 transition-all" aria-label="Próxima página">
+                <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+              </a>
+            ) : (
+              <span class="w-9 h-9 flex items-center justify-center rounded-lg bg-surface-container-low/50 text-outline/40 cursor-not-allowed">
+                <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+              </span>
+            )}
+          </nav>
+        )}
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="admin-toast" role="status" aria-live="polite" class="fixed bottom-xl left-1/2 -translate-x-1/2 hidden rounded-full px-lg py-md font-label-md text-label-md shadow-lg bg-on-surface text-surface z-50">
+  <span id="admin-toast-message">—</span>
+</div>
+
+<script>
+  function showToast(message: string) {
+    const toast = document.getElementById('admin-toast');
+    const toastMsg = document.getElementById('admin-toast-message');
+    if (toast && toastMsg) {
+      toastMsg.textContent = message;
+      toast.classList.remove('hidden');
+      window.setTimeout(() => toast.classList.add('hidden'), 3500);
+    }
+  }
+
+  async function toggleFeatured(row: HTMLTableRowElement) {
+    const jobId = row.dataset.jobId;
+    const current = row.dataset.featured === 'true';
+    const next = !current;
+    try {
+      const res = await fetch(`/admin/api/jobs/${jobId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_featured: next }),
+      });
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      row.dataset.featured = String(next);
+      const icon = row.querySelector('.featured-icon') as HTMLElement | null;
+      const btn = row.querySelector('.featured-toggle') as HTMLButtonElement | null;
+      if (icon) {
+        icon.textContent = next ? 'star' : 'grade';
+        icon.classList.toggle('text-primary', next);
+        icon.classList.toggle('text-on-surface-variant', !next);
+      }
+      if (btn) btn.setAttribute('aria-pressed', String(next));
+      showToast(next ? 'Vaga destacada.' : 'Destaque removido.');
+    } catch (err) {
+      showToast('Falha ao alternar destaque.');
+    }
+  }
+
+  async function deleteJob(row: HTMLTableRowElement) {
+    const jobId = row.dataset.jobId;
+    if (!window.confirm('Remover esta vaga (soft-delete)?')) return;
+    try {
+      const res = await fetch(`/admin/api/jobs/${jobId}`, { method: 'DELETE' });
+      if (!res.ok && res.status !== 204) throw new Error(`status ${res.status}`);
+      row.remove();
+      showToast('Vaga removida.');
+    } catch (err) {
+      showToast('Falha ao remover vaga.');
+    }
+  }
+
+  document.querySelectorAll<HTMLTableRowElement>('#jobs-tbody tr[data-job-id]').forEach((row) => {
+    const featBtn = row.querySelector('.featured-toggle') as HTMLButtonElement | null;
+    const delBtn = row.querySelector('.delete-job') as HTMLButtonElement | null;
+    featBtn?.addEventListener('click', () => void toggleFeatured(row));
+    delBtn?.addEventListener('click', () => void deleteJob(row));
+  });
+
+  const runBtn = document.getElementById('run-scrapers-btn');
+  runBtn?.addEventListener('click', async () => {
+    if (!window.confirm('Disparar pipeline de scrapers agora?')) return;
+    runBtn.setAttribute('disabled', 'true');
+    try {
+      const res = await fetch('/admin/api/scrapers/run', { method: 'POST' });
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      const data = await res.json().catch(() => ({}));
+      showToast(data.message || 'Scrapers disparados.');
+    } catch (err) {
+      showToast('Falha ao disparar scrapers.');
+    } finally {
+      runBtn.removeAttribute('disabled');
+    }
+  });
+</script>
