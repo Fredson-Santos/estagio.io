@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Text, DateTime, ForeignKey, Enum as SQLEnum, Integer, Uuid
+from sqlalchemy import String, Text, DateTime, ForeignKey, Enum as SQLEnum, Integer, Uuid, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from estagio_shared.db.database import Base
 from estagio_shared.taxonomy import JobArea, JobModality, JobStatus, SourceStatus
@@ -37,6 +37,7 @@ class Job(Base):
     posted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     scraped_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
+    is_featured: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     status: Mapped[JobStatus] = mapped_column(SQLEnum(JobStatus, name="jobstatus"), default=JobStatus.ACTIVE, nullable=False)
 
     source_uuid: Mapped[uuid.UUID] = mapped_column(ForeignKey("sources.id"), nullable=False)
