@@ -8,6 +8,7 @@ export const AREA_LABELS: Record<string, string> = {
   FINANCAS: 'Finanças',
   ENGENHARIA_OUTRAS: 'Engenharia',
   DIREITO: 'Direito',
+  PROGRAMA_ESTAGIO: 'Programa de Estágio (Multi-Áreas)',
   OUTROS: 'Outros',
 };
 
@@ -26,6 +27,7 @@ export const AREA_OPTIONS: AreaOption[] = [
   { value: 'FINANCAS', label: AREA_LABELS.FINANCAS },
   { value: 'DIREITO', label: AREA_LABELS.DIREITO },
   { value: 'ENGENHARIA_OUTRAS', label: AREA_LABELS.ENGENHARIA_OUTRAS },
+  { value: 'PROGRAMA_ESTAGIO', label: AREA_LABELS.PROGRAMA_ESTAGIO },
   { value: 'OUTROS', label: AREA_LABELS.OUTROS },
 ];
 
