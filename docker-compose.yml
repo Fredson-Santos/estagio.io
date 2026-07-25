@@ -54,6 +54,8 @@ services:
       - HOST=0.0.0.0
       - PORT=4321
       - ADMIN_API_KEY=${ADMIN_API_KEY:-changeme}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme_admin_password}
+      - ADMIN_SECRET=${ADMIN_SECRET:-generate_a_long_random_secret_here_minimum_32_chars}
     ports:
       - "127.0.0.1:4321:4321"
     depends_on:
