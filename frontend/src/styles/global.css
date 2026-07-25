@@ -152,9 +152,23 @@ body {
   --color-surface-container-low: #1e293b;
   --color-surface-container: #334155;
   --color-surface-container-high: #475569;
+  --color-surface-container-highest: #475569;
   --color-outline-variant: #334155;
   --color-outline: #64748b;
   --color-secondary-container: #334155;
   --color-on-secondary-container: #e2e8f0;
   color-scheme: dark;
+}
+
+.dark select option {
+  background-color: #1e293b;
+  color: #f8fafc;
+}
+
+.dark input::placeholder {
+  color: #64748b;
+}
+
+.dark .glass-effect {
+  background: rgba(15, 23, 42, 0.85);
 }
