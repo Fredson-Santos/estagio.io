@@ -29,6 +29,7 @@ USER app
 EXPOSE 4321
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD wget -q --spider http://localhost:4321/ || exit 1
+    CMD node -e "fetch('http://127.0.0.1:4321/').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
+
 
 CMD ["node", "./dist/server/entry.mjs"]
