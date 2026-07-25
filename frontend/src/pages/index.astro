@@ -16,6 +16,8 @@ try {
     logo: job.company_logo || undefined,
     modality: formatModality(job.modality),
     isNew: job.is_new,
+    sourceUrl: job.source_url,
+    sourceName: job.source_name || undefined,
   }));
 } catch (e) {
   console.error('Erro ao buscar vagas do backend', e);
@@ -65,7 +67,6 @@ try {
         <div class="flex flex-wrap justify-center items-center gap-xl grayscale opacity-60">
           <span class="font-headline-sm font-extrabold tracking-tighter">Gupy</span>
           <span class="font-headline-sm font-extrabold tracking-tighter">CIEE</span>
-          <span class="font-headline-sm font-extrabold tracking-tighter">Vagas.com</span>
           <span class="font-headline-sm font-extrabold tracking-tighter">Nube</span>
           <span class="font-headline-sm font-extrabold tracking-tighter">Eureca</span>
         </div>

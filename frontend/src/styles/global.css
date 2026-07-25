@@ -154,5 +154,7 @@ body {
   --color-surface-container-high: #475569;
   --color-outline-variant: #334155;
   --color-outline: #64748b;
+  --color-secondary-container: #334155;
+  --color-on-secondary-container: #e2e8f0;
   color-scheme: dark;
 }
