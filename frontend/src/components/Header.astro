@@ -100,11 +100,11 @@ const isSobre = pathname.startsWith('/sobre');
     updateThemeUI(newTheme);
   });
 
-  // Restaura URL de busca salva nos links 'Vagas' do Header
-  const savedVagasFilterUrl = sessionStorage.getItem('last_vagas_filter_url');
-  if (savedVagasFilterUrl) {
-    document.querySelectorAll('a[href="/vagas"]').forEach((link) => {
-      (link as HTMLAnchorElement).href = savedVagasFilterUrl;
+  // Ao clicar nos links do menu do cabeçalho, limpa os filtros salvos
+  // para que a navegação principal abra páginas sem filtros antigos
+  document.querySelectorAll('a[href="/"], a[href="/vagas"]').forEach((link) => {
+    link.addEventListener('click', () => {
+      sessionStorage.removeItem('last_vagas_filter_url');
     });
-  }
+  });
 </script>
