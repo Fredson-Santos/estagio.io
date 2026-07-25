@@ -94,3 +94,48 @@ async def seed_job(db_session):
     await db_session.commit()
     await db_session.refresh(job)
     return job
+
+
+@pytest.fixture
+async def seed_featured_jobs(db_session):
+    """Cria 3 vagas ativas: 2 em destaque e 1 comum, compartilhando 1 source."""
+    source = Source(
+        name="Gupy",
+        type="json",
+        base_url="https://portal.gupy.io",
+        status=SourceStatus.ACTIVE,
+    )
+    db_session.add(source)
+    await db_session.commit()
+    await db_session.refresh(source)
+
+    jobs = []
+    specs = [
+        ("Estágio Backend", "ACME", JobModality.HYBRID, True),
+        ("Estágio Frontend", "Beta", JobModality.REMOTE, True),
+        ("Estágio DevOps", "Gamma", JobModality.ONSITE, False),
+    ]
+    for i, (title, company, modality, is_featured) in enumerate(specs):
+        job = Job(
+            id=uuid.uuid4(),
+            title=title,
+            company=company,
+            location="São Paulo",
+            modality=modality,
+            area=JobArea.TI_SOFTWARE,
+            description="Descrição",
+            source_url=f"https://example.com/job/{i}",
+            source_id=f"gupy-{i}",
+            posted_at=datetime.now(timezone.utc),
+            source_uuid=source.id,
+            status=JobStatus.ACTIVE,
+            is_active=True,
+            is_featured=is_featured,
+        )
+        db_session.add(job)
+        jobs.append(job)
+
+    await db_session.commit()
+    for j in jobs:
+        await db_session.refresh(j)
+    return jobs

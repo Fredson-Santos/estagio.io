@@ -38,23 +38,20 @@ async def list_jobs(
             Job.title.ilike(f"%{safe_q}%", escape="\\"),
             Job.company.ilike(f"%{safe_q}%", escape="\\")
         ))
-    if area:
-        query = query.where(Job.area == area)
     if modality:
         query = query.where(Job.modality == modality)
     if location:
         safe_loc = location.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         query = query.where(Job.location.ilike(f"%{safe_loc}%", escape="\\"))
+    if featured:
+        query = query.where(Job.is_featured == True)
         
     # Get total count
     count_query = select(func.count()).select_from(query.subquery())
     total = await db.scalar(count_query) or 0
     
     # Get items
-    if featured:
-        query = query.where(Job.is_featured == True)
     query = query.order_by(
-        Job.is_featured.desc().nulls_last(),
         Job.posted_at.desc().nulls_last()
     ).offset(skip).limit(limit)
         
