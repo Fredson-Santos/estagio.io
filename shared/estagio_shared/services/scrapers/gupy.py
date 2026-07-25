@@ -44,25 +44,71 @@ def _map_modality(workplace_type: str) -> JobModality:
     return mapping.get(workplace_type.lower(), JobModality.ONSITE)
 
 def _guess_area(title: str, description: str) -> JobArea:
-    """Classificação determinística (sem LLM) básica para economizar custo."""
-    text = f"{title} {description}".lower()
-    if any(re.search(rf"\b{x}\b", text) for x in ["desenvolvedor", "software", "backend", "frontend", "ti", "tecnologia", "programador", "sistemas", "devops"]):
-        return JobArea.TI_SOFTWARE
-    if any(re.search(rf"\b{x}\b", text) for x in ["dados", "data analyst", "data science", "engenharia de dados"]):
-        return JobArea.DADOS
-    if any(re.search(rf"\b{x}\b", text) for x in ["design", "ux", "ui", "produto"]):
-        return JobArea.DESIGN
-    if any(re.search(rf"\b{x}\b", text) for x in ["marketing", "comunicação", "growth"]):
-        return JobArea.MARKETING
-    if any(re.search(rf"\b{x}\b", text) for x in ["rh", "recursos humanos", "recrutamento", "pessoas"]):
-        return JobArea.RH
-    if any(re.search(rf"\b{x}\b", text) for x in ["finanças", "contábil", "financeiro"]):
-        return JobArea.FINANCAS
-    if any(re.search(rf"\b{x}\b", text) for x in ["direito", "jurídico", "legal"]):
-        return JobArea.DIREITO
-    if any(re.search(rf"\b{x}\b", text) for x in ["administração", "negócios", "comercial", "vendas"]):
-        return JobArea.NEGOCIOS
+    """
+    Classificação determinística precisa (Title-First & Multi-Stage).
+    Prioriza o Título para evitar que palavras soltas na descrição causem falsos positivos.
+    Identifica vagas de programas de estágio com múltiplas áreas.
+    """
+    title_lower = (title or "").lower()
+    desc_lower = (description or "").lower()
+
+    # 0. Checagem de Programa de Estágio (Multi-Áreas)
+    program_keywords = [
+        "programa de estágio", "programa de estagio", "estágio corporativo", "estagio corporativo",
+        "diversas áreas", "diversas areas", "várias áreas", "varias areas", "banco de talentos",
+        "estágio generalista", "estagio generalista", "multi-áreas", "multi-areas"
+    ]
+    if any(k in title_lower for k in program_keywords):
+        return JobArea.PROGRAMA_ESTAGIO
+
+    if "programa" in title_lower or "estágio" in title_lower or "estagio" in title_lower:
+        matched_areas = 0
+        if re.search(r"\b(marketing|comunicação)\b", desc_lower): matched_areas += 1
+        if re.search(r"\b(ti|tecnologia|desenvolvimento|software)\b", desc_lower): matched_areas += 1
+        if re.search(r"\b(administração|negócios|comercial)\b", desc_lower): matched_areas += 1
+        if re.search(r"\b(finanças|financeiro|contábil)\b", desc_lower): matched_areas += 1
+        if re.search(r"\b(rh|recursos humanos)\b", desc_lower): matched_areas += 1
+        if re.search(r"\b(engenharia)\b", desc_lower): matched_areas += 1
+
+        if matched_areas >= 3:
+            return JobArea.PROGRAMA_ESTAGIO
+
+    # 1. FASE 1: TITLE-FIRST MATCHING (Prioridade Absoluta ao Título)
+    title_rules = [
+        (JobArea.TI_SOFTWARE, [r"\b(desenvolvedor|dev|software|backend|frontend|fullstack|programador|sistemas|devops|web|mobile|qa|tester|infraestrutura)\b", r"\b(ti|tecnologia)\b"]),
+        (JobArea.DADOS, [r"\b(dados|data analyst|data science|bi|business intelligence|data engineer|engenharia de dados)\b"]),
+        (JobArea.DESIGN, [r"\b(design|designer|ux|ui|product design|arte|criativo)\b"]),
+        (JobArea.MARKETING, [r"\b(marketing|mkt|seo|sem|growth|mídias sociais|social media|copywriter|branding)\b"]),
+        (JobArea.RH, [r"\b(rh|recursos humanos|recrutamento|seleção|people|talent|gestão de pessoas)\b"]),
+        (JobArea.FINANCAS, [r"\b(finanças|financeiro|contabilidade|contábil|auditoria|tributário|tesouraria|fiscal)\b"]),
+        (JobArea.DIREITO, [r"\b(direito|jurídico|legal|advocacia|compliance)\b"]),
+        (JobArea.ENGENHARIA_OUTRAS, [r"\b(engenharia|engenheiro|eng|produção|mecânica|elétrica|civil|química)\b"]),
+        (JobArea.NEGOCIOS, [r"\b(administração|adm|negócios|comercial|vendas|sales|operações|inside sales|gestão)\b"]),
+    ]
+
+    for area, patterns in title_rules:
+        if any(re.search(pat, title_lower) for pat in patterns):
+            return area
+
+    # 2. FASE 2: DESCRIPTION CONTEXTUAL MATCHING (Apenas para Títulos Genéricos)
+    desc_rules = [
+        (JobArea.TI_SOFTWARE, [r"\b(atuará com desenvolvimento|programação em|stack tecnológica|desenvolvimento de software|código clean|banco de dados relacional|desenvolvedor)\b"]),
+        (JobArea.DADOS, [r"\b(análise de dados|ciência de dados|modelos de dados|dashboards em power bi|sql avançado|pipeline de dados)\b"]),
+        (JobArea.DESIGN, [r"\b(criação de wireframes|prototipagem|figma|design de interface|experiência do usuário)\b"]),
+        (JobArea.MARKETING, [r"\b(área de marketing|estratégias de marketing|campanhas de marketing|redes sociais e inbound|gestão de tráfego)\b"]),
+        (JobArea.RH, [r"\b(área de recursos humanos|processos seletivos|atividades de rh|admissão e integração|clima organizacional)\b"]),
+        (JobArea.FINANCAS, [r"\b(área financeira|contas a pagar|contas a receber|conciliação bancária|demonstrativos contábeis)\b"]),
+        (JobArea.DIREITO, [r"\b(área jurídica|elaboração de contratos|processos judiciais|consultoria jurídica)\b"]),
+        (JobArea.ENGENHARIA_OUTRAS, [r"\b(área de engenharia|processos produtivos|linhas de produção|projetos de engenharia)\b"]),
+        (JobArea.NEGOCIOS, [r"\b(área comercial|prospecção de clientes|processos administrativos|suporte à gestão|vendas b2b)\b"]),
+    ]
+
+    for area, patterns in desc_rules:
+        if any(re.search(pat, desc_lower) for pat in patterns):
+            return area
+
     return JobArea.OUTROS
+
 
 def parse_gupy_job(raw_job: dict) -> dict:
     """Formata o JSON retornado pela Gupy para o formato do nosso banco de dados."""

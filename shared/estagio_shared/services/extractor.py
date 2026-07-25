@@ -22,7 +22,7 @@ com exatamente as duas chaves abaixo: 'job_data' (os dados extraídos limpos) e 
     "company": "nome da empresa limpo (ou null se não for possível determinar)",
     "location": "cidade, estado (ou null se for remoto)",
     "modality": "um dos valores exatos: 'REMOTE', 'HYBRID', 'ONSITE'. Se não informado, deduzir pelo texto ou usar 'ONSITE' como padrão",
-    "area": "um dos valores exatos da taxonomia: 'TI_SOFTWARE', 'DADOS', 'DESIGN', 'MARKETING', 'NEGOCIOS', 'RH', 'FINANCAS', 'ENGENHARIA_OUTRAS', 'DIREITO', 'OUTROS'",
+    "area": "um dos valores exatos da taxonomia: 'TI_SOFTWARE', 'DADOS', 'DESIGN', 'MARKETING', 'NEGOCIOS', 'RH', 'FINANCAS', 'ENGENHARIA_OUTRAS', 'DIREITO', 'PROGRAMA_ESTAGIO', 'OUTROS'",
     "description": "descrição completa e limpa da vaga, com os requisitos e atividades principal",
     "company_logo": "url da imagem do logo da empresa se existir, ou null caso não exista na página"
   },

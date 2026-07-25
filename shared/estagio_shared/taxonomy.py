@@ -10,6 +10,7 @@ class JobArea(str, Enum):
     FINANCAS = "FINANCAS"
     ENGENHARIA_OUTRAS = "ENGENHARIA_OUTRAS"
     DIREITO = "DIREITO"
+    PROGRAMA_ESTAGIO = "PROGRAMA_ESTAGIO"
     OUTROS = "OUTROS"
 
 class JobModality(str, Enum):

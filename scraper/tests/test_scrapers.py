@@ -8,6 +8,12 @@ def test_guess_area():
     assert _guess_area("Desenvolvedor Python Backend", "Python, SQL, APIs") == JobArea.TI_SOFTWARE
     assert _guess_area("Estágio em Marketing", "SEO e Google Ads") == JobArea.MARKETING
     assert _guess_area("Estágio em RH", "Recrutamento e seleção") == JobArea.RH
+    # Caso crítico: Administração que cita marketing e TI na descrição deve permanecer NEGOCIOS
+    assert _guess_area("Estágio em Administração", "Atuará com interface com equipes de marketing e TI.") == JobArea.NEGOCIOS
+    assert _guess_area("Estágio em Recursos Humanos", "Interface com desenvolvedores e sistemas de TI.") == JobArea.RH
+    # Casos de Programa de Estágio Multi-Áreas
+    assert _guess_area("Programa de Estágio 2026 - Diversas Áreas", "Vagas em TI, Marketing, RH e Finanças") == JobArea.PROGRAMA_ESTAGIO
+    assert _guess_area("Estágio Corporativo", "Oportunidades em várias áreas da empresa") == JobArea.PROGRAMA_ESTAGIO
 
 def test_parse_gupy_job():
     raw_json = {
