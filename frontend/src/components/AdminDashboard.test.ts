@@ -127,4 +127,10 @@ describe('AdminDashboard Component', () => {
     // O guard de early return deve existir
     expect(source).toContain('if (!btn || btn.disabled) return');
   });
+
+  it('renders a logout link pointing to /admin/logout', async () => {
+    const html = await renderDashboard();
+    expect(html).toContain('href="/admin/logout"');
+    expect(html).toContain('Sair');
+  });
 });
