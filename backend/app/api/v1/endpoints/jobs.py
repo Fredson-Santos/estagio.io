@@ -7,13 +7,14 @@ from typing import Optional
 from uuid import UUID
 
 from app.db.database import get_db
-from app.db.models import Job
+from app.db.models import Job, JobClick
 from app.schemas.job import JobResponse, PaginatedJobResponse, JobUpdate
 from estagio_shared.taxonomy import JobArea, JobModality
 from app.core.rate_limit import limiter
 from app.core.security import verify_admin_key
 
 router = APIRouter()
+
 
 @router.get("", response_model=PaginatedJobResponse)
 @limiter.limit("60/minute")
@@ -108,3 +109,21 @@ async def delete_job(
 
     job.is_active = False
     await db.commit()
+
+
+@router.post("/{job_id}/click", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("30/minute")
+async def register_click(
+    request: Request,
+    job_id: UUID,
+    db: AsyncSession = Depends(get_db)
+):
+    job = await db.scalar(select(Job).where(Job.id == job_id, Job.is_active == True))
+    if not job:
+        raise HTTPException(status_code=404, detail="Vaga não encontrada")
+
+    referrer = (request.headers.get("referer") or "")[:255]
+    click = JobClick(job_id=job.id, referrer=referrer)
+    db.add(click)
+    await db.commit()
+

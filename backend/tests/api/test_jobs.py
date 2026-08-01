@@ -99,3 +99,22 @@ async def test_read_jobs_ordered_by_posted_at_desc(db_session, client):
     assert items[0]["title"] == "Vaga Recente Comum"
     assert items[1]["title"] == "Vaga Antiga Destaque"
 
+
+async def test_register_click_success(client, seed_job, db_session):
+    response = await client.post(f"/api/v1/jobs/{seed_job.id}/click", headers={"Referer": "https://estagio.io"})
+    assert response.status_code == 204
+
+    from sqlalchemy.future import select
+    from app.db.models import JobClick
+    result = await db_session.execute(select(JobClick).where(JobClick.job_id == seed_job.id))
+    clicks = result.scalars().all()
+    assert len(clicks) == 1
+    assert clicks[0].referrer == "https://estagio.io"
+
+
+async def test_register_click_not_found(client):
+    random_id = str(uuid.uuid4())
+    response = await client.post(f"/api/v1/jobs/{random_id}/click")
+    assert response.status_code == 404
+
+
