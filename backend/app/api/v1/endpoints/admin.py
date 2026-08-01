@@ -1,8 +1,10 @@
-from fastapi import APIRouter, BackgroundTasks, Depends
+import httpx
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
 
+from app.core.config import settings
 from app.db.database import get_db
 from app.db.models import Job, Source
 from app.schemas.admin import AdminStats, ScraperRunResponse
@@ -29,7 +31,15 @@ async def get_stats(db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/scrapers/run", response_model=ScraperRunResponse, status_code=202)
-async def run_scrapers(background_tasks: BackgroundTasks):
-    from estagio_shared.services.etl import run_pipeline
-    background_tasks.add_task(run_pipeline)
+async def run_scrapers():
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        try:
+            resp = await client.post(
+                f"{settings.SCRAPER_URL}/run",
+                headers={"X-Admin-Key": settings.ADMIN_API_KEY or ""},
+            )
+            resp.raise_for_status()
+        except httpx.HTTPError:
+            raise HTTPException(status_code=502, detail="Scraper indisponível")
     return ScraperRunResponse(message="Pipeline de scrapers disparado", status="triggered")
+

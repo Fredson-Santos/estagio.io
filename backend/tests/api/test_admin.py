@@ -1,5 +1,6 @@
 import uuid
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
+import httpx
 
 from app.db.models import Job
 
@@ -25,11 +26,38 @@ async def test_scrapers_run_requires_auth(client):
 
 
 async def test_scrapers_run_triggers(client, admin_headers):
-    with patch("estagio_shared.services.etl.run_pipeline", new=lambda: None):
+    mock_resp = MagicMock()
+    mock_resp.raise_for_status = MagicMock()
+
+    original_post = httpx.AsyncClient.post
+
+    async def side_effect(self, url, *args, **kwargs):
+        if "http://scraper" in str(url) or "9090" in str(url):
+            return mock_resp
+        return await original_post(self, url, *args, **kwargs)
+
+    with patch.object(httpx.AsyncClient, "post", autospec=True, side_effect=side_effect):
         response = await client.post("/api/v1/admin/scrapers/run", headers=admin_headers)
     assert response.status_code == 202
     data = response.json()
     assert data["status"] == "triggered"
+
+
+async def test_scrapers_run_returns_502_on_scraper_unavailable(client, admin_headers):
+    original_post = httpx.AsyncClient.post
+
+    async def side_effect(self, url, *args, **kwargs):
+        if "http://scraper" in str(url) or "9090" in str(url):
+            raise httpx.HTTPError("Scraper connection error")
+        return await original_post(self, url, *args, **kwargs)
+
+    with patch.object(httpx.AsyncClient, "post", autospec=True, side_effect=side_effect):
+        response = await client.post("/api/v1/admin/scrapers/run", headers=admin_headers)
+    assert response.status_code == 502
+    assert response.json()["detail"] == "Scraper indisponível"
+
+
+
 
 
 async def test_patch_job_featured(client, seed_job, admin_headers):
