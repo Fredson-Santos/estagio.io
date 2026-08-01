@@ -5,20 +5,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "estagio-shared"
 version = "0.1.0"
-description = "Pacote compartilhado entre backend API e scraper do estagio.io"
+description = "Taxonomia compartilhada entre backend e scraper do estagio.io"
 requires-python = ">=3.12"
-dependencies = [
-    "sqlalchemy>=2.0.30",
-    "asyncpg>=0.29.0",
-    "aiosqlite>=0.20.0",
-    "pydantic-settings>=2.3.0",
-    "httpx>=0.27.0",
-    "beautifulsoup4>=4.12.3",
-    "lxml>=5.2.2",
-    "openai>=1.30.5",
-    "rapidfuzz>=3.9.0",
-    "python-dotenv>=1.0.1",
-]
+dependencies = []
 
 [tool.setuptools.packages.find]
 include = ["estagio_shared*"]

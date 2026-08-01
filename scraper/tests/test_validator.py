@@ -1,6 +1,7 @@
 import pytest
-from estagio_shared.services.job_validator import validate_job
+from src.services.job_validator import validate_job
 from estagio_shared.taxonomy import JobModality, JobArea
+
 
 def test_validate_valid_onsite_job():
     job = {
