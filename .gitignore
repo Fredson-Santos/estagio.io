@@ -23,6 +23,9 @@ dist/
 # Database
 *.db
 *.sqlite3
+backend/data/
+scraper/data/
+scraper/db/
 
 # Logs
 *.log
