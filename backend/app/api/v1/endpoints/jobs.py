@@ -6,8 +6,8 @@ from sqlalchemy import func
 from typing import Optional
 from uuid import UUID
 
-from estagio_shared.db.database import get_db
-from estagio_shared.db.models import Job
+from app.db.database import get_db
+from app.db.models import Job
 from app.schemas.job import JobResponse, PaginatedJobResponse, JobUpdate
 from estagio_shared.taxonomy import JobArea, JobModality
 from app.core.rate_limit import limiter

@@ -1,7 +1,7 @@
 import uuid
 from unittest.mock import patch
 
-from estagio_shared.db.models import Job
+from app.db.models import Job
 
 
 async def test_stats_requires_auth(client):

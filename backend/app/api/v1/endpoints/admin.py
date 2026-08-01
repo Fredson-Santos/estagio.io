@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
 
-from estagio_shared.db.database import get_db
-from estagio_shared.db.models import Job, Source
+from app.db.database import get_db
+from app.db.models import Job, Source
 from app.schemas.admin import AdminStats, ScraperRunResponse
 from app.core.security import verify_admin_key
 

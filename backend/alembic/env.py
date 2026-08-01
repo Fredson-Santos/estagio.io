@@ -11,8 +11,8 @@ from sqlalchemy import pool
 from alembic import context
 
 from app.core.config import settings
-from estagio_shared.db.database import Base
-from estagio_shared.db.models import *  # Import all models so they register with Base.metadata
+from app.db.database import Base
+from app.db.models import *  # Import all models so they register with Base.metadata
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)

@@ -7,8 +7,8 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine, AsyncSession
 
-from estagio_shared.db.database import Base, get_db
-from estagio_shared.db.models import Job, Source
+from app.db.database import Base, get_db
+from app.db.models import Job, Source
 from estagio_shared.taxonomy import JobArea, JobModality, JobStatus, SourceStatus
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"

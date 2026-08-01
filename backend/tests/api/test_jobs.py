@@ -66,7 +66,7 @@ async def test_featured_filter_count_without_flag(client, seed_featured_jobs):
 
 async def test_read_jobs_ordered_by_posted_at_desc(db_session, client):
     from datetime import datetime, timedelta, timezone
-    from estagio_shared.db.models import Job, Source
+    from app.db.models import Job, Source
     from estagio_shared.taxonomy import JobArea, JobModality, JobStatus, SourceStatus
 
     source = Source(name="Test", type="json", base_url="https://test.io", status=SourceStatus.ACTIVE)

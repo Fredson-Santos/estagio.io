@@ -26,3 +26,12 @@ class SourceStatus(str, Enum):
     ACTIVE = "ACTIVE"
     INACTIVE = "INACTIVE"
     ERROR = "ERROR"
+
+
+class TrackingStatus(str, Enum):
+    SAVED = "SAVED"
+    APPLIED = "APPLIED"
+    INTERVIEW = "INTERVIEW"
+    OFFER = "OFFER"
+    HIRED = "HIRED"
+    REJECTED = "REJECTED"
