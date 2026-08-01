@@ -135,8 +135,39 @@ def upgrade() -> None:
     )
     op.create_index("ix_tracked_jobs_user_id", "tracked_jobs", ["user_id"])
 
+    op.execute("""
+        CREATE VIRTUAL TABLE IF NOT EXISTS jobs_fts USING fts5(
+            title, company, description, location,
+            content=jobs, content_rowid=rowid
+        );
+    """)
+    op.execute("""
+        CREATE TRIGGER IF NOT EXISTS jobs_fts_insert AFTER INSERT ON jobs BEGIN
+            INSERT INTO jobs_fts(rowid, title, company, description, location)
+            VALUES (new.rowid, new.title, new.company, new.description, new.location);
+        END;
+    """)
+    op.execute("""
+        CREATE TRIGGER IF NOT EXISTS jobs_fts_delete AFTER DELETE ON jobs BEGIN
+            INSERT INTO jobs_fts(jobs_fts, rowid, title, company, description, location)
+            VALUES('delete', old.rowid, old.title, old.company, old.description, old.location);
+        END;
+    """)
+    op.execute("""
+        CREATE TRIGGER IF NOT EXISTS jobs_fts_update AFTER UPDATE ON jobs BEGIN
+            INSERT INTO jobs_fts(jobs_fts, rowid, title, company, description, location)
+            VALUES('delete', old.rowid, old.title, old.company, old.description, old.location);
+            INSERT INTO jobs_fts(rowid, title, company, description, location)
+            VALUES (new.rowid, new.title, new.company, new.description, new.location);
+        END;
+    """)
+
 
 def downgrade() -> None:
+    op.execute("DROP TRIGGER IF EXISTS jobs_fts_update;")
+    op.execute("DROP TRIGGER IF EXISTS jobs_fts_delete;")
+    op.execute("DROP TRIGGER IF EXISTS jobs_fts_insert;")
+    op.execute("DROP TABLE IF EXISTS jobs_fts;")
     op.drop_index("ix_tracked_jobs_user_id", table_name="tracked_jobs")
     op.drop_table("tracked_jobs")
     op.drop_index("ix_users_email", table_name="users")
@@ -144,3 +175,4 @@ def downgrade() -> None:
     op.drop_table("job_clicks")
     op.drop_table("jobs")
     op.drop_table("sources")
+

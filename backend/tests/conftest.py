@@ -15,6 +15,9 @@ TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 TEST_ADMIN_KEY = "test-admin-key"
 
 
+from sqlalchemy import text
+
+
 @pytest.fixture(scope="function")
 def event_loop():
     loop = asyncio.new_event_loop()
@@ -23,14 +26,52 @@ def event_loop():
 
 
 @pytest.fixture(scope="function")
-async def engine():
-    eng = create_async_engine(TEST_DATABASE_URL, echo=False)
+async def engine(tmp_path):
+    db_file = tmp_path / "test.db"
+    test_db_url = f"sqlite+aiosqlite:///{db_file}"
+    eng = create_async_engine(test_db_url, echo=False)
     async with eng.begin() as conn:
+        await conn.execute(text("PRAGMA journal_mode=WAL;"))
         await conn.run_sync(Base.metadata.create_all)
+        await conn.execute(
+            text("""
+            CREATE VIRTUAL TABLE IF NOT EXISTS jobs_fts USING fts5(
+                title, company, description, location,
+                content=jobs, content_rowid=rowid
+            );
+        """)
+        )
+        await conn.execute(
+            text("""
+            CREATE TRIGGER IF NOT EXISTS jobs_fts_insert AFTER INSERT ON jobs BEGIN
+                INSERT INTO jobs_fts(rowid, title, company, description, location)
+                VALUES (new.rowid, new.title, new.company, new.description, new.location);
+            END;
+        """)
+        )
+        await conn.execute(
+            text("""
+            CREATE TRIGGER IF NOT EXISTS jobs_fts_delete AFTER DELETE ON jobs BEGIN
+                INSERT INTO jobs_fts(jobs_fts, rowid, title, company, description, location)
+                VALUES('delete', old.rowid, old.title, old.company, old.description, old.location);
+            END;
+        """)
+        )
+        await conn.execute(
+            text("""
+            CREATE TRIGGER IF NOT EXISTS jobs_fts_update AFTER UPDATE ON jobs BEGIN
+                INSERT INTO jobs_fts(jobs_fts, rowid, title, company, description, location)
+                VALUES('delete', old.rowid, old.title, old.company, old.description, old.location);
+                INSERT INTO jobs_fts(rowid, title, company, description, location)
+                VALUES (new.rowid, new.title, new.company, new.description, new.location);
+            END;
+        """)
+        )
     yield eng
     async with eng.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
     await eng.dispose()
+
 
 
 @pytest.fixture(scope="function")
