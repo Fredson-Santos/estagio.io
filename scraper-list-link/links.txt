@@ -1,8 +1,0 @@
-eureca = https://candidate-api.eureca.me/v2/opportunities?pageSize=8&page=1
-
-gupy = https://employability-portal.gupy.io/api/v1/jobs/companies?jobName=estagio&limit=1000&sortBy=company&sortOrder=asc
-
-bebee = https://bebee.com/br/jobs?q=Programa+De+Est%C3%A1gio
-
-99jobs = https://www.99jobs.com/opportunities/filtered_search?utf8=%E2%9C%93&utm_source=tagportal&utm_medium=busca&utm_campaign=home&utm_id=001&search%5Bterm%5D=estagio
-
