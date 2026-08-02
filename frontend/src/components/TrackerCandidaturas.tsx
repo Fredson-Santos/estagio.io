@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import type { ReactNode } from "react";
 
 // ---------- Tipos ----------
@@ -678,79 +678,122 @@ function NovaCandidaturaModal({ onClose, onSave }: { onClose: () => void; onSave
 
   const canSave = form.cargo.trim() && form.empresa.trim();
 
+  const inputStyle: React.CSSProperties = {
+    width: "100%", fontSize: 14, padding: "8px 12px",
+    borderRadius: 8, border: "1px solid #c1c6d7",
+    background: "#fff", outline: "none", boxSizing: "border-box",
+  };
+  const labelStyle: React.CSSProperties = {
+    display: "flex", flexDirection: "column", gap: 4,
+  };
+  const labelTextStyle: React.CSSProperties = {
+    fontSize: 12, fontWeight: 500, color: "#414754",
+  };
+
   return (
-    <div className="fixed inset-0 bg-on-surface/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-      <div className="bg-surface-container-lowest rounded-xl w-full max-w-md border border-outline-variant/30 shadow-lg">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant/20">
-          <h2 className="font-headline-sm text-headline-sm font-semibold text-on-surface">Nova candidatura</h2>
-          <button onClick={onClose} className="text-on-surface-variant hover:text-on-surface rounded-full w-8 h-8 flex items-center justify-center hover:bg-surface-container-low transition-colors">
-            <span className="material-symbols-outlined text-[20px]">close</span>
+    <div
+      style={{
+        position: "fixed", inset: 0,
+        background: "rgba(25,28,29,0.5)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        zIndex: 50, padding: "16px",
+        backdropFilter: "blur(4px)",
+      }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        style={{
+          background: "#ffffff",
+          borderRadius: "12px",
+          width: "100%",
+          maxWidth: "460px",
+          border: "1px solid #e5e7eb",
+          boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #e5e7eb" }}>
+          <h2 style={{ fontSize: 18, fontWeight: 600, color: "#191c1d", margin: 0 }}>Nova candidatura</h2>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#414754", display: "flex", padding: 4 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>close</span>
           </button>
         </div>
 
-        <div className="px-5 py-4 flex flex-col gap-3.5">
-          <Field label="Cargo">
+        {/* Body */}
+        <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
+          <label style={labelStyle}>
+            <span style={labelTextStyle}>Cargo *</span>
             <input
               autoFocus
               value={form.cargo}
               onChange={(e) => setForm({ ...form, cargo: e.target.value })}
               placeholder="Ex: Estágio em Dados"
-              className="w-full font-body-sm text-body-sm px-3 py-2 rounded-lg border border-outline-variant bg-surface text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              style={inputStyle}
             />
-          </Field>
-          <Field label="Empresa">
+          </label>
+          <label style={labelStyle}>
+            <span style={labelTextStyle}>Empresa *</span>
             <input
               value={form.empresa}
               onChange={(e) => setForm({ ...form, empresa: e.target.value })}
               placeholder="Ex: Nubank"
-              className="w-full font-body-sm text-body-sm px-3 py-2 rounded-lg border border-outline-variant bg-surface text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              style={inputStyle}
             />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Local">
+          </label>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <label style={labelStyle}>
+              <span style={labelTextStyle}>Local</span>
               <input
                 value={form.local}
                 onChange={(e) => setForm({ ...form, local: e.target.value })}
                 placeholder="Cidade ou Remoto"
-                className="w-full font-body-sm text-body-sm px-3 py-2 rounded-lg border border-outline-variant bg-surface text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                style={inputStyle}
               />
-            </Field>
-            <Field label="Modalidade">
-              <div className="relative">
+            </label>
+            <label style={labelStyle}>
+              <span style={labelTextStyle}>Modalidade</span>
+              <div style={{ position: "relative" }}>
                 <select
                   value={form.modalidade}
                   onChange={(e) => setForm({ ...form, modalidade: e.target.value })}
-                  className="w-full font-body-sm text-body-sm px-3 py-2 rounded-lg border border-outline-variant bg-surface text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none cursor-pointer"
+                  style={{ ...inputStyle, appearance: "none", cursor: "pointer", paddingRight: 32 }}
                 >
                   <option>Presencial</option>
                   <option>Remoto</option>
                   <option>Híbrido</option>
                 </select>
-                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[18px]">expand_more</span>
+                <span className="material-symbols-outlined" style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: 18, color: "#727786", pointerEvents: "none" }}>expand_more</span>
               </div>
-            </Field>
+            </label>
           </div>
-          <Field label="Link da vaga (opcional)">
+          <label style={labelStyle}>
+            <span style={labelTextStyle}>Link da vaga (opcional)</span>
             <input
               value={form.link}
               onChange={(e) => setForm({ ...form, link: e.target.value })}
               placeholder="https://..."
-              className="w-full font-body-sm text-body-sm px-3 py-2 rounded-lg border border-outline-variant bg-surface text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              style={inputStyle}
             />
-          </Field>
+          </label>
         </div>
 
-        <div className="px-5 py-4 border-t border-outline-variant/20 flex justify-end gap-2">
+        {/* Footer */}
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, padding: "12px 20px", borderTop: "1px solid #e5e7eb" }}>
           <button
             onClick={onClose}
-            className="font-label-md text-label-sm text-on-surface-variant hover:text-on-surface px-4 py-2 rounded-lg hover:bg-surface-container-low transition-colors"
+            style={{ fontSize: 13, color: "#414754", background: "none", border: "1px solid #c1c6d7", padding: "8px 16px", borderRadius: 8, cursor: "pointer" }}
           >
             Cancelar
           </button>
           <button
             disabled={!canSave}
             onClick={() => onSave(form)}
-            className="font-label-md text-label-sm text-on-primary bg-primary hover:brightness-110 disabled:bg-surface-container-high disabled:text-outline disabled:cursor-not-allowed px-4 py-2 rounded-lg transition-all active:scale-95"
+            style={{
+              fontSize: 13, fontWeight: 500, padding: "8px 16px", borderRadius: 8, cursor: canSave ? "pointer" : "not-allowed",
+              background: canSave ? "#0058c3" : "#e5e7eb",
+              color: canSave ? "#ffffff" : "#9ca3af",
+              border: "none",
+            }}
           >
             Salvar
           </button>
@@ -782,140 +825,152 @@ function DetalheModal({
     (s) => !card.etapas?.some((e) => e.titulo === s)
   );
 
+  const statusColors: Record<string, { bg: string; border: string; text: string }> = {
+    salvo:      { bg: "#f3f4f5", border: "#c1c6d7", text: "#414754" },
+    enviado:    { bg: "#eff4ff", border: "#0058c3", text: "#0058c3" },
+    entrevista: { bg: "#fffbeb", border: "#f59e0b", text: "#92400e" },
+    oferta:     { bg: "#ecfdf5", border: "#10b981", text: "#065f46" },
+    recusado:   { bg: "#fff1f2", border: "#ba1a1a", text: "#9f1239" },
+  };
+
   return (
-    <div className="fixed inset-0 bg-on-surface/15 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-      <div className="bg-surface-container-lowest rounded-xl w-full max-w-md border border-outline-variant/30 shadow-lg max-h-[85vh] overflow-y-auto">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-outline-variant/20">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary font-bold flex items-center justify-center flex-shrink-0">
+    <div
+      style={{
+        position: "fixed", inset: 0,
+        background: "rgba(25,28,29,0.45)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        zIndex: 50, padding: "16px",
+        backdropFilter: "blur(4px)",
+      }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        style={{
+          background: "#ffffff",
+          borderRadius: "12px",
+          width: "100%",
+          maxWidth: "480px",
+          border: "1px solid #e5e7eb",
+          boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+          maxHeight: "88vh",
+          overflowY: "auto",
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", padding: "20px 20px 16px", borderBottom: "1px solid #e5e7eb" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: "#eff4ff", color: "#0058c3", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 14 }}>
               {initials(card.empresa)}
             </div>
             <div>
-              <h2 className="font-headline-sm text-headline-sm font-semibold text-on-surface leading-snug">
-                {card.cargo}
-              </h2>
-              <p className="font-body-sm text-on-surface-variant mt-0.5">{card.empresa}</p>
+              <h2 style={{ fontSize: 18, fontWeight: 600, color: "#191c1d", lineHeight: 1.3, margin: 0 }}>{card.cargo}</h2>
+              <p style={{ fontSize: 13, color: "#414754", marginTop: 2 }}>{card.empresa}</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-on-surface-variant hover:text-on-surface rounded-full w-8 h-8 flex items-center justify-center hover:bg-surface-container-low transition-colors">
-            <span className="material-symbols-outlined text-[20px]">close</span>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: 6, color: "#414754", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%" }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>close</span>
           </button>
         </div>
 
-        <div className="px-5 py-4 flex flex-col gap-3.5">
-          <div className="flex items-center gap-4 font-body-sm text-body-sm text-on-surface-variant">
-            <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[16px]">location_on</span>
+        {/* Body */}
+        <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Localização + modalidade */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 13, color: "#414754" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 15 }}>location_on</span>
               {card.local}
             </span>
-            <span
-              className={`font-label-sm text-label-sm px-2 py-0.5 rounded-full border ${MODALIDADE_STYLE[card.modalidade]}`}
-            >
+            <span style={{
+              fontSize: 12, fontWeight: 500, padding: "2px 8px", borderRadius: 999, border: "1px solid",
+              ...(card.modalidade === "Remoto"
+                ? { background: "#ecfdf5", color: "#065f46", borderColor: "#a7f3d0" }
+                : card.modalidade === "Híbrido"
+                ? { background: "#fffbeb", color: "#92400e", borderColor: "#fcd34d" }
+                : { background: "#f3f4f5", color: "#414754", borderColor: "#c1c6d7" })
+            }}>
               {card.modalidade}
             </span>
           </div>
 
+          {/* Link */}
           {card.link && (
-            <a
-              href={card.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 font-body-sm text-body-sm text-primary hover:underline"
-            >
-              <span className="material-symbols-outlined text-[16px]">open_in_new</span>
+            <a href={card.link} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#0058c3", textDecoration: "none" }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 15 }}>open_in_new</span>
               Ver vaga original
             </a>
           )}
 
+          {/* Notas */}
           {card.notas && (
-            <div className="bg-surface-container rounded-lg p-3 font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+            <div style={{ background: "#f3f4f5", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "#414754", lineHeight: 1.5 }}>
               {card.notas}
             </div>
           )}
 
+          {/* Etapas */}
           <div>
-            <p className="font-label-md text-label-sm font-medium text-on-surface mb-2">
-              Etapas do processo
-            </p>
+            <p style={{ fontSize: 13, fontWeight: 600, color: "#191c1d", marginBottom: 10 }}>Etapas do processo</p>
 
             {card.etapas && card.etapas.length > 0 && (
-              <div className="flex flex-col gap-1.5 mb-2.5">
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
                 {card.etapas.map((etapa) => (
-                  <div
-                    key={etapa.id}
-                    className="flex items-center gap-2.5 group bg-surface-container-lowest rounded-lg px-2.5 py-2 border border-outline-variant/20"
-                  >
+                  <div key={etapa.id} style={{ display: "flex", alignItems: "center", gap: 10, background: "#f9fafb", borderRadius: 8, padding: "8px 10px", border: "1px solid #e5e7eb" }}>
                     <button
                       onClick={() => onToggleEtapa(etapa.id)}
-                      className={`w-4 h-4 rounded-md border flex items-center justify-center flex-shrink-0 transition-colors ${
-                        etapa.feita
-                          ? "bg-emerald-500 border-emerald-500 text-white"
-                          : "border-outline-variant bg-surface-container-lowest"
-                      }`}
+                      style={{
+                        width: 16, height: 16, borderRadius: 4, border: "1px solid",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        flexShrink: 0, cursor: "pointer",
+                        ...(etapa.feita
+                          ? { background: "#10b981", borderColor: "#10b981", color: "#fff" }
+                          : { background: "#fff", borderColor: "#c1c6d7", color: "transparent" })
+                      }}
                     >
                       {etapa.feita && (
-                        <svg viewBox="0 0 12 12" className="w-2.5 h-2.5" fill="none">
-                          <path
-                            d="M2.5 6L5 8.5L9.5 3.5"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            strokeLinejoin="round"
-                            strokeLinecap="round"
-                          />
+                        <svg viewBox="0 0 12 12" style={{ width: 10, height: 10 }} fill="none">
+                          <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
                         </svg>
                       )}
                     </button>
-                    <span
-                      className={`font-body-sm flex-1 ${
-                        etapa.feita ? "text-outline line-through" : "text-on-surface"
-                      }`}
-                    >
+                    <span style={{ fontSize: 13, flex: 1, color: etapa.feita ? "#9ca3af" : "#191c1d", textDecoration: etapa.feita ? "line-through" : "none" }}>
                       {etapa.titulo}
                     </span>
                     <button
                       onClick={() => onRemoveEtapa(etapa.id)}
-                      className="opacity-0 group-hover:opacity-100 text-on-surface-variant hover:text-error transition-opacity"
+                      style={{ background: "none", border: "none", cursor: "pointer", color: "#9ca3af", padding: 2, display: "flex" }}
                     >
-                      <span className="material-symbols-outlined text-[15px]">close</span>
+                      <span className="material-symbols-outlined" style={{ fontSize: 14 }}>close</span>
                     </button>
                   </div>
                 ))}
               </div>
             )}
 
-            <div className="flex gap-1.5 mb-2">
+            <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
               <input
                 value={novaEtapa}
                 onChange={(e) => setNovaEtapa(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && novaEtapa.trim()) {
-                    onAddEtapa(novaEtapa);
-                    setNovaEtapa("");
-                  }
+                  if (e.key === "Enter" && novaEtapa.trim()) { onAddEtapa(novaEtapa); setNovaEtapa(""); }
                 }}
-                placeholder="Adicionar etapa"
-                className="w-full font-body-sm text-body-sm px-3 py-2 rounded-lg border border-outline-variant bg-surface text-on-surface outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary flex-1"
+                placeholder="Adicionar etapa..."
+                style={{ flex: 1, fontSize: 13, padding: "8px 12px", borderRadius: 8, border: "1px solid #c1c6d7", outline: "none", background: "#fff" }}
               />
               <button
-                onClick={() => {
-                  if (novaEtapa.trim()) {
-                    onAddEtapa(novaEtapa);
-                    setNovaEtapa("");
-                  }
-                }}
-                className="font-label-md bg-surface-container border border-outline-variant/40 text-on-surface-variant hover:bg-surface-container-high px-3 rounded-lg transition-colors"
+                onClick={() => { if (novaEtapa.trim()) { onAddEtapa(novaEtapa); setNovaEtapa(""); } }}
+                style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #c1c6d7", background: "#f3f4f5", cursor: "pointer", fontSize: 16, color: "#414754" }}
               >
                 +
               </button>
             </div>
 
             {sugestoesDisponiveis.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                 {sugestoesDisponiveis.slice(0, 5).map((s) => (
                   <button
                     key={s}
                     onClick={() => onAddEtapa(s)}
-                    className="font-label-sm text-outline border border-dashed border-outline-variant/50 hover:border-outline-variant hover:bg-surface-container-lowest px-2 py-1 rounded-full transition-colors"
+                    style={{ fontSize: 12, color: "#414754", border: "1px dashed #c1c6d7", background: "none", padding: "4px 10px", borderRadius: 999, cursor: "pointer" }}
                   >
                     + {s}
                   </button>
@@ -924,38 +979,46 @@ function DetalheModal({
             )}
           </div>
 
+          {/* Mover para */}
           <div>
-            <p className="font-label-md font-label-sm font-semibold text-on-surface mb-2">Mover para</p>
-            <div className="flex flex-wrap gap-1.5">
-              {COLUNAS.map((col) => (
-                <button
-                  key={col.id}
-                  onClick={() => onMove(col.id)}
-                  className={`flex items-center gap-1.5 font-label-sm text-label-sm px-2.5 py-1.5 rounded-lg border transition-colors ${
-                    card.status === col.id
-                      ? `${col.badge} ${col.headerBorder} border`
-                      : "bg-surface-container-lowest text-on-surface-variant border-outline-variant/40 hover:border-outline-variant"
-                  }`}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${col.dot}`} />
-                  {col.label}
-                </button>
-              ))}
+            <p style={{ fontSize: 13, fontWeight: 600, color: "#191c1d", marginBottom: 10 }}>Mover para</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {COLUNAS.map((col) => {
+                const isActive = card.status === col.id;
+                const sc = statusColors[col.id] ?? { bg: "#f3f4f5", border: "#c1c6d7", text: "#414754" };
+                return (
+                  <button
+                    key={col.id}
+                    onClick={() => onMove(col.id)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 6,
+                      fontSize: 12, fontWeight: 500,
+                      padding: "6px 12px", borderRadius: 8,
+                      border: `1px solid ${isActive ? sc.border : "#c1c6d7"}`,
+                      background: isActive ? sc.bg : "#fff",
+                      color: isActive ? sc.text : "#414754",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: sc.border, flexShrink: 0 }} />
+                    {col.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        <div className="px-5 py-4 border-t border-outline-variant/20 flex justify-between items-center">
+        {/* Footer */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderTop: "1px solid #e5e7eb" }}>
           <button
             onClick={onDelete}
-            className="flex items-center gap-1.5 font-label-md text-error hover:text-error/80 transition-colors"
+            style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", color: "#ba1a1a", fontSize: 13 }}
           >
-            <span className="material-symbols-outlined text-[16px]">delete</span>
+            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete</span>
             Remover
           </button>
-          <span className="font-label-sm text-outline">
-            Atualizado {daysAgo(card.updatedAt)}
-          </span>
+          <span style={{ fontSize: 12, color: "#727786" }}>Atualizado {daysAgo(card.updatedAt)}</span>
         </div>
       </div>
     </div>
