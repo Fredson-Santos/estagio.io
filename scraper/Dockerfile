@@ -32,7 +32,9 @@ COPY --from=builder /install /usr/local
 COPY scraper/ /app/scraper/
 COPY shared/ /app/shared/
 
-RUN pip install --no-deps --force-reinstall /app/shared
+RUN pip install --no-deps --force-reinstall /app/shared \
+    && mkdir -p /app/db /app/data \
+    && chown app:app /app/db /app/data
 
 USER app
 

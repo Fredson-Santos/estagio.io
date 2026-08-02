@@ -93,6 +93,9 @@ def create_app() -> FastAPI:
     return app
 
 
+app = create_app()
+
+
 async def _run_health_server():
     app = create_app()
     config = uvicorn.Config(app, host="0.0.0.0", port=9090, log_level="warning")

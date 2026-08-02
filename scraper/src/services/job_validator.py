@@ -74,6 +74,65 @@ def parse_salary(salary_obj: Any) -> Any:
     return None
 
 
+def parse_salary_cents(salary_obj: Any) -> Tuple[int | None, int | None]:
+    """
+    Retorna (min_cents, max_cents) a partir do objeto ou string de salário.
+    """
+    if not salary_obj:
+        return None, None
+
+    if isinstance(salary_obj, dict):
+        min_c = salary_obj.get("minCents")
+        max_c = salary_obj.get("maxCents")
+        cents = salary_obj.get("cents") or salary_obj.get("value")
+        if min_c or max_c:
+            return (int(min_c) if min_c else None, int(max_c) if max_c else None)
+        if cents and isinstance(cents, (int, float)) and cents > 0:
+            val_cents = int(cents if cents > 10000 else cents * 100)
+            return val_cents, val_cents
+
+    if isinstance(salary_obj, str):
+        numbers = re.findall(r'R\$\s*([\d\.,]+)', salary_obj)
+        if not numbers:
+            numbers = re.findall(r'\b\d{3,4}(?:[.,]\d{2})?\b', salary_obj)
+        cents_list = []
+        for n in numbers:
+            try:
+                clean_n = n.replace('.', '').replace(',', '.')
+                val = float(clean_n)
+                if val > 0:
+                    cents_list.append(int(round(val * 100)))
+            except ValueError:
+                pass
+        if len(cents_list) >= 2:
+            return cents_list[0], cents_list[1]
+        elif len(cents_list) == 1:
+            return cents_list[0], cents_list[0]
+
+    return None, None
+
+
+def parse_duration_months(text: Any) -> int | None:
+    """Extrai a duração do estágio em meses a partir de um texto."""
+    if not text or not isinstance(text, str):
+        return None
+
+    match_m = re.search(r'(\d{1,2})\s*(?:meses|mês|mes)', text, re.IGNORECASE)
+    if match_m:
+        months = int(match_m.group(1))
+        if 1 <= months <= 36:
+            return months
+
+    match_y = re.search(r'(\d{1,2})\s*(?:anos|ano)', text, re.IGNORECASE)
+    if match_y:
+        years = int(match_y.group(1))
+        if 1 <= years <= 3:
+            return years * 12
+
+    return None
+
+
+
 def validate_job(job: Dict[str, Any]) -> Tuple[bool, str]:
     """
     Valida se uma vaga possui todas as informações necessárias exigidas pelo frontend.

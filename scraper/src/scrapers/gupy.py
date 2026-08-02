@@ -111,7 +111,7 @@ def _guess_area(title: str, description: str) -> JobArea:
 
 
 def parse_gupy_job(raw_job: dict) -> dict:
-    """Formata o JSON retornado pela Gupy para o formato do nosso banco de dados."""
+    """Formata o JSON retornado pela Gupy para o formato completo do nosso banco de dados."""
     title = raw_job.get("name", "Vaga Gupy")
     company = raw_job.get("careerPageName", "Empresa Confidencial")
     
@@ -126,14 +126,14 @@ def parse_gupy_job(raw_job: dict) -> dict:
         
     description = raw_job.get("description", "").strip()
     
-    # Extração de salário caso fornecido na API da Gupy
-    from src.services.job_validator import parse_salary
-    salary = parse_salary(raw_job.get("salary") or raw_job.get("salaryRange"))
+    # Extração de salário
+    from src.services.job_validator import parse_salary, parse_salary_cents, parse_duration_months
+    raw_salary_obj = raw_job.get("salary") or raw_job.get("salaryRange")
+    salary = parse_salary(raw_salary_obj)
+    salary_min_cents, salary_max_cents = parse_salary_cents(raw_salary_obj or salary)
 
     # URL da vaga no portal da Gupy
     source_url = raw_job.get("jobUrl", "")
-    
-    # Extrai o ID da URL se possível, ou usa o ID interno
     source_id = str(raw_job.get("id", ""))
     
     published_date_str = raw_job.get("publishedDate")
@@ -143,20 +143,51 @@ def parse_gupy_job(raw_job: dict) -> dict:
             posted_at = datetime.fromisoformat(published_date_str.replace("Z", "+00:00"))
         except ValueError:
             pass
-            
+
+    deadline_str = raw_job.get("applicationDeadline")
+    deadline = None
+    if deadline_str:
+        try:
+            deadline = datetime.fromisoformat(deadline_str.replace("Z", "+00:00"))
+        except ValueError:
+            pass
+
+    # Skills e pré-requisitos
+    skills = raw_job.get("skills", [])
+    skills_names = [s.get("name") for s in skills if isinstance(s, dict) and s.get("name")]
+    requirements = ", ".join(skills_names) if skills_names else None
+
+    # PCD
+    badges = raw_job.get("badges", {})
+    is_pcd = bool(raw_job.get("disabilities")) or bool(badges.get("isPWD"))
+
+    # Tipo de contrato & duração
+    raw_type = raw_job.get("type", "")
+    contract_type = "Estágio" if "intern" in raw_type.lower() or "estagio" in raw_type.lower() else (raw_type or "Estágio")
+    duration_months = parse_duration_months(f"{title} {description}")
+
     return {
-        "title":       trunc(title, 255),
-        "company":     trunc(company, 255),
-        "location":    trunc(location, 255),
-        "modality":    modality,
-        "area":        _guess_area(title, description),
-        "description": description[:4000] if len(description) > 4000 else description,
-        "salary":      trunc(salary, 255),
-        "company_logo": trunc(raw_job.get("careerPageLogo"), 1000),
-        "source_url":  trunc(source_url, 1000),
-        "source_id":   trunc(source_id, 255),
-        "posted_at":   posted_at,
+        "title":            trunc(title, 255),
+        "company":          trunc(company, 255),
+        "location":         trunc(location, 255),
+        "modality":         modality,
+        "area":             _guess_area(title, description),
+        "description":      description[:4000] if len(description) > 4000 else description,
+        "salary":           trunc(salary, 255),
+        "salary_min_cents": salary_min_cents,
+        "salary_max_cents": salary_max_cents,
+        "company_logo":     trunc(raw_job.get("careerPageLogo"), 1000),
+        "source_url":       trunc(source_url, 1000),
+        "source_id":        trunc(source_id, 255),
+        "posted_at":        posted_at,
+        "benefits":         None,
+        "requirements":     trunc(requirements, 2000),
+        "deadline":         deadline,
+        "is_pcd":           is_pcd,
+        "contract_type":    trunc(contract_type, 50),
+        "duration_months":  duration_months,
     }
+
 
 async def _enrich_job_html(client: httpx.AsyncClient, job: dict) -> dict:
     url = job.get("source_url")
@@ -194,4 +225,181 @@ async def run_gupy_scraper(limit: int = 50) -> list[dict]:
             tasks = [_enrich_job_html(client, j) for j in valid_jobs]
             valid_jobs = await asyncio.gather(*tasks)
 
+    return valid_jobs
+
+
+GUPY_COMPANIES_URL = "https://employability-portal.gupy.io/api/v1/jobs/companies"
+
+async def fetch_gupy_companies(query: str = "estagio", limit: int = 1000) -> list[dict]:
+    """Busca empresas com vagas de estágio na Gupy."""
+    params = {"jobName": query, "limit": limit, "sortBy": "company", "sortOrder": "asc"}
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        try:
+            resp = await client.get(GUPY_COMPANIES_URL, params=params)
+            resp.raise_for_status()
+            data = resp.json()
+            return data.get("data", [])
+        except Exception as exc:
+            print(f"[Gupy Companies] Erro ao buscar empresas: {exc}")
+            return []
+
+
+GUPY_VAGAJA_API_URL = "https://candidato-ja.api.gupy.io/api/public/jobs"
+
+async def fetch_gupy_vagaja_jobs(limit: int = 500) -> list[dict]:
+    """Busca vagas no Gupy Vaga-Já (candidato-ja.api.gupy.io)."""
+    all_jobs: list[dict] = []
+    page = 1
+    chunk_size = 50
+
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        while len(all_jobs) < limit:
+            params = {"page": page, "limit": chunk_size, "sort": "recent"}
+            try:
+                resp = await client.get(GUPY_VAGAJA_API_URL, params=params)
+                resp.raise_for_status()
+                data = resp.json()
+                items = data.get("data", [])
+                total_pages = data.get("totalPages", 1)
+                if not items:
+                    break
+                all_jobs.extend(items)
+                if page >= total_pages:
+                    break
+                page += 1
+            except Exception as exc:
+                print(f"[Gupy Vaga-Já] Erro na página {page}: {exc}")
+                break
+
+    return all_jobs[:limit]
+
+
+def _is_internship_vagaja(title: str, desc: str, ws_name: str) -> bool:
+    t = (title or "").lower()
+    d = (desc or "").lower()
+    w = (ws_name or "").lower()
+    return (
+        "estágio" in t or "estagio" in t or
+        "estágio" in d or "estagio" in d or
+        "estág" in w or "estag" in w
+    )
+
+
+def parse_gupy_vagaja_job(raw_item: dict) -> dict | None:
+    """Converte uma vaga do Gupy Vaga-Já para o formato ScrapedJob.
+
+    Retorna None se não for vaga de estágio.
+    """
+    title = raw_item.get("title") or "Vaga Gupy Vaga-Já"
+    desc = (raw_item.get("description") or raw_item.get("summary") or "").strip()
+    ws = raw_item.get("workScale", {})
+    ws_name = ""
+    if isinstance(ws, dict):
+        ws_name = ws.get("name") or ws.get("description") or ""
+
+    if not _is_internship_vagaja(title, desc, ws_name):
+        return None
+
+    v_id = str(raw_item.get("id", ""))
+    company_obj = raw_item.get("company", {})
+    if not isinstance(company_obj, dict):
+        company_obj = {}
+    company = company_obj.get("name") or company_obj.get("corporateName") or "Empresa Vaga-Já"
+    logo = company_obj.get("logoUrl")
+
+    addr = raw_item.get("companyAddress", {})
+    if not isinstance(addr, dict):
+        addr = {}
+    city = addr.get("city") or ""
+    state = addr.get("state") or ""
+
+    avail = (raw_item.get("availability") or "").upper()
+    if avail == "REMOTE" or "remot" in desc.lower():
+        modality = JobModality.REMOTE
+    elif avail == "ONSITE" or "presencial" in desc.lower():
+        modality = JobModality.ONSITE
+    else:
+        modality = JobModality.HYBRID
+
+    location = f"{city}, {state}".strip(", ") if city else "Não informado"
+    if modality == JobModality.REMOTE:
+        location = "Remoto"
+
+    from src.services.job_validator import parse_salary, parse_salary_cents, parse_duration_months
+    sal_min = raw_item.get("salaryMin")
+    salary = parse_salary(desc)
+    salary_min_cents, salary_max_cents = parse_salary_cents(salary)
+    if sal_min and not salary_min_cents:
+        salary_min_cents = int(sal_min * 100)
+        salary = f"R$ {sal_min:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
+
+    source_url = (
+        raw_item.get("publicShortUrl")
+        or raw_item.get("whatsappShortUrl")
+        or f"https://web.vaga-ja.com/{raw_item.get('shortId') or v_id}"
+    )
+
+    is_pcd = "pcd" in title.lower() or "pcd" in desc.lower()
+    published_at_str = raw_item.get("publishedAt")
+    posted_at = None
+    if published_at_str:
+        try:
+            posted_at = datetime.fromisoformat(published_at_str.replace("Z", "+00:00"))
+        except ValueError:
+            pass
+
+    deadline_str = raw_item.get("expirationDate")
+    deadline = None
+    if deadline_str:
+        try:
+            deadline = datetime.fromisoformat(deadline_str.replace("Z", "+00:00"))
+        except ValueError:
+            pass
+
+    duration_months = parse_duration_months(f"{title} {desc}")
+    area = _guess_area(title, desc)
+
+    return {
+        "title": trunc(title, 255),
+        "company": trunc(company, 255),
+        "location": trunc(location, 255),
+        "modality": modality,
+        "area": area,
+        "description": desc[:4000] if len(desc) > 4000 else desc,
+        "salary": trunc(salary, 255),
+        "salary_min_cents": salary_min_cents,
+        "salary_max_cents": salary_max_cents,
+        "company_logo": trunc(logo, 1000),
+        "source_url": trunc(source_url, 1000),
+        "source_id": trunc(v_id, 255),
+        "posted_at": posted_at,
+        "benefits": None,
+        "requirements": None,
+        "deadline": deadline,
+        "is_pcd": is_pcd,
+        "contract_type": trunc("Estágio", 50),
+        "duration_months": duration_months,
+    }
+
+
+async def run_gupy_vagaja_scraper(limit: int = 500) -> list[dict]:
+    """Pipeline completo do Gupy Vaga-Já: fetch + parse + validate."""
+    from src.services.job_validator import validate_job, safe_str
+
+    raw_jobs = await fetch_gupy_vagaja_jobs(limit=limit)
+    logger_msg = f"[Gupy Vaga-Já] {len(raw_jobs)} vagas brutas recebidas."
+    print(logger_msg)
+
+    valid_jobs: list[dict] = []
+    for raw in raw_jobs:
+        parsed = parse_gupy_vagaja_job(raw)
+        if parsed is None:
+            continue
+        is_valid, reason = validate_job(parsed)
+        if is_valid:
+            valid_jobs.append(parsed)
+        else:
+            print(f"[Gupy Vaga-Já] Vaga '{safe_str(parsed.get('title'))}' descartada: {reason}")
+
+    print(f"[Gupy Vaga-Já] {len(valid_jobs)} vagas válidas.")
     return valid_jobs
