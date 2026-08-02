@@ -4,7 +4,7 @@ export function getBackendUrl(): string {
   if (typeof process !== 'undefined' && process.env && process.env.BACKEND_URL) {
     return process.env.BACKEND_URL;
   }
-  return import.meta.env.BACKEND_URL || 'http://backend:8000';
+  return import.meta.env.BACKEND_URL || 'http://127.0.0.1:8000';
 }
 
 export function getAdminApiKey(): string {
