@@ -1,6 +1,24 @@
 name: estagio
 
 services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-estagio}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-estagio}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: always
+    networks:
+      - estagio_net
+
   backend:
     build:
       context: .
@@ -8,12 +26,13 @@ services:
     ports:
       - "${BACKEND_PORT:-8001}:8000"
     environment:
-      - DATABASE_URL=sqlite+aiosqlite:////app/data/backend.db
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-estagio}
       - SCRAPER_URL=http://scraper:9090
       - CORS_ORIGINS=${CORS_ORIGINS}
       - ADMIN_API_KEY=${ADMIN_API_KEY:-changeme}
-    volumes:
-      - backend_data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 15s
@@ -60,9 +79,11 @@ services:
       - LLM_PROVIDER=${LLM_PROVIDER:-groq}
       - LLM_MODEL=${LLM_MODEL:-llama-3.1-8b-instant}
       - GROQ_API_KEY=${GROQ_API_KEY}
+      - GROQ_MODEL=${GROQ_MODEL:-llama-3.3-70b-versatile}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - AREA_MATCHER_MODE=${AREA_MATCHER_MODE:-regex}
       - ETL_INTERVAL_HOURS=${ETL_INTERVAL_HOURS:-6}
       - RULES_FILE=/app/data/scraper_rules.json
     volumes:
@@ -73,7 +94,7 @@ services:
       - estagio_net
 
 volumes:
-  backend_data:
+  pgdata:
   scraper_data:
   scraper_rules:
 
