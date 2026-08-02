@@ -33,40 +33,6 @@ async def engine(tmp_path):
     async with eng.begin() as conn:
         await conn.execute(text("PRAGMA journal_mode=WAL;"))
         await conn.run_sync(Base.metadata.create_all)
-        await conn.execute(
-            text("""
-            CREATE VIRTUAL TABLE IF NOT EXISTS jobs_fts USING fts5(
-                title, company, description, location,
-                content=jobs, content_rowid=rowid
-            );
-        """)
-        )
-        await conn.execute(
-            text("""
-            CREATE TRIGGER IF NOT EXISTS jobs_fts_insert AFTER INSERT ON jobs BEGIN
-                INSERT INTO jobs_fts(rowid, title, company, description, location)
-                VALUES (new.rowid, new.title, new.company, new.description, new.location);
-            END;
-        """)
-        )
-        await conn.execute(
-            text("""
-            CREATE TRIGGER IF NOT EXISTS jobs_fts_delete AFTER DELETE ON jobs BEGIN
-                INSERT INTO jobs_fts(jobs_fts, rowid, title, company, description, location)
-                VALUES('delete', old.rowid, old.title, old.company, old.description, old.location);
-            END;
-        """)
-        )
-        await conn.execute(
-            text("""
-            CREATE TRIGGER IF NOT EXISTS jobs_fts_update AFTER UPDATE ON jobs BEGIN
-                INSERT INTO jobs_fts(jobs_fts, rowid, title, company, description, location)
-                VALUES('delete', old.rowid, old.title, old.company, old.description, old.location);
-                INSERT INTO jobs_fts(rowid, title, company, description, location)
-                VALUES (new.rowid, new.title, new.company, new.description, new.location);
-            END;
-        """)
-        )
     yield eng
     async with eng.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)

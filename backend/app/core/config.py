@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "estagio.io API"
     API_V1_STR: str = "/api/v1"
 
-    DATABASE_URL: str = "sqlite+aiosqlite:////app/data/backend.db"
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/estagio"
     CORS_ORIGINS: list[str] = [
         "http://localhost:4321",
         "http://127.0.0.1:4321",

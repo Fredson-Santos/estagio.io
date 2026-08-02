@@ -1,25 +1,23 @@
-from sqlalchemy import event
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=False,
-    poolclass=NullPool,
-    connect_args={"check_same_thread": False},
-)
+
+def _build_engine():
+    url = settings.DATABASE_URL
+    kwargs = {"echo": False, "pool_pre_ping": True}
+    if url.startswith("sqlite"):
+        # SQLite doesn't support pool_size/max_overflow
+        kwargs["poolclass"] = NullPool
+    else:
+        kwargs["pool_size"] = 10
+        kwargs["max_overflow"] = 20
+    return create_async_engine(url, **kwargs)
 
 
-@event.listens_for(engine.sync_engine, "connect")
-def _set_wal(dbapi_conn, _):
-    cursor = dbapi_conn.cursor()
-    cursor.execute("PRAGMA journal_mode=WAL")
-    cursor.execute("PRAGMA synchronous=NORMAL")
-    cursor.close()
-
+engine = _build_engine()
 
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 

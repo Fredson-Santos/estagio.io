@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
-from sqlalchemy import func
+from sqlalchemy import func, text
 from typing import Optional
 from uuid import UUID
 
@@ -32,33 +32,43 @@ async def list_jobs(
     query = select(Job).options(joinedload(Job.source)).where(Job.is_active == True)
 
     if q:
-        from sqlalchemy import or_
-        # Sanitiza wildcards do LIKE para evitar queries abusivas
-        safe_q = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-        query = query.where(or_(
-            Job.title.ilike(f"%{safe_q}%", escape="\\"),
-            Job.company.ilike(f"%{safe_q}%", escape="\\")
-        ))
+        if db.bind and db.bind.dialect.name == "postgresql":
+            # PostgreSQL: use the search_vector GIN index for full-text search
+            query = query.where(
+                text("jobs.search_vector @@ websearch_to_tsquery('portuguese', unaccent(:q))")
+            ).params(q=q)
+        else:
+            # SQLite / other dialects: fall back to ILIKE on title and company
+            from sqlalchemy import or_
+            safe_q = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            query = query.where(or_(
+                Job.title.ilike(f"%{safe_q}%", escape="\\"),
+                Job.company.ilike(f"%{safe_q}%", escape="\\")
+            ))
     if modality:
         query = query.where(Job.modality == modality)
     if location:
         safe_loc = location.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-        query = query.where(Job.location.ilike(f"%{safe_loc}%", escape="\\"))
+        if db.bind and db.bind.dialect.name == "postgresql":
+            query = query.where(
+                text("unaccent(jobs.location) ILIKE unaccent(:loc)")
+            ).params(loc=f"%{safe_loc}%")
+        else:
+            query = query.where(Job.location.ilike(f"%{safe_loc}%", escape="\\"))
+
     if featured:
         query = query.where(Job.is_featured == True)
-        
-    # Get total count
+
     count_query = select(func.count()).select_from(query.subquery())
     total = await db.scalar(count_query) or 0
-    
-    # Get items
+
     query = query.order_by(
         Job.posted_at.desc().nulls_last()
     ).offset(skip).limit(limit)
-        
+
     result = await db.execute(query)
     items = result.scalars().all()
-    
+
     return {
         "items": items,
         "total": total,

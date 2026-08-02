@@ -1,12 +1,12 @@
-"""initial sqlite schema
+"""initial schema (database-agnostic)
 
 Revision ID: 0001_initial
 Revises:
 Create Date: 2026-08-01 00:00:00.000000
 
-Schema SQLite completo: sources, jobs (com UNIQUE(source_url) + 9 colunas
-extras V1), job_clicks, users, tracked_jobs. Recriado do zero apos troca
-PostgreSQL -> SQLite (ver task.md commit 1).
+Schema base: sources, jobs (UNIQUE(source_url) + 9 colunas extras V1),
+job_clicks, users, tracked_jobs.  Generator ... db nao tem partes
+especificas de SQLite nem de PostgreSQL (FTS e indexes ficam na 0002).
 """
 from typing import Sequence, Union
 
@@ -135,39 +135,8 @@ def upgrade() -> None:
     )
     op.create_index("ix_tracked_jobs_user_id", "tracked_jobs", ["user_id"])
 
-    op.execute("""
-        CREATE VIRTUAL TABLE IF NOT EXISTS jobs_fts USING fts5(
-            title, company, description, location,
-            content=jobs, content_rowid=rowid
-        );
-    """)
-    op.execute("""
-        CREATE TRIGGER IF NOT EXISTS jobs_fts_insert AFTER INSERT ON jobs BEGIN
-            INSERT INTO jobs_fts(rowid, title, company, description, location)
-            VALUES (new.rowid, new.title, new.company, new.description, new.location);
-        END;
-    """)
-    op.execute("""
-        CREATE TRIGGER IF NOT EXISTS jobs_fts_delete AFTER DELETE ON jobs BEGIN
-            INSERT INTO jobs_fts(jobs_fts, rowid, title, company, description, location)
-            VALUES('delete', old.rowid, old.title, old.company, old.description, old.location);
-        END;
-    """)
-    op.execute("""
-        CREATE TRIGGER IF NOT EXISTS jobs_fts_update AFTER UPDATE ON jobs BEGIN
-            INSERT INTO jobs_fts(jobs_fts, rowid, title, company, description, location)
-            VALUES('delete', old.rowid, old.title, old.company, old.description, old.location);
-            INSERT INTO jobs_fts(rowid, title, company, description, location)
-            VALUES (new.rowid, new.title, new.company, new.description, new.location);
-        END;
-    """)
-
 
 def downgrade() -> None:
-    op.execute("DROP TRIGGER IF EXISTS jobs_fts_update;")
-    op.execute("DROP TRIGGER IF EXISTS jobs_fts_delete;")
-    op.execute("DROP TRIGGER IF EXISTS jobs_fts_insert;")
-    op.execute("DROP TABLE IF EXISTS jobs_fts;")
     op.drop_index("ix_tracked_jobs_user_id", table_name="tracked_jobs")
     op.drop_table("tracked_jobs")
     op.drop_index("ix_users_email", table_name="users")

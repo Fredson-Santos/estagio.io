@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import (
     Boolean,
+    Column,
     DateTime,
     Enum as SQLEnum,
     ForeignKey,
@@ -11,6 +12,7 @@ from sqlalchemy import (
     Text,
     Uuid,
 )
+from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
@@ -73,6 +75,8 @@ class Job(Base):
     closed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     salary_min_cents: Mapped[int] = mapped_column(Integer, nullable=True)
     salary_max_cents: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    search_vector = Column(TSVECTOR().with_variant(Text(), "sqlite", "mysql"))
 
     source_uuid: Mapped[uuid.UUID] = mapped_column(ForeignKey("sources.id"), nullable=False)
     source = relationship("Source", back_populates="jobs")
