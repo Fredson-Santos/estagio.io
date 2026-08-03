@@ -3,8 +3,8 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout 
-  title="Sobre o estagio.io | Democratizando Oportunidades"
-  description="O estagio.io reúne as melhores oportunidades de estágio em um só lugar para facilitar sua busca."
+  title="Sobre o estagio.io | Agregador de Vagas de Estágio"
+  description="O estagio.io monitora os principais portais de carreira do Brasil e reúne tudo em um só lugar."
 >
   <style>
     .hero-gradient {
@@ -15,15 +15,35 @@ import Layout from '../layouts/Layout.astro';
     }
   </style>
 
-  <!-- Hero Section -->
+  <!-- 1. Hero Section -->
   <section class="hero-gradient py-xl md:py-32 px-gutter">
     <div class="max-w-4xl mx-auto text-center space-y-md fade-in-section">
-      <h1 class="font-display text-display md:text-[64px] leading-tight tracking-tight text-on-surface">O agregador de vagas para estudantes</h1>
-      <p class="font-body-lg text-body-lg text-secondary max-w-2xl mx-auto">O estagio.io reúne as melhores oportunidades de estágio em um só lugar para facilitar sua busca.</p>
+      <h1 class="font-display text-display md:text-[64px] leading-tight tracking-tight text-on-surface">
+        Chega de abrir 15 abas atrás de estágio.
+      </h1>
+      <p class="font-body-lg text-body-lg text-secondary max-w-2xl mx-auto">
+        O estagio.io monitora os principais portais de carreira do Brasil e reúne tudo em um só lugar — pra você não perder nenhuma vaga boa por falta de tempo.
+      </p>
     </div>
   </section>
 
-  <!-- Mission Section -->
+  <!-- 2. O problema (seção nova) -->
+  <section class="py-xl px-gutter max-w-container-max mx-auto">
+    <div class="bg-surface-container-low border border-outline-variant rounded-2xl p-xl md:p-12 space-y-md fade-in-section">
+      <div class="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full font-label-sm text-label-sm">
+        <span class="material-symbols-outlined !text-[16px]">help_outline</span>
+        Por que existimos
+      </div>
+      <h2 class="font-headline-lg text-headline-lg text-on-surface">
+        Boas vagas somem rápido — e você não pode ficar em 10 sites por dia
+      </h2>
+      <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed max-w-3xl">
+        Toda semana surgem centenas de vagas de estágio espalhadas em diversas plataformas de carreira. As melhores recebem candidaturas em poucas horas. Pra maioria dos estudantes, simplesmente não dá tempo de acompanhar tudo isso — entre faculdade, trabalho e vida pessoal.
+      </p>
+    </div>
+  </section>
+
+  <!-- 3. Nossa Missão (ajustada) -->
   <section class="py-xl px-gutter max-w-container-max mx-auto">
     <div class="grid md:grid-cols-2 gap-xl items-center fade-in-section">
       <div class="space-y-lg order-2 md:order-1">
@@ -31,9 +51,13 @@ import Layout from '../layouts/Layout.astro';
           <span class="material-symbols-outlined !text-[16px]">flag</span>
           Nossa Missão
         </div>
-        <h2 class="font-headline-lg text-headline-lg">Todas as vagas em um só lugar</h2>
-        <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">O estagio.io é um agregador que monitora os principais portais de carreira para que você não precise visitar dezenas de sites todos os dias.</p>
-        <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">Nossa plataforma centraliza e organiza as oportunidades, permitindo que você encontre seu próximo estágio de forma rápida, eficiente e totalmente gratuita.</p>
+        <h2 class="font-headline-lg text-headline-lg text-on-surface">Todas as vagas em um só lugar</h2>
+        <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          O estagio.io é um agregador que monitora as principais plataformas de carreira para que você não precise visitar dezenas de sites todos os dias.
+        </p>
+        <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          Nossa plataforma centraliza e organiza as oportunidades, permitindo que você encontre seu próximo estágio de forma rápida, eficiente e totalmente gratuita.
+        </p>
       </div>
       <div class="order-1 md:order-2 rounded-xl bg-surface-container-low p-xl flex flex-col justify-center gap-xl shadow-sm border border-outline-variant aspect-square md:aspect-video">
         <div class="flex items-center gap-md">
@@ -47,11 +71,11 @@ import Layout from '../layouts/Layout.astro';
         </div>
         <div class="flex items-center gap-md">
           <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-            <span class="material-symbols-outlined">business</span>
+            <span class="material-symbols-outlined">travel_explore</span>
           </div>
           <div>
-            <div class="font-display text-headline-lg font-bold text-on-surface">500+</div>
-            <div class="font-label-md text-label-md text-on-surface-variant">Empresas Parceiras</div>
+            <div class="font-display text-headline-lg font-bold text-on-surface">15+</div>
+            <div class="font-label-md text-label-md text-on-surface-variant">Plataformas Monitoradas</div>
           </div>
         </div>
         <div class="flex items-center gap-md">
@@ -67,7 +91,7 @@ import Layout from '../layouts/Layout.astro';
     </div>
   </section>
 
-  <!-- How it Works (Crawl/Integration) -->
+  <!-- 4. Como funcionamos -->
   <section class="py-xl px-gutter max-w-container-max mx-auto">
     <div class="bg-on-secondary-fixed dark:bg-slate-900 dark:border dark:border-slate-800 rounded-2xl p-xl md:p-24 text-on-primary relative overflow-hidden fade-in-section">
       <!-- Abstract pattern overlay -->
@@ -81,14 +105,13 @@ import Layout from '../layouts/Layout.astro';
       <div class="relative z-10 max-w-2xl">
         <h2 class="font-display text-headline-lg md:text-[40px] text-white mb-md">Como funcionamos?</h2>
         <p class="font-body-lg text-body-lg text-secondary-fixed-dim mb-lg">
-          Nosso sistema realiza uma varredura constante nos principais portais de carreira do mercado brasileiro.
+          Nosso sistema realiza uma varredura constante nas principais plataformas de carreira do mercado brasileiro.
         </p>
         <div class="flex flex-wrap gap-md items-center mb-xl">
-          <span class="px-4 py-2 bg-white/10 rounded-full font-label-md text-label-md border border-white/20">Gupy</span>
-          <span class="px-4 py-2 bg-white/10 rounded-full font-label-md text-label-md border border-white/20">CIEE</span>
-          <span class="px-4 py-2 bg-white/10 rounded-full font-label-md text-label-md border border-white/20">Vagas.com</span>
-          <span class="px-4 py-2 bg-white/10 rounded-full font-label-md text-label-md border border-white/20">LinkedIn</span>
-          <span class="px-4 py-2 bg-white/10 rounded-full font-label-md text-label-md border border-white/20">+10 outros</span>
+          <span class="px-4 py-2 bg-white/10 rounded-full font-label-md text-label-md border border-white/20">Plataformas de Carreira</span>
+          <span class="px-4 py-2 bg-white/10 rounded-full font-label-md text-label-md border border-white/20">Portais de Estágio</span>
+          <span class="px-4 py-2 bg-white/10 rounded-full font-label-md text-label-md border border-white/20">Redes Profissionais</span>
+          <span class="px-4 py-2 bg-white/10 rounded-full font-label-md text-label-md border border-white/20">15+ fontes integradas</span>
         </div>
         <p class="font-body-md text-body-md text-secondary-fixed-dim">
           Isso garante que você não perca nenhuma oportunidade relevante. Organizamos tudo de forma limpa, permitindo filtros avançados por localização, bolsa-auxílio e modalidade.
@@ -97,9 +120,9 @@ import Layout from '../layouts/Layout.astro';
     </div>
   </section>
 
-  <!-- CTA Section -->
+  <!-- 5. CTA final -->
   <section class="py-xl text-center px-gutter fade-in-section">
-    <h2 class="font-headline-lg text-headline-lg mb-md">Pronto para dar o próximo passo?</h2>
+    <h2 class="font-headline-lg text-headline-lg mb-md text-on-surface">Pronto para dar o próximo passo?</h2>
     <div class="flex flex-col sm:flex-row gap-md justify-center items-center">
       <a class="w-full sm:w-auto px-8 py-3 bg-primary text-white rounded-lg font-label-md text-label-md hover:bg-primary/90 transition-colors shadow-lg" href="/vagas">Ver vagas disponíveis</a>
     </div>
