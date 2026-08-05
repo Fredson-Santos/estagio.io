@@ -29,4 +29,24 @@ describe('JobCard Component', () => {
     // Valida que não contém elementos button aninhados
     expect(html).not.toContain('<button');
   });
+
+  it('does not render the platform badge', async () => {
+    const container = await AstroContainer.create();
+
+    const props = {
+      id: 'job-456',
+      title: 'Estágio em Design',
+      company: 'DesignCo',
+      location: 'Remoto',
+      modality: 'REMOTE',
+      sourceUrl: 'https://candidatos.abler.com.br/vagas/123',
+      sourceName: 'Abler',
+    };
+
+    const html = await container.renderToString(JobCard, { props });
+
+    // Badge de plataforma deve ser removido do card
+    expect(html).not.toContain('Abler');
+    expect(html).not.toContain('data-fallback-initials');
+  });
 });

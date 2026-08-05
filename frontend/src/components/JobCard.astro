@@ -1,6 +1,5 @@
 ---
 import { formatModality } from '../utils/modality';
-import { getPlatformName } from '../utils/platform';
 
 interface Props {
   id: string;
@@ -19,7 +18,6 @@ interface Props {
 
 const { id, title, company, location, modality, salary, logo, isNew = false, publishedAt, searchParams, sourceUrl, sourceName } = Astro.props;
 const displayModality = formatModality(modality);
-const platformName = getPlatformName(sourceUrl, sourceName);
 
 // Sanitiza visualmente o salário para ignorar objetos stringificados
 const isValidSalary = salary && 
@@ -63,9 +61,6 @@ const jobUrl = `/vagas/${id}${searchParams ? `?${searchParams}` : ''}`;
       )}
       <span class="bg-secondary-container/50 text-on-secondary-container dark:bg-slate-700/80 dark:text-slate-200 dark:border dark:border-slate-600/50 px-sm py-xs rounded-full text-label-sm font-label-sm font-medium">
         {displayModality}
-      </span>
-      <span class="bg-surface-container-low border border-outline-variant/40 text-on-surface-variant dark:bg-slate-800/80 dark:text-slate-300 dark:border-slate-700 px-sm py-xs rounded-full text-label-sm font-label-sm">
-        {platformName}
       </span>
     </div>
   </div>
