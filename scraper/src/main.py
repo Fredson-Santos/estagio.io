@@ -138,11 +138,13 @@ async def main():
         scheduler.start()
         logger.info("Scraper agendado (ETL: a cada %dh, Cleanup: 03:00 UTC, Expired: 03:30 UTC).", interval)
 
+    health_task = asyncio.create_task(_run_health_server())
+    logger.info("Servidor HTTP do scraper iniciado na porta 9090.")
+
     # Primeira execução imediata
     logger.info("Executando primeiro pipeline ETL...")
-    await _etl_job()
+    asyncio.create_task(_etl_job())
 
-    health_task = asyncio.create_task(_run_health_server())
     try:
         while True:
             await asyncio.sleep(3600)

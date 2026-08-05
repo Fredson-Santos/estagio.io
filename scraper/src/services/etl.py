@@ -115,6 +115,9 @@ async def run_pipeline():
             for j in result.scalars().all()
         ]
 
+        from src.services.sync import sync_to_backend
+        from src.config import settings
+
         # 1. Cia de Estágios
         logger.info("Buscando vagas na Cia de Estágios...")
         cia_jobs = await run_ciadeestagios_scraper()
@@ -122,6 +125,9 @@ async def run_pipeline():
         totals["Cia de Estágios"] = await _ingest_jobs(
             session, cia_jobs, source_cia, existing_jobs, "Cia de Estágios"
         )
+        if totals["Cia de Estágios"] > 0:
+            await session.commit()
+            await sync_to_backend(settings.BACKEND_URL, settings.BACKEND_API_KEY)
 
         # 2. Eureca
         logger.info("Buscando vagas na Eureca...")
@@ -130,6 +136,9 @@ async def run_pipeline():
         totals["Eureca"] = await _ingest_jobs(
             session, eureca_jobs, source_eureca, existing_jobs, "Eureca"
         )
+        if totals["Eureca"] > 0:
+            await session.commit()
+            await sync_to_backend(settings.BACKEND_URL, settings.BACKEND_API_KEY)
 
         # 3. Gupy
         logger.info("Buscando vagas na Gupy...")
@@ -138,6 +147,9 @@ async def run_pipeline():
         totals["Gupy"] = await _ingest_jobs(
             session, gupy_jobs, source_gupy, existing_jobs, "Gupy"
         )
+        if totals["Gupy"] > 0:
+            await session.commit()
+            await sync_to_backend(settings.BACKEND_URL, settings.BACKEND_API_KEY)
 
         # 4. Gupy Vaga-Já
         logger.info("Buscando vagas no Gupy Vaga-Já...")
@@ -146,6 +158,9 @@ async def run_pipeline():
         totals["Gupy Vaga-Já"] = await _ingest_jobs(
             session, vagaja_jobs, source_gupy, existing_jobs, "Gupy Vaga-Já"
         )
+        if totals["Gupy Vaga-Já"] > 0:
+            await session.commit()
+            await sync_to_backend(settings.BACKEND_URL, settings.BACKEND_API_KEY)
 
         # 5. Abler
         logger.info("Buscando vagas na Abler...")
@@ -154,6 +169,9 @@ async def run_pipeline():
         totals["Abler"] = await _ingest_jobs(
             session, abler_jobs, source_abler, existing_jobs, "Abler"
         )
+        if totals["Abler"] > 0:
+            await session.commit()
+            await sync_to_backend(settings.BACKEND_URL, settings.BACKEND_API_KEY)
 
         # 6. Plataformas secundárias (Vagas.com.br + SuperEstagios)
         logger.info("Buscando vagas em plataformas secundárias...")
@@ -172,14 +190,12 @@ async def run_pipeline():
             totals[platform_name] = await _ingest_jobs(
                 session, sec_jobs, p_source, existing_jobs, platform_name
             )
+            if totals[platform_name] > 0:
+                await session.commit()
+                await sync_to_backend(settings.BACKEND_URL, settings.BACKEND_API_KEY)
 
-        if any(totals.values()):
-            await session.commit()
-            total_added = sum(totals.values())
-            logger.info("Sucesso! %d novas vagas salvas no banco de dados.", total_added)
-        else:
-            logger.info("Nenhuma nova vaga encontrada (todas foram deduplicadas ou filtradas).")
-
+        total_added = sum(totals.values())
+        logger.info("Finalizado pipeline ETL. Total de novas vagas adicionadas: %d", total_added)
         logger.info("Resumo: %s", totals)
 
     # 7. LLM Area Matching (pós-pipeline, se configurado)

@@ -205,25 +205,33 @@ async def _enrich_job_html(client: httpx.AsyncClient, job: dict) -> dict:
         pass
     return job
 
-async def run_gupy_scraper(limit: int = 50) -> list[dict]:
+async def run_gupy_scraper(limit: int = 500) -> list[dict]:
     import asyncio
     from src.services.job_validator import validate_job, safe_str
     raw_jobs = await fetch_gupy_jobs(limit=limit)
     parsed_jobs = [parse_gupy_job(job) for job in raw_jobs]
+    
+    # 1. Filtra preliminarmente apenas chaves básicas para enriquecimento
+    candidates = [
+        j for j in parsed_jobs 
+        if j.get("title") and j.get("company") and j.get("source_url")
+    ]
+
+    # 2. Enriquece concorrentemente com a descrição completa do HTML nativo da Gupy
+    if candidates:
+        print(f"[Gupy Scraper] Buscando HTML nativo de {len(candidates)} vagas...")
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+            tasks = [_enrich_job_html(client, j) for j in candidates]
+            candidates = await asyncio.gather(*tasks)
+
+    # 3. Valida a qualidade final das vagas com a descrição preenchida
     valid_jobs = []
-    for j in parsed_jobs:
+    for j in candidates:
         is_valid, reason = validate_job(j)
         if is_valid:
             valid_jobs.append(j)
         else:
             print(f"[Gupy Scraper] Vaga '{safe_str(j.get('title'))}' descartada: {reason}")
-
-    # Enriquece concorrentemente as vagas válidas com o HTML nativo das páginas da Gupy
-    if valid_jobs:
-        print(f"[Gupy Scraper] Buscando HTML nativo de {len(valid_jobs)} vagas...")
-        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
-            tasks = [_enrich_job_html(client, j) for j in valid_jobs]
-            valid_jobs = await asyncio.gather(*tasks)
 
     return valid_jobs
 
