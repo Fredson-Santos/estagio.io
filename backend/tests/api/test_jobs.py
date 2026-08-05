@@ -118,3 +118,98 @@ async def test_register_click_not_found(client):
     assert response.status_code == 404
 
 
+# --- Testes do endpoint /locations ---
+
+async def test_list_locations_empty(client):
+    """Sem vagas, deve retornar lista vazia."""
+    response = await client.get("/api/v1/jobs/locations")
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+async def test_list_locations_returns_distinct_cities(client, db_session):
+    """Deve retornar cidades distintas das vagas ativas."""
+    import uuid as _uuid
+    from datetime import datetime, timezone
+    from app.db.models import Job, Source
+    from estagio_shared.taxonomy import JobArea, JobModality, JobStatus, SourceStatus
+
+    source = Source(name="TestSrc", type="json", base_url="https://test.io", status=SourceStatus.ACTIVE)
+    db_session.add(source)
+    await db_session.commit()
+
+    # Dois jobs em "São Paulo", um em "Recife"
+    for i, city in enumerate(["São Paulo", "São Paulo", "Recife"]):
+        job = Job(
+            id=_uuid.uuid4(), title=f"Vaga {i}", company="X", location=city,
+            modality=JobModality.REMOTE, area=JobArea.TI_SOFTWARE, description="d",
+            source_url=f"http://t/{i}", source_id=f"t-{i}",
+            posted_at=datetime.now(timezone.utc), source_uuid=source.id,
+            status=JobStatus.ACTIVE, is_active=True, is_featured=False,
+        )
+        db_session.add(job)
+    await db_session.commit()
+
+    response = await client.get("/api/v1/jobs/locations")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    # Deve retornar cidades únicas
+    assert len(data) == 2
+    assert "Recife" in data
+    assert "São Paulo" in data
+
+
+async def test_list_locations_with_q_filter(client, db_session):
+    """Deve filtrar cidades pelo parâmetro q."""
+    import uuid as _uuid
+    from datetime import datetime, timezone
+    from app.db.models import Job, Source
+    from estagio_shared.taxonomy import JobArea, JobModality, JobStatus, SourceStatus
+
+    source = Source(name="TestSrc2", type="json", base_url="https://test2.io", status=SourceStatus.ACTIVE)
+    db_session.add(source)
+    await db_session.commit()
+
+    for i, city in enumerate(["São Paulo", "São Bernardo", "Campinas"]):
+        job = Job(
+            id=_uuid.uuid4(), title=f"Vaga {i}", company="Y", location=city,
+            modality=JobModality.REMOTE, area=JobArea.TI_SOFTWARE, description="d",
+            source_url=f"http://t2/{i}", source_id=f"t2-{i}",
+            posted_at=datetime.now(timezone.utc), source_uuid=source.id,
+            status=JobStatus.ACTIVE, is_active=True, is_featured=False,
+        )
+        db_session.add(job)
+    await db_session.commit()
+
+    response = await client.get("/api/v1/jobs/locations?q=São")
+    assert response.status_code == 200
+    data = response.json()
+    assert all("São" in city for city in data)
+    assert "Campinas" not in data
+
+
+async def test_list_locations_inactive_jobs_excluded(client, db_session):
+    """Vagas inativas não devem aparecer nas sugestões."""
+    import uuid as _uuid
+    from datetime import datetime, timezone
+    from app.db.models import Job, Source
+    from estagio_shared.taxonomy import JobArea, JobModality, JobStatus, SourceStatus
+
+    source = Source(name="TestSrc3", type="json", base_url="https://test3.io", status=SourceStatus.ACTIVE)
+    db_session.add(source)
+    await db_session.commit()
+
+    job = Job(
+        id=_uuid.uuid4(), title="Inativa", company="Z", location="Porto Alegre",
+        modality=JobModality.REMOTE, area=JobArea.TI_SOFTWARE, description="d",
+        source_url="http://t3/1", source_id="t3-1",
+        posted_at=datetime.now(timezone.utc), source_uuid=source.id,
+        status=JobStatus.CLOSED, is_active=False, is_featured=False,
+    )
+    db_session.add(job)
+    await db_session.commit()
+
+    response = await client.get("/api/v1/jobs/locations")
+    assert response.status_code == 200
+    assert "Porto Alegre" not in response.json()

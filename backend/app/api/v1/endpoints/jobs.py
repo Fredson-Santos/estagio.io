@@ -76,6 +76,33 @@ async def list_jobs(
         "limit": limit
     }
 
+@router.get("/locations", response_model=list[str])
+@limiter.limit("60/minute")
+async def list_locations(
+    request: Request,
+    q: Optional[str] = None,
+    limit: int = Query(10, ge=1, le=50),
+    db: AsyncSession = Depends(get_db),
+):
+    """Retorna lista de cidades distintas das vagas ativas para autocomplete."""
+    query = (
+        select(Job.location)
+        .where(Job.is_active == True, Job.location.isnot(None), Job.location != "")
+        .distinct()
+    )
+    if q:
+        safe_q = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        if db.bind and db.bind.dialect.name == "postgresql":
+            query = query.where(
+                func.unaccent(Job.location).ilike(func.unaccent(f"%{safe_q}%"))
+            )
+        else:
+            query = query.where(Job.location.ilike(f"%{safe_q}%", escape="\\"))
+    query = query.order_by(Job.location).limit(limit)
+    result = await db.execute(query)
+    return [row[0] for row in result.fetchall()]
+
+
 @router.get("/{job_id}", response_model=JobResponse)
 async def get_job(
     job_id: UUID,
