@@ -101,7 +101,17 @@ function pageUrl(page: number): string {
           </div>
           <div class="md:col-span-3 relative">
             <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">location_on</span>
-            <input name="location" value={searchParams.get('location') || ''} class="w-full pl-12 pr-4 py-3 bg-surface border-outline-variant border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-md text-on-surface-variant" placeholder="Cidade ou remoto" type="text"/>
+            <input
+              id="location-input"
+              name="location"
+              value={searchParams.get('location') || ''}
+              class="w-full pl-12 pr-4 py-3 bg-surface border-outline-variant border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-md text-on-surface-variant"
+              placeholder="Cidade ou remoto"
+              type="text"
+              autocomplete="off"
+              list="location-suggestions"
+            />
+            <datalist id="location-suggestions"></datalist>
           </div>
           <div class="md:col-span-3">
             <button type="submit" class="w-full bg-primary text-on-primary px-xl py-3 rounded-lg font-label-md text-label-md hover:bg-primary-container transition-all flex items-center justify-center gap-sm whitespace-nowrap">
@@ -264,6 +274,38 @@ function pageUrl(page: number): string {
   if (window.location.search) {
     sessionStorage.setItem('last_vagas_filter_url', window.location.href);
   }
+
+  // --- Autocomplete de cidade ---
+  (function () {
+    const locationInput = document.getElementById('location-input') as HTMLInputElement | null;
+    const datalist = document.getElementById('location-suggestions') as HTMLDataListElement | null;
+    if (!locationInput || !datalist) return;
+
+    let debounceTimer: ReturnType<typeof setTimeout>;
+
+    locationInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      const q = locationInput.value.trim();
+      if (q.length < 2) {
+        datalist.innerHTML = '';
+        return;
+      }
+      debounceTimer = setTimeout(async () => {
+        try {
+          const res = await fetch(`/api/v1/jobs/locations?q=${encodeURIComponent(q)}&limit=8`, {
+            headers: { Accept: 'application/json' },
+          });
+          if (!res.ok) return;
+          const cities: string[] = await res.json();
+          datalist.innerHTML = cities
+            .map((c) => `<option value="${c.replace(/"/g, '&quot;')}"></option>`)
+            .join('');
+        } catch {
+          // silently ignore network errors
+        }
+      }, 250);
+    });
+  })();
 
   // Listener para limpar filtros
   const clearFilters = () => sessionStorage.removeItem('last_vagas_filter_url');
