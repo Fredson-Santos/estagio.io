@@ -11,7 +11,7 @@
 
 ---
 
-## 📌 Sobre o Projeto
+## 📌 Sobre o Projeto 
 
 O **estagio.io** é uma plataforma completa e moderna de agregação e inteligência de vagas de estágio no Brasil. Nosso objetivo é **centralizar, sanitizar e organizar** oportunidades espalhadas nos maiores portais corporativos (Gupy, CIEE, Nube, Eureca, entre outros) em um único ambiente rápido, gratuito e orientado a SEO.
 
