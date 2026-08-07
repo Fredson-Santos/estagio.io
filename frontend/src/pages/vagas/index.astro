@@ -2,8 +2,8 @@
 import Layout from '../../layouts/Layout.astro';
 import JobCard from '../../components/JobCard.astro';
 import { formatModality } from '../../utils/modality';
-import { fetchJobs } from '../../lib/api';
-import type { Job, JobWithDisplay } from '../../lib/types';
+import { fetchJobs, fetchPlatforms } from '../../lib/api';
+import type { Job, JobWithDisplay, PlatformResponse } from '../../lib/types';
 
 export const prerender = false;
 
@@ -24,14 +24,19 @@ if (searchParams.get('location')) query.append('location', searchParams.get('loc
 if (searchParams.get('type'))     query.append('type',     searchParams.get('type') || '');
 if (searchParams.get('modality')) query.append('modality', searchParams.get('modality') || '');
 if (searchParams.get('company'))  query.append('company',  searchParams.get('company') || '');
+if (searchParams.get('platform')) query.append('platform', searchParams.get('platform') || '');
 
-// Fetch jobs do backend
+// Fetch jobs e plataformas em paralelo
 let jobs: JobWithDisplay[] = [];
 let total = 0;
 let hasBackendError = false;
+let platforms: PlatformResponse[] = [];
 
 try {
-  const data = await fetchJobs(`/jobs?${query.toString()}&limit=${LIMIT}&skip=${skip}`);
+  const [data, platformList] = await Promise.all([
+    fetchJobs(`/jobs?${query.toString()}&limit=${LIMIT}&skip=${skip}`),
+    fetchPlatforms(),
+  ]);
   jobs = data.items.map((job: Job) => ({
     ...job,
     publishedAt: job.posted_at ? new Date(job.posted_at).toLocaleDateString('pt-BR') : 'Recente',
@@ -41,6 +46,7 @@ try {
     sourceName: job.source_name || undefined,
   }));
   total = data.total;
+  platforms = platformList;
 } catch (e) {
   console.error('Erro ao buscar vagas do backend', e);
   hasBackendError = true;
@@ -134,6 +140,15 @@ function pageUrl(page: number): string {
               <option value="REMOTE"  selected={searchParams.get('modality') === 'REMOTE'}>Remoto</option>
               <option value="HYBRID"  selected={searchParams.get('modality') === 'HYBRID'}>Híbrido</option>
               <option value="ONSITE"  selected={searchParams.get('modality') === 'ONSITE'}>Presencial</option>
+            </select>
+            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">expand_more</span>
+          </div>
+          <div class="relative group">
+            <select id="select-platform" name="platform" aria-label="Plataforma" class="appearance-none bg-none bg-surface-container-low border border-outline-variant rounded-full pl-md pr-10 py-2 font-label-md text-label-md text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer transition-all">
+              <option value="" selected={!searchParams.get('platform')}>Plataforma</option>
+              {platforms.map((p: PlatformResponse) => (
+                <option value={p.slug} selected={searchParams.get('platform') === p.slug}>{p.name} ({p.count})</option>
+              ))}
             </select>
             <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">expand_more</span>
           </div>
@@ -280,9 +295,9 @@ function pageUrl(page: number): string {
   document.getElementById('clear-filters-btn')?.addEventListener('click', clearFilters);
   document.getElementById('clear-filters-card-btn')?.addEventListener('click', clearFilters);
 
-  // Auto-submete o form ao mudar qualquer filtro (type, modality)
+  // Auto-submete o form ao mudar qualquer filtro (type, modality, platform)
   const form = document.getElementById('filter-form') as HTMLFormElement | null;
-  const filterSelects = ['select-type', 'select-modality'];
+  const filterSelects = ['select-type', 'select-modality', 'select-platform'];
   const submitBtn = form?.querySelector('button[type="submit"]');
 
   filterSelects.forEach((id) => {

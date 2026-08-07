@@ -39,7 +39,7 @@ try {
     modality: formatModality(data.modality),
     area: getAreaLabel(data.area),
     description: data.description || '',
-    salary: data.salary || null,
+    salary: (data.salary && typeof data.salary === 'string' && data.salary.length <= 80 && !data.salary.includes('\n') && !data.salary.includes('<')) ? data.salary : null,
     logo: data.company_logo || undefined,
     sourceUrl: data.source_url || '#',
     postedLabel,

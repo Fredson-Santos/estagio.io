@@ -25,6 +25,12 @@ export interface JobListResponse {
   limit: number;
 }
 
+export interface PlatformResponse {
+  slug: string;
+  name: string;
+  count: number;
+}
+
 export interface JobWithDisplay extends Job {
   publishedAt?: string;
   logo?: string | undefined;

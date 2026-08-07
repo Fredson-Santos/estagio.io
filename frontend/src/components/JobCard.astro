@@ -19,12 +19,15 @@ interface Props {
 const { id, title, company, location, modality, salary, logo, isNew = false, publishedAt, searchParams, sourceUrl, sourceName } = Astro.props;
 const displayModality = formatModality(modality);
 
-// Sanitiza visualmente o salário para ignorar objetos stringificados
+// Sanitiza visualmente o salário para ignorar objetos stringificados e descrições acidentalmente mapeadas
 const isValidSalary = salary && 
   typeof salary === 'string' && 
   !salary.startsWith('{') && 
   !salary.toLowerCase().includes('undisclosed') && 
   !salary.toLowerCase().includes('display') &&
+  salary.length <= 80 &&
+  !salary.includes('\n') &&
+  !salary.includes('<') &&
   salary.trim() !== '';
 
 const companyInitials = (company || 'VA').substring(0, 2).toUpperCase();
