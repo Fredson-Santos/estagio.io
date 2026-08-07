@@ -17,6 +17,12 @@ describe('getPlatformName', () => {
     expect(getPlatformName('https://www.vagas.com.br/vagas/123')).toBe('Vagas.com');
   });
 
+  it('identifies Cia de Estágios correctly', () => {
+    expect(getPlatformName('https://app.ciadeestagios.com.br/vaga/123')).toBe('Cia de Estágios');
+    expect(getPlatformName('https://ciadeestagios.com.br/vaga/123')).toBe('Cia de Estágios');
+    expect(getPlatformName(undefined, 'Cia de Estagios')).toBe('Cia de Estágios');
+  });
+
   it('falls back gracefully to generic hostname or default', () => {
     expect(getPlatformName('https://customjobboard.com/vaga')).toBe('Customjobboard.com');
     expect(getPlatformName(undefined, undefined)).toBe('Site Oficial');
