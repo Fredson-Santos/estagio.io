@@ -213,3 +213,165 @@ async def test_list_locations_inactive_jobs_excluded(client, db_session):
     response = await client.get("/api/v1/jobs/locations")
     assert response.status_code == 200
     assert "Porto Alegre" not in response.json()
+
+
+# --- Testes do endpoint /platforms ---
+
+async def test_list_platforms_empty(client):
+    """Sem vagas ativas, deve retornar lista vazia."""
+    response = await client.get("/api/v1/jobs/platforms")
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+async def test_list_platforms_returns_aggregated(client, db_session):
+    """Deve agregar contagens por plataforma normalizada."""
+    import uuid as _uuid
+    from datetime import datetime, timezone
+    from app.db.models import Job, Source
+    from estagio_shared.taxonomy import JobArea, JobModality, JobStatus, SourceStatus
+
+    # 3 sources distintas que devem agregar para 2 plataformas (Gupy x2 + Eureca x1)
+    gupy1 = Source(name="bmw.gupy.io", type="json", base_url="https://bmw.gupy.io", status=SourceStatus.ACTIVE)
+    gupy2 = Source(name="bauducco.gupy.io", type="json", base_url="https://bauducco.gupy.io", status=SourceStatus.ACTIVE)
+    eureca = Source(name="eureca.me", type="json", base_url="https://eureca.me", status=SourceStatus.ACTIVE)
+    db_session.add_all([gupy1, gupy2, eureca])
+    await db_session.commit()
+    await db_session.refresh(gupy1)
+    await db_session.refresh(gupy2)
+    await db_session.refresh(eureca)
+
+    now = datetime.now(timezone.utc)
+    jobs_specs = [
+        (gupy1, "http://j/1"),
+        (gupy1, "http://j/2"),
+        (gupy2, "http://j/3"),
+        (eureca, "http://j/4"),
+    ]
+    for i, (src, url) in enumerate(jobs_specs):
+        job = Job(
+            id=_uuid.uuid4(), title=f"Vaga {i}", company="X", location="SP",
+            modality=JobModality.REMOTE, area=JobArea.TI_SOFTWARE, description="d",
+            source_url=url, source_id=f"src-{i}", posted_at=now,
+            source_uuid=src.id, status=JobStatus.ACTIVE, is_active=True, is_featured=False,
+        )
+        db_session.add(job)
+    await db_session.commit()
+
+    response = await client.get("/api/v1/jobs/platforms")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+
+    # Deriva dicionário slug -> count
+    by_slug = {item["slug"]: item for item in data}
+    assert "gupy" in by_slug, f"slug 'gupy' ausente em {by_slug.keys()}"
+    assert by_slug["gupy"]["name"] == "Gupy"
+    assert by_slug["gupy"]["count"] == 3, f"esperado 3 vagas gupy, veio {by_slug['gupy']['count']}"
+
+    assert "eureca" in by_slug
+    assert by_slug["eureca"]["name"] == "Eureca"
+    assert by_slug["eureca"]["count"] == 1
+
+    # Ordenação: Gupy (3) deve vir antes de Eureca (1)
+    assert data[0]["slug"] == "gupy"
+    assert data[1]["slug"] == "eureca"
+
+
+async def test_list_platforms_excludes_inactive_jobs(client, db_session):
+    """Vagas inativas não devem contribuir para a contagem de plataformas."""
+    import uuid as _uuid
+    from datetime import datetime, timezone
+    from app.db.models import Job, Source
+    from estagio_shared.taxonomy import JobArea, JobModality, JobStatus, SourceStatus
+
+    # Source só com vagas inativas — não deve aparecer na resposta
+    src_inactive = Source(name="vaga-ja.com", type="json", base_url="https://vaga-ja.com", status=SourceStatus.ACTIVE)
+    db_session.add(src_inactive)
+    await db_session.commit()
+    await db_session.refresh(src_inactive)
+
+    job = Job(
+        id=_uuid.uuid4(), title="Inativa", company="Y", location="RJ",
+        modality=JobModality.REMOTE, area=JobArea.TI_SOFTWARE, description="d",
+        source_url="http://inv/1", source_id="inv-1",
+        posted_at=datetime.now(timezone.utc), source_uuid=src_inactive.id,
+        status=JobStatus.CLOSED, is_active=False, is_featured=False,
+    )
+    db_session.add(job)
+    await db_session.commit()
+
+    response = await client.get("/api/v1/jobs/platforms")
+    assert response.status_code == 200
+    data = response.json()
+
+    # Plataforma 'vaga-ja' não deve aparecer pois a única vaga está inativa
+    slugs = [item["slug"] for item in data]
+    assert "vaga-ja" not in slugs
+
+
+async def test_read_jobs_with_platform_filter(client, db_session):
+    """Filtra vagas por plataforma via parâmetro ?platform=gupy."""
+    import uuid as _uuid
+    from datetime import datetime, timezone
+    from app.db.models import Job, Source
+    from estagio_shared.taxonomy import JobArea, JobModality, JobStatus, SourceStatus
+
+    gupy = Source(name="bmw.gupy.io", type="json", base_url="https://bmw.gupy.io", status=SourceStatus.ACTIVE)
+    eureca = Source(name="eureca.me", type="json", base_url="https://eureca.me", status=SourceStatus.ACTIVE)
+    db_session.add_all([gupy, eureca])
+    await db_session.commit()
+    await db_session.refresh(gupy)
+    await db_session.refresh(eureca)
+
+    now = datetime.now(timezone.utc)
+    # 2 vagas Gupy + 1 vaga Eureca
+    for i, (src, url) in enumerate([
+        (gupy, "http://jpf/1"),
+        (gupy, "http://jpf/2"),
+        (eureca, "http://jpf/3"),
+    ]):
+        job = Job(
+            id=_uuid.uuid4(), title=f"Vaga {i}", company="X", location="SP",
+            modality=JobModality.REMOTE, area=JobArea.TI_SOFTWARE, description="d",
+            source_url=url, source_id=f"jpf-{i}", posted_at=now,
+            source_uuid=src.id, status=JobStatus.ACTIVE, is_active=True, is_featured=False,
+        )
+        db_session.add(job)
+    await db_session.commit()
+
+    response = await client.get("/api/v1/jobs?platform=gupy")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 2, f"esperado 2 vagas gupy, veio {data['total']}"
+    # Sem o filtro retornaria 3 vagas (2 gupy + 1 eureca); o filtro removeu eureca.
+    assert len(data["items"]) == 2
+
+
+async def test_read_jobs_with_platform_filter_no_match(client, db_session):
+    """Plataforma inexistente deve retornar lista vazia."""
+    import uuid as _uuid
+    from datetime import datetime, timezone
+    from app.db.models import Job, Source
+    from estagio_shared.taxonomy import JobArea, JobModality, JobStatus, SourceStatus
+
+    gupy = Source(name="gupy.io", type="json", base_url="https://gupy.io", status=SourceStatus.ACTIVE)
+    db_session.add(gupy)
+    await db_session.commit()
+    await db_session.refresh(gupy)
+
+    job = Job(
+        id=_uuid.uuid4(), title="Vaga", company="X", location="SP",
+        modality=JobModality.REMOTE, area=JobArea.TI_SOFTWARE, description="d",
+        source_url="http://jnof/1", source_id="jnof-1",
+        posted_at=datetime.now(timezone.utc), source_uuid=gupy.id,
+        status=JobStatus.ACTIVE, is_active=True, is_featured=False,
+    )
+    db_session.add(job)
+    await db_session.commit()
+
+    response = await client.get("/api/v1/jobs?platform=plataforma-inexistente")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 0
+    assert data["items"] == []

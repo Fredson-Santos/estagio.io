@@ -1,3 +1,5 @@
+import re
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -7,13 +9,68 @@ from typing import Optional
 from uuid import UUID
 
 from app.db.database import get_db
-from app.db.models import Job, JobClick
+from app.db.models import Job, JobClick, Source
 from app.schemas.job import JobResponse, PaginatedJobResponse, JobUpdate
+from app.schemas.platform import PlatformResponse
 from estagio_shared.taxonomy import JobArea, JobModality
 from app.core.rate_limit import limiter
 from app.core.security import verify_admin_key
 
 router = APIRouter()
+
+
+# --- Normalização de plataformas -------------------------------------------
+# O campo Source.name no banco possui mais de 600 entradas individuais devido
+# aos subdomínios (ex: bmw.gupy.io, bauducco.gupy.io). Este dicionário e a
+# função de fallback agrupam essas entradas em plataformas amigáveis.
+
+_PLATFORM_KNOWN: list[tuple[str, str, str]] = [
+    # (substring case-insensitive encontrada em Source.name, slug, name amigável)
+    ("gupy", "gupy", "Gupy"),
+    ("ciadeestagios", "ciadeestagios", "Cia de Estágios"),
+    ("cia de estagios", "ciadeestagios", "Cia de Estágios"),
+    ("eureca", "eureca", "Eureca"),
+    ("abler", "abler", "Abler"),
+    ("vaga-ja", "vaga-ja", "Vaga Já"),
+    ("vaga ja", "vaga-ja", "Vaga Já"),
+]
+
+
+def _slugify(value: str) -> str:
+    """Converte texto em slug ASCII minúsculo (ex: 'Cia de Estágios' -> 'cia-de-estagios')."""
+    slug = value.lower().strip()
+    slug = re.sub(r"[^a-z0-9]+", "-", slug)
+    slug = slug.strip("-")
+    return slug or "plataforma"
+
+
+def _normalize_platform(source_name: str) -> tuple[str, str]:
+    """Retorna (slug, name amigável) para um Source.name, agregando subdomínios."""
+    if not source_name:
+        return ("plataforma", "Plataforma")
+
+    lower = source_name.lower()
+
+    for needle, slug, friendly in _PLATFORM_KNOWN:
+        if needle in lower:
+            return (slug, friendly)
+
+    # Fallback dinâmico: extrai domínio "limpo" se source_name parece uma URL/host.
+    host_match = re.search(r"([a-z0-9-]+\.[a-z]{2,})(?:/|$)", lower)
+    if host_match:
+        host = host_match.group(1)
+        # descarta subdomínio tı́pico (empresa.gupy.io já tratado acima, então aqui
+        # pega só ramos não-mapeados e usa a parte principal do host)
+        parts = host.split(".")
+        if len(parts) >= 2:
+            label = parts[-2]
+        else:
+            label = host
+        friendly = label.capitalize()
+        return (_slugify(label), friendly)
+
+    # último fallback: capitaliza o próprio Source.name
+    return (_slugify(source_name), source_name.strip().capitalize())
 
 
 @router.get("", response_model=PaginatedJobResponse)
@@ -24,6 +81,7 @@ async def list_jobs(
     area: Optional[JobArea] = None,
     location: Optional[str] = None,
     modality: Optional[JobModality] = None,
+    platform: Optional[str] = Query(None, description="Slug ou nome (parcial) da plataforma"),
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     featured: bool = Query(False),
@@ -58,6 +116,13 @@ async def list_jobs(
 
     if featured:
         query = query.where(Job.is_featured == True)
+
+    if platform:
+        # JOIN explícito com Source -- muito mais performático que EXISTS()
+        # em PostgreSQL. Combina com slug (ex: "gupy") ou nome parcial.
+        query = query.join(Job.source).where(
+            func.lower(Source.name).contains(platform.lower())
+        )
 
     count_query = select(func.count()).select_from(query.subquery())
     total = await db.scalar(count_query) or 0
@@ -101,6 +166,39 @@ async def list_locations(
     query = query.order_by(Job.location).limit(limit)
     result = await db.execute(query)
     return [row[0] for row in result.fetchall()]
+
+
+@router.get("/platforms", response_model=list[PlatformResponse])
+@limiter.limit("60/minute")
+async def list_platforms(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Agrega vagas ativas por plataforma, normaliza nomes e retorna contagem.
+
+    Exemplo: agrupa bmw.gupy.io / bauducco.gupy.io sob slug 'gupy' / name 'Gupy'.
+    A tabela Source contém N entradas individuais por subdomínio, então aqui
+    aplicamos normalização para entregar ao filtro do frontend uma lista limpa.
+    """
+    stmt = (
+        select(Source.name, func.count(Job.id).label("count"))
+        .join(Job, Job.source_uuid == Source.id)
+        .where(Job.is_active == True)
+        .group_by(Source.name)
+    )
+    rows = (await db.execute(stmt)).all()
+
+    # Agrega contagens por plataforma normalizada e ordena por count desc.
+    aggregated: dict[tuple[str, str], int] = {}
+    for source_name, count in rows:
+        slug, friendly = _normalize_platform(source_name)
+        key = (slug, friendly)
+        aggregated[key] = aggregated.get(key, 0) + int(count)
+
+    return [
+        PlatformResponse(slug=key[0], name=key[1], count=cnt)
+        for key, cnt in sorted(aggregated.items(), key=lambda x: (-x[1], x[0][1]))
+    ]
 
 
 @router.get("/{job_id}", response_model=JobResponse)
