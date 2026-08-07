@@ -8,6 +8,7 @@ describe('getPlatformName', () => {
   });
 
   it('identifies Eureca platform correctly', () => {
+    expect(getPlatformName('https://app.eureca.me/vagas/123')).toBe('Eureca');
     expect(getPlatformName('https://oportunidades.eureca.me/123')).toBe('Eureca');
     expect(getPlatformName(undefined, 'Eureca')).toBe('Eureca');
   });

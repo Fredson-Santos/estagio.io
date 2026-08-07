@@ -62,8 +62,30 @@ def test_parse_eureca_job():
     assert parsed["location"] == "São Paulo - SP"
     assert parsed["modality"] == JobModality.HYBRID
     assert parsed["area"] == JobArea.DADOS
-    assert parsed["source_url"] == "https://oportunidades.eureca.me/oportunidade/123456"
+    assert parsed["source_url"] == "https://app.eureca.me/vagas/123456"
     assert parsed["company_logo"] == "https://eureca.me/logo.png"
+
+
+def test_parse_eureca_job_varias_localidades():
+    raw_json = {
+        "id": "789101",
+        "name": "Trainee em Marketing/Produtos",
+        "companyName": "L'Oréal",
+        "locations": {},
+        "workModel": "hibrido",
+        "description": "Programa de trainee abrangente para diversas áreas de marketing",
+        "createdAt": "2026-07-15 14:00:00+00",
+        "companyLogoUrl": "https://eureca.me/logo.png"
+    }
+
+    parsed = parse_eureca_job(raw_json)
+
+    assert parsed["location"] == "Várias Localidades"
+    from src.services.job_validator import validate_job
+    is_valid, reason = validate_job(parsed)
+    assert is_valid is True
+    assert reason == ""
+
 
 
 def test_parse_eureca_job_with_detail():
