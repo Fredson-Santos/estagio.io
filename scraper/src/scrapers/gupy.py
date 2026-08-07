@@ -335,11 +335,13 @@ def parse_gupy_vagaja_job(raw_item: dict) -> dict | None:
 
     from src.services.job_validator import parse_salary, parse_salary_cents, parse_duration_months
     sal_min = raw_item.get("salaryMin")
-    salary = parse_salary(desc)
-    salary_min_cents, salary_max_cents = parse_salary_cents(salary)
+    sal_display = raw_item.get("salaryDisplay") or (f"R$ {sal_min}" if sal_min else None)
+    salary = parse_salary(sal_display)
+    salary_min_cents, salary_max_cents = parse_salary_cents(sal_display or salary)
     if sal_min and not salary_min_cents:
         salary_min_cents = int(sal_min * 100)
-        salary = f"R$ {sal_min:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
+        if not salary:
+            salary = f"R$ {sal_min:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
 
     source_url = (
         raw_item.get("publicShortUrl")

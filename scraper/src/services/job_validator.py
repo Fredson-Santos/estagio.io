@@ -42,6 +42,8 @@ def parse_salary(salary_obj: Any) -> Any:
             return None
         if salary_str.startswith("{") or "undisclosed" in salary_str.lower() or "'display'" in salary_str:
             return None
+        if len(salary_str) > 80 or "\n" in salary_str or "<" in salary_str or ">" in salary_str:
+            return None
         return salary_str
 
     if isinstance(salary_obj, dict):

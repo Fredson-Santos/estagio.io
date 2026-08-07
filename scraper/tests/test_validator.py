@@ -96,3 +96,12 @@ def test_reject_job_with_error():
     is_valid, reason = validate_job(job)
     assert is_valid is False
     assert "erro" in reason.lower()
+
+
+def test_parse_salary_long_description_rejected():
+    from src.services.job_validator import parse_salary
+    assert parse_salary("Descrição de vaga longa com mais de 80 caracteres que acidentalmente foi passada como parâmetro para a função parse_salary") is None
+    assert parse_salary("R$ 1.500,00\nTexto adicional na próxima linha") is None
+    assert parse_salary("<p>R$ 1.500,00 em HTML</p>") is None
+    assert parse_salary("R$ 1.500,00") == "R$ 1.500,00"
+

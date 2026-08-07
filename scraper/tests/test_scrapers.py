@@ -173,6 +173,31 @@ def test_parse_abler_job_pcd():
     assert parsed["area"] == JobArea.DIREITO
 
 
+def test_parse_abler_job_no_salary_fallback():
+    attr = {
+        "title": "Estágio em TI",
+        "description": "Vaga com descrição longa detalhada sobre as atividades do estagiário.",
+        "workplacetype": ["home"],
+    }
+    parsed = parse_abler_job(attr, "v2", "https://abler/v2", "Empresa X", None)
+    assert parsed["salary"] is None
+    assert parsed["salary_min_cents"] is None
+
+
+def test_parse_abler_job_salary_min():
+    attr = {
+        "title": "Estágio em Engenharia",
+        "description": "Desenvolvimento de projetos",
+        "salary_min": 1500,
+        "salary_max": 2000,
+    }
+    parsed = parse_abler_job(attr, "v3", "https://abler/v3", "Engenharia SA", None)
+    assert parsed["salary"] == "R$ 1500 - R$ 2000"
+    assert parsed["salary_min_cents"] == 150000
+    assert parsed["salary_max_cents"] == 200000
+
+
+
 def test_parse_gupy_vagaja_job():
     raw_item = {
         "id": "vagaja123",

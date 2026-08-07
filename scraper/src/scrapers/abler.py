@@ -90,12 +90,30 @@ def parse_abler_job(attr: dict, v_id: str, link: str, company: str, logo: str | 
     sal_display = clean_val(attr.get("salary_display"))
     sal_min = attr.get("salary_min")
     sal_max = attr.get("salary_max")
-    salary = parse_salary(sal_display or (f"R$ {sal_min}" if sal_min else desc))
-    salary_min_cents, salary_max_cents = parse_salary_cents(sal_display or salary)
+    
+    raw_sal = sal_display
+    if not raw_sal:
+        if sal_min and sal_max:
+            raw_sal = f"R$ {sal_min} - R$ {sal_max}"
+        elif sal_min:
+            raw_sal = f"R$ {sal_min}"
+        elif sal_max:
+            raw_sal = f"Até R$ {sal_max}"
+        else:
+            raw_sal = None
+
+    salary = parse_salary(raw_sal)
+    salary_min_cents, salary_max_cents = parse_salary_cents(raw_sal or salary)
     if sal_min and not salary_min_cents:
-        salary_min_cents = int(sal_min * 100)
+        try:
+            salary_min_cents = int(float(sal_min) * 100)
+        except (ValueError, TypeError):
+            pass
     if sal_max and not salary_max_cents:
-        salary_max_cents = int(sal_max * 100)
+        try:
+            salary_max_cents = int(float(sal_max) * 100)
+        except (ValueError, TypeError):
+            pass
 
     contract_raw = clean_val(attr.get("contracting_regime")) or "estágio"
     contract_type = "Estágio"
