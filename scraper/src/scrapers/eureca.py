@@ -105,7 +105,7 @@ def parse_eureca_job(item: dict, detail: dict | None = None) -> dict:
         city_val = ", ".join(cities) if cities else ""
         state_val = ", ".join(states) if states or not state_val else state_val
 
-    location = f"{city_val} - {state_val}".strip(" -") if city_val or state_val else "Não informado"
+    location = f"{city_val} - {state_val}".strip(" -") if city_val or state_val else "Várias Localidades"
 
     # Modality: detail uses isRemoteWork; item uses workModel
     is_remote = d.get("isRemoteWork") or item.get("isRemoteWork") or False
@@ -128,7 +128,7 @@ def parse_eureca_job(item: dict, detail: dict | None = None) -> dict:
 
     # URL da vaga na Eureca
     opp_id = str(item.get("id", ""))
-    source_url = f"https://oportunidades.eureca.me/oportunidade/{opp_id}"
+    source_url = f"https://app.eureca.me/vagas/{opp_id}"
     source_id = opp_id
 
     created_at_str = item.get("createdAt") or d.get("createdAt")
