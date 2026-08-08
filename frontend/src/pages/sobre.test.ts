@@ -51,4 +51,14 @@ describe('Sobre Page', () => {
     expect(html).toContain('Ver vagas disponíveis');
     expect(html).toContain('href="/vagas"');
   });
+
+  it('renders "Criado por" section with email', async () => {
+    const container = await AstroContainer.create();
+    const html = await container.renderToString(Sobre);
+
+    expect(html).toContain('Criado por');
+    expect(html).toContain('Fredson Santos');
+    expect(html).toContain('fredsonf219@gmail.com');
+    expect(html).toContain('href="mailto:fredsonf219@gmail.com"');
+  });
 });
