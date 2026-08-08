@@ -22,7 +22,7 @@ class ScraperSettings(BaseSettings):
     def DATABASE_URL(self) -> str:
         return f"sqlite+aiosqlite:///{self.SCRAPER_DB_PATH}"
 
-    model_config = SettingsConfigDict(env_file=".env", env_ignore_empty=True, extra="ignore")
+    model_config = SettingsConfigDict(env_file=(".env", "../.env"), env_ignore_empty=True, extra="ignore")
 
 
 settings = ScraperSettings()
