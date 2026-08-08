@@ -83,8 +83,14 @@ def create_app() -> FastAPI:
 
     @app.post("/run", status_code=status.HTTP_202_ACCEPTED)
     async def run(x_admin_key: str | None = Header(None, alias="X-Admin-Key")):
+        import hmac as _hmac
         expected_key = settings.BACKEND_API_KEY
-        if expected_key and x_admin_key != expected_key:
+        if not expected_key:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="BACKEND_API_KEY não configurada",
+            )
+        if not x_admin_key or not _hmac.compare_digest(x_admin_key, expected_key):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Não autorizado")
 
         asyncio.create_task(_etl_job())

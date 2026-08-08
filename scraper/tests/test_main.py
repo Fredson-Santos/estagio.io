@@ -34,6 +34,16 @@ def test_run_endpoint_rejects_wrong_key(client):
     assert response.status_code == 401
 
 
+def test_run_endpoint_when_key_empty_returns_503(monkeypatch):
+    from src.config import settings
+    monkeypatch.setattr(settings, "BACKEND_API_KEY", "")
+    app = create_app()
+    client = TestClient(app)
+    response = client.post("/run", headers={"X-Admin-Key": "any-key"})
+    assert response.status_code == 503
+    assert response.json()["detail"] == "BACKEND_API_KEY não configurada"
+
+
 @pytest.mark.asyncio
 async def test_cleanup_job_deletes_old_synced(tmp_path, monkeypatch):
     from src.config import settings

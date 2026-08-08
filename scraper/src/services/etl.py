@@ -53,6 +53,7 @@ async def _ingest_jobs(
     jobs_data: list[dict],
     source: Source,
     existing_jobs: list[dict],
+    existing_urls: set[str],
     platform_label: str,
 ) -> int:
     """Pipeline interno: valida, deduplica e cria ScrapedJob no DB."""
@@ -66,7 +67,7 @@ async def _ingest_jobs(
             )
             continue
 
-        if not is_duplicate(job_data, existing_jobs):
+        if not is_duplicate(job_data, existing_jobs, existing_urls):
             new_job = ScrapedJob(
                 title=trunc(job_data["title"], 255),
                 company=trunc(job_data["company"], 255),
@@ -84,6 +85,8 @@ async def _ingest_jobs(
             )
             session.add(new_job)
             existing_jobs.append(job_data)
+            if job_data.get("source_url"):
+                existing_urls.add(job_data["source_url"])
             jobs_added += 1
     return jobs_added
 
@@ -110,10 +113,12 @@ async def run_pipeline():
         source_abler = await get_or_create_abler_source(session)
 
         result = await session.execute(select(ScrapedJob))
+        all_existing = result.scalars().all()
         existing_jobs = [
             {"title": j.title, "company": j.company, "location": j.location, "source_url": j.source_url}
-            for j in result.scalars().all()
+            for j in all_existing
         ]
+        existing_urls: set[str] = {j.source_url for j in all_existing if j.source_url}
 
         from src.services.sync import sync_to_backend
         from src.config import settings
@@ -123,55 +128,40 @@ async def run_pipeline():
         cia_jobs = await run_ciadeestagios_scraper()
         logger.info("Encontradas %d vagas válidas na Cia de Estágios.", len(cia_jobs))
         totals["Cia de Estágios"] = await _ingest_jobs(
-            session, cia_jobs, source_cia, existing_jobs, "Cia de Estágios"
+            session, cia_jobs, source_cia, existing_jobs, existing_urls, "Cia de Estágios"
         )
-        if totals["Cia de Estágios"] > 0:
-            await session.commit()
-            await sync_to_backend(settings.BACKEND_URL, settings.BACKEND_API_KEY)
 
         # 2. Eureca
         logger.info("Buscando vagas na Eureca...")
         eureca_jobs = await run_eureca_scraper(limit=2000)
         logger.info("Encontradas %d vagas válidas na Eureca.", len(eureca_jobs))
         totals["Eureca"] = await _ingest_jobs(
-            session, eureca_jobs, source_eureca, existing_jobs, "Eureca"
+            session, eureca_jobs, source_eureca, existing_jobs, existing_urls, "Eureca"
         )
-        if totals["Eureca"] > 0:
-            await session.commit()
-            await sync_to_backend(settings.BACKEND_URL, settings.BACKEND_API_KEY)
 
         # 3. Gupy
         logger.info("Buscando vagas na Gupy...")
         gupy_jobs = await run_gupy_scraper(limit=2000)
         logger.info("Encontradas %d vagas válidas na Gupy.", len(gupy_jobs))
         totals["Gupy"] = await _ingest_jobs(
-            session, gupy_jobs, source_gupy, existing_jobs, "Gupy"
+            session, gupy_jobs, source_gupy, existing_jobs, existing_urls, "Gupy"
         )
-        if totals["Gupy"] > 0:
-            await session.commit()
-            await sync_to_backend(settings.BACKEND_URL, settings.BACKEND_API_KEY)
 
         # 4. Gupy Vaga-Já
         logger.info("Buscando vagas no Gupy Vaga-Já...")
         vagaja_jobs = await run_gupy_vagaja_scraper(limit=500)
         logger.info("Encontradas %d vagas válidas no Gupy Vaga-Já.", len(vagaja_jobs))
         totals["Gupy Vaga-Já"] = await _ingest_jobs(
-            session, vagaja_jobs, source_gupy, existing_jobs, "Gupy Vaga-Já"
+            session, vagaja_jobs, source_gupy, existing_jobs, existing_urls, "Gupy Vaga-Já"
         )
-        if totals["Gupy Vaga-Já"] > 0:
-            await session.commit()
-            await sync_to_backend(settings.BACKEND_URL, settings.BACKEND_API_KEY)
 
         # 5. Abler
         logger.info("Buscando vagas na Abler...")
         abler_jobs = await run_abler_scraper()
         logger.info("Encontradas %d vagas válidas na Abler.", len(abler_jobs))
         totals["Abler"] = await _ingest_jobs(
-            session, abler_jobs, source_abler, existing_jobs, "Abler"
+            session, abler_jobs, source_abler, existing_jobs, existing_urls, "Abler"
         )
-        if totals["Abler"] > 0:
-            await session.commit()
-            await sync_to_backend(settings.BACKEND_URL, settings.BACKEND_API_KEY)
 
         # 6. Plataformas secundárias (Vagas.com.br + SuperEstagios)
         logger.info("Buscando vagas em plataformas secundárias...")
@@ -188,13 +178,15 @@ async def run_pipeline():
                 source_type="scraper"
             )
             totals[platform_name] = await _ingest_jobs(
-                session, sec_jobs, p_source, existing_jobs, platform_name
+                session, sec_jobs, p_source, existing_jobs, existing_urls, platform_name
             )
-            if totals[platform_name] > 0:
-                await session.commit()
-                await sync_to_backend(settings.BACKEND_URL, settings.BACKEND_API_KEY)
 
         total_added = sum(totals.values())
+        if total_added > 0:
+            await session.commit()
+            logger.info("Sincronizando novas vagas com o Backend...")
+            await sync_to_backend(settings.BACKEND_URL, settings.BACKEND_API_KEY)
+
         logger.info("Finalizado pipeline ETL. Total de novas vagas adicionadas: %d", total_added)
         logger.info("Resumo: %s", totals)
 
