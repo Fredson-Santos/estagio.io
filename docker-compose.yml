@@ -55,6 +55,9 @@ services:
       - ADMIN_API_KEY=${ADMIN_API_KEY:-changeme}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme_admin_password}
       - ADMIN_SECRET=${ADMIN_SECRET:-generate_a_long_random_secret_here_minimum_32_chars}
+      - PUBLIC_UMAMI_WEBSITE_ID=${PUBLIC_UMAMI_WEBSITE_ID:-}
+      - PUBLIC_UMAMI_SCRIPT_URL=${PUBLIC_UMAMI_SCRIPT_URL:-https://umami.conekta.tech/script.js}
+      - PUBLIC_UMAMI_DOMAINS=${PUBLIC_UMAMI_DOMAINS:-}
     ports:
       - "${FRONTEND_PORT:-4321}:4321"
     depends_on:
