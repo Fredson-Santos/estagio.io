@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     ADMIN_API_KEY: str | None = None
     SCRAPER_URL: str = "http://scraper:9090"
 
-    model_config = SettingsConfigDict(env_file=".env", env_ignore_empty=True, extra="ignore")
+    model_config = SettingsConfigDict(env_file=(".env", "../.env"), env_ignore_empty=True, extra="ignore")
 
 
 settings = Settings()

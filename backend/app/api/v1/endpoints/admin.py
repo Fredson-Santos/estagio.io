@@ -2,7 +2,7 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import func
+from sqlalchemy import case, func
 
 from app.core.config import settings
 from app.db.database import get_db
@@ -15,18 +15,23 @@ router = APIRouter(dependencies=[Depends(verify_admin_key)])
 
 @router.get("/stats", response_model=AdminStats)
 async def get_stats(db: AsyncSession = Depends(get_db)):
-    total_jobs = await db.scalar(select(func.count()).select_from(Job)) or 0
-    active_jobs = await db.scalar(select(func.count()).select_from(Job).where(Job.is_active == True)) or 0
-    featured_jobs = await db.scalar(select(func.count()).select_from(Job).where(Job.is_featured == True)) or 0
+    job_stats = await db.execute(
+        select(
+            func.count(Job.id).label("total"),
+            func.count(case((Job.is_active.is_(True), Job.id))).label("active"),
+            func.count(case((Job.is_featured.is_(True), Job.id))).label("featured"),
+            func.max(Job.scraped_at).label("last_scraped"),
+        )
+    )
+    row = job_stats.one()
     sources = await db.scalar(select(func.count()).select_from(Source)) or 0
-    last_scraped_at = await db.scalar(select(func.max(Job.scraped_at)))
 
     return AdminStats(
-        total_jobs=total_jobs,
-        active_jobs=active_jobs,
-        featured_jobs=featured_jobs,
+        total_jobs=row.total or 0,
+        active_jobs=row.active or 0,
+        featured_jobs=row.featured or 0,
         sources=sources,
-        last_scraped_at=last_scraped_at,
+        last_scraped_at=row.last_scraped,
     )
 
 
