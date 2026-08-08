@@ -26,6 +26,50 @@ async def test_read_jobs_with_q(client):
     assert "items" in data
 
 
+async def test_read_jobs_q_title_match_comes_first(client, db_session):
+    """Vagas com o termo no título devem aparecer antes das que têm o termo apenas na empresa."""
+    import uuid as _uuid
+    from datetime import datetime, timedelta, timezone
+    from app.db.models import Job, Source
+    from estagio_shared.taxonomy import JobArea, JobModality, JobStatus, SourceStatus
+
+    source = Source(name="RelevanceTest", type="json", base_url="https://rel.io", status=SourceStatus.ACTIVE)
+    db_session.add(source)
+    await db_session.commit()
+
+    now = datetime.now(timezone.utc)
+    # Vaga mais recente, mas o termo "Marketing" está só na empresa
+    job_company_match = Job(
+        id=_uuid.uuid4(), title="Estágio Comercial", company="Marketing Corp",
+        location="SP", modality=JobModality.REMOTE, area=JobArea.MARKETING,
+        description="desc", source_url="http://rel/1", source_id="rel-1",
+        posted_at=now, source_uuid=source.id,
+        status=JobStatus.ACTIVE, is_active=True, is_featured=False,
+    )
+    # Vaga mais antiga, mas o termo "Marketing" está no título
+    job_title_match = Job(
+        id=_uuid.uuid4(), title="Estágio em Marketing Digital", company="Outra Empresa",
+        location="SP", modality=JobModality.REMOTE, area=JobArea.MARKETING,
+        description="desc", source_url="http://rel/2", source_id="rel-2",
+        posted_at=now - timedelta(days=5), source_uuid=source.id,
+        status=JobStatus.ACTIVE, is_active=True, is_featured=False,
+    )
+    db_session.add_all([job_company_match, job_title_match])
+    await db_session.commit()
+
+    response = await client.get("/api/v1/jobs?q=Marketing")
+    assert response.status_code == 200
+    items = response.json()["items"]
+    # Deve retornar as 2 vagas
+    titles = [i["title"] for i in items]
+    assert "Estágio em Marketing Digital" in titles
+    assert "Estágio Comercial" in titles
+    # A vaga com Marketing no título deve vir PRIMEIRO
+    assert titles.index("Estágio em Marketing Digital") < titles.index("Estágio Comercial"), (
+        f"Esperado 'Estágio em Marketing Digital' antes de 'Estágio Comercial', mas a ordem foi: {titles}"
+    )
+
+
 async def test_read_jobs_with_modality_filter(client):
     response = await client.get("/api/v1/jobs?modality=REMOTE")
     assert response.status_code == 200

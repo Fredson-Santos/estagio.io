@@ -12,6 +12,37 @@ from estagio_shared.taxonomy import JobModality
 
 from src.services.matcher import regex_fallback_classify
 
+# Mapeamento de sigla de estado → nome completo
+STATES_MAP: dict[str, str] = {
+    "AC": "Acre",
+    "AL": "Alagoas",
+    "AM": "Amazonas",
+    "AP": "Amapá",
+    "BA": "Bahia",
+    "CE": "Ceará",
+    "DF": "Distrito Federal",
+    "ES": "Espírito Santo",
+    "GO": "Goiás",
+    "MA": "Maranhão",
+    "MG": "Minas Gerais",
+    "MS": "Mato Grosso do Sul",
+    "MT": "Mato Grosso",
+    "PA": "Pará",
+    "PB": "Paraíba",
+    "PE": "Pernambuco",
+    "PI": "Piauí",
+    "PR": "Paraná",
+    "RJ": "Rio de Janeiro",
+    "RN": "Rio Grande do Norte",
+    "RO": "Rondônia",
+    "RR": "Roraima",
+    "RS": "Rio Grande do Sul",
+    "SC": "Santa Catarina",
+    "SE": "Sergipe",
+    "SP": "São Paulo",
+    "TO": "Tocantins",
+}
+
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -59,6 +90,29 @@ def parse_location_obj(
             state = match_st.group(1)
 
     return {"city": city, "state": state, "country": "BR"}
+
+
+def normalize_location(city: str | None, state: str | None) -> str:
+    """Retorna localização normalizada no formato 'Cidade, UF' ou 'UF'.
+
+    - A sigla de estado é mantida em maiúsculas (ex: 'SP', 'MG').
+    - Se não houver cidade, retorna apenas a sigla do estado.
+    - Se não houver nenhum dos dois, retorna string vazia.
+    """
+    city_clean = (city or "").strip()
+    state_clean = (state or "").strip().upper()
+
+    # Normaliza: se o valor recebido for o nome por extenso (ex: "São Paulo"),
+    # converte de volta para a sigla usando o mapa invertido.
+    if state_clean and state_clean not in STATES_MAP:
+        inverse = {v.upper(): k for k, v in STATES_MAP.items()}
+        state_clean = inverse.get(state_clean, state_clean)
+
+    if city_clean and state_clean:
+        return f"{city_clean}, {state_clean}"
+    if city_clean:
+        return city_clean
+    return state_clean
 
 
 def format_modality_enum(modality_str: str | None) -> JobModality:

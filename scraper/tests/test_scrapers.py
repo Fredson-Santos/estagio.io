@@ -4,7 +4,7 @@ from src.scrapers.eureca import parse_eureca_job
 from src.scrapers.ciadeestagios import parse_ciadeestagios_job
 from src.scrapers.abler import parse_abler_job
 from src.services.dedup import is_duplicate
-from src.services.base import parse_location_obj, format_modality_enum, clean_html, format_company_name, extract_areas_and_category
+from src.services.base import parse_location_obj, format_modality_enum, clean_html, format_company_name, extract_areas_and_category, normalize_location
 from estagio_shared.taxonomy import JobArea, JobModality
 
 
@@ -59,7 +59,7 @@ def test_parse_eureca_job():
     
     assert parsed["title"] == "Estagiário de Dados"
     assert parsed["company"] == "Tech Corp"
-    assert parsed["location"] == "São Paulo - SP"
+    assert parsed["location"] == "São Paulo, SP"
     assert parsed["modality"] == JobModality.HYBRID
     assert parsed["area"] == JobArea.DADOS
     assert parsed["source_url"] == "https://app.eureca.me/vagas/123456"
@@ -283,6 +283,36 @@ def test_parse_location_obj_raw_str():
     loc = parse_location_obj(raw_loc_str="Rio de Janeiro - RJ")
     assert loc["city"] is not None
     assert loc["state"] == "RJ"
+
+# === Testes de normalize_location ===
+
+def test_normalize_location_city_and_state_sigla():
+    """Sigla de estado deve ser mantida no formato UF."""
+    assert normalize_location("São Paulo", "SP") == "São Paulo, SP"
+    assert normalize_location("Belo Horizonte", "MG") == "Belo Horizonte, MG"
+    assert normalize_location("Curitiba", "PR") == "Curitiba, PR"
+    assert normalize_location("Porto Alegre", "RS") == "Porto Alegre, RS"
+
+def test_normalize_location_only_state_sigla():
+    """Sem cidade, deve retornar apenas a sigla do estado."""
+    assert normalize_location(None, "SP") == "SP"
+    assert normalize_location("", "RJ") == "RJ"
+    assert normalize_location(None, "MG") == "MG"
+
+def test_normalize_location_only_city():
+    """Apenas cidade sem estado: retorna somente a cidade."""
+    assert normalize_location("Campinas", None) == "Campinas"
+    assert normalize_location("Campinas", "") == "Campinas"
+
+def test_normalize_location_empty():
+    """Sem cidade e sem estado: retorna string vazia."""
+    assert normalize_location(None, None) == ""
+    assert normalize_location("", "") == ""
+
+def test_normalize_location_state_full_name_converts_to_sigla():
+    """Se o estado vier por extenso, deve ser convertido para a sigla."""
+    assert normalize_location("Salvador", "Bahia") == "Salvador, BA"
+    assert normalize_location("São Paulo", "São Paulo") == "São Paulo, SP"
 
 def test_format_modality_enum():
     assert format_modality_enum("remote") == JobModality.REMOTE

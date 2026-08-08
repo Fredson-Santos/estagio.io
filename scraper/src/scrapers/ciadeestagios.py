@@ -15,6 +15,7 @@ from src.services.base import (
     format_company_name,
     format_iso_datetime,
     format_modality_enum,
+    normalize_location,
     parse_location_obj,
     parse_string_list,
 )
@@ -76,7 +77,7 @@ def parse_ciadeestagios_job(raw: dict) -> dict:
     )
     city = loc_obj.get("city") or ""
     state = loc_obj.get("state") or ""
-    location = f"{city}, {state}".strip(", ") if city else "Não informado"
+    location = normalize_location(city, state) if city else "Não informado"
     if modality == JobModality.REMOTE:
         location = "Remoto"
 

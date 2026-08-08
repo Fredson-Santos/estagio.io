@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
-from sqlalchemy import func, text
+from sqlalchemy import case, func, text
 from typing import Optional
 from uuid import UUID
 
@@ -127,9 +127,28 @@ async def list_jobs(
     count_query = select(func.count()).select_from(query.subquery())
     total = await db.scalar(count_query) or 0
 
-    query = query.order_by(
-        Job.posted_at.desc().nulls_last()
-    ).offset(skip).limit(limit)
+    if q and db.bind and db.bind.dialect.name == "postgresql":
+        # Ordena por relevância (ts_rank) primeiro, depois por data
+        query = query.order_by(
+            text(
+                "ts_rank(jobs.search_vector, websearch_to_tsquery('portuguese', unaccent(:rank_q))) DESC"
+            ).bindparams(rank_q=q),
+            Job.posted_at.desc().nulls_last(),
+        )
+    elif q:
+        # SQLite: correspondência exata no título tem prioridade sobre company
+        safe_q_rank = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        query = query.order_by(
+            case(
+                (Job.title.ilike(f"%{safe_q_rank}%", escape="\\"), 0),
+                else_=1,
+            ),
+            Job.posted_at.desc().nulls_last(),
+        )
+    else:
+        query = query.order_by(Job.posted_at.desc().nulls_last())
+
+    query = query.offset(skip).limit(limit)
 
     result = await db.execute(query)
     items = result.scalars().all()

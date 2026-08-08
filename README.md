@@ -142,5 +142,5 @@ python -m pytest tests/ -v
 Este projeto é desenvolvido sob a licença **MIT**. Veja o arquivo `LICENSE` para mais detalhes.
 
 <p align="center">
-  Desenvolvido por <a href="https://github.com/Fredson-Santos">Fredson Santos</a> 🚀
+  Desenvolvido por <a href="https://github.com/Fredson-Santos">Fredson Santos</a> (<a href="mailto:fredsonf219@gmail.com">fredsonf219@gmail.com</a>) 🚀
 </p>

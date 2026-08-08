@@ -3,6 +3,7 @@ import re
 from datetime import datetime, timezone
 
 from estagio_shared.taxonomy import JobArea, JobModality
+from src.services.base import normalize_location
 from src.services.job_validator import trunc
 
 GUPY_API_URL = "https://employability-portal.gupy.io/api/v1/jobs"
@@ -117,7 +118,7 @@ def parse_gupy_job(raw_job: dict) -> dict:
     
     city = raw_job.get("city") or ""
     state = raw_job.get("state") or ""
-    location = f"{city}, {state}".strip(", ")
+    location = normalize_location(city, state)
     
     modality = _map_modality(raw_job.get("workplaceType", ""))
     
@@ -329,7 +330,7 @@ def parse_gupy_vagaja_job(raw_item: dict) -> dict | None:
     else:
         modality = JobModality.HYBRID
 
-    location = f"{city}, {state}".strip(", ") if city else "Não informado"
+    location = normalize_location(city, state) if city else "Não informado"
     if modality == JobModality.REMOTE:
         location = "Remoto"
 
