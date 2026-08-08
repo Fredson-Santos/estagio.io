@@ -17,6 +17,7 @@ from src.services.base import (
     clean_html,
     clean_val,
     format_iso_datetime,
+    normalize_location,
     parse_location_obj,
 )
 from src.services.job_validator import (
@@ -81,7 +82,7 @@ def parse_abler_job(attr: dict, v_id: str, link: str, company: str, logo: str | 
     )
     city_val = loc_obj.get("city") or ""
     state_val = loc_obj.get("state") or ""
-    location = f"{city_val}, {state_val}".strip(", ") if city_val else "Não informado"
+    location = normalize_location(city_val, state_val) if city_val else "Não informado"
     if modality == JobModality.REMOTE:
         location = "Remoto"
 

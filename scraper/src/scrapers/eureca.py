@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 
 from estagio_shared.taxonomy import JobArea, JobModality
 from src.scrapers.gupy import _guess_area
+from src.services.base import normalize_location
 from src.services.job_validator import trunc
 
 EURECA_OPPORTUNITIES_URL = "https://candidate-api.eureca.me/v2/opportunities"
@@ -105,7 +106,7 @@ def parse_eureca_job(item: dict, detail: dict | None = None) -> dict:
         city_val = ", ".join(cities) if cities else ""
         state_val = ", ".join(states) if states or not state_val else state_val
 
-    location = f"{city_val} - {state_val}".strip(" -") if city_val or state_val else "Várias Localidades"
+    location = normalize_location(city_val, state_val) if (city_val or state_val) else "Várias Localidades"
 
     # Modality: detail uses isRemoteWork; item uses workModel
     is_remote = d.get("isRemoteWork") or item.get("isRemoteWork") or False
