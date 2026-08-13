@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @plugin "@tailwindcss/forms";
 @plugin "@tailwindcss/container-queries";
 
@@ -171,4 +173,13 @@ body {
 
 .dark .glass-effect {
   background: rgba(15, 23, 42, 0.85);
+}
+
+/* Previne zoom automático do iOS Safari ao focar em campos digitáveis */
+@media screen and (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
