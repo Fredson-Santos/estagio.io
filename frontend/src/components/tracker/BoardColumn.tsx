@@ -13,6 +13,7 @@ interface BoardColumnProps {
   onDragLeave: (colId: string) => void;
   onDrop: (colId: string) => void;
   onCardClick: (id: string) => void;
+  onArchiveCard?: (id: string) => void;
 }
 
 export default function BoardColumn({
@@ -26,6 +27,7 @@ export default function BoardColumn({
   onDragLeave,
   onDrop,
   onCardClick,
+  onArchiveCard,
 }: BoardColumnProps) {
   return (
     <div
@@ -104,16 +106,29 @@ export default function BoardColumn({
                   <span>{statusDateLabel(card.status, card.updatedAt)}</span>
                 </div>
 
-                {prazoText ? (
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700 border border-red-200 dark:bg-[#3d1418] dark:text-[#f85149] dark:border-[#f85149]/30 leading-none">
-                    {prazoText}
-                  </span>
-                ) : card.etapas && card.etapas.length > 0 ? (
-                  <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] bg-surface-container-low dark:bg-slate-700 text-on-surface-variant dark:text-slate-200 leading-none">
-                    <span className="material-symbols-outlined text-[11px]">checklist</span>
-                    {card.etapas.filter((e) => e.feita).length}/{card.etapas.length}
-                  </span>
-                ) : null}
+                <div className="flex items-center gap-1">
+                  {col.id === "recusado" && onArchiveCard && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onArchiveCard(card.id); }}
+                      className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium text-on-surface-variant/70 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-700 dark:hover:text-red-300 transition-colors leading-none cursor-pointer"
+                      title="Arquivar candidatura"
+                      aria-label={`Arquivar ${card.cargo}`}
+                    >
+                      <span className="material-symbols-outlined text-[12px]">archive</span>
+                      Arquivar
+                    </button>
+                  )}
+                  {prazoText ? (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700 border border-red-200 dark:bg-[#3d1418] dark:text-[#f85149] dark:border-[#f85149]/30 leading-none">
+                      {prazoText}
+                    </span>
+                  ) : card.etapas && card.etapas.length > 0 ? (
+                    <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] bg-surface-container-low dark:bg-slate-700 text-on-surface-variant dark:text-slate-200 leading-none">
+                      <span className="material-symbols-outlined text-[11px]">checklist</span>
+                      {card.etapas.filter((e) => e.feita).length}/{card.etapas.length}
+                    </span>
+                  ) : null}
+                </div>
               </div>
             </div>
           );

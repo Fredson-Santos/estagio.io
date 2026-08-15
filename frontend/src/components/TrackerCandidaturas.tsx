@@ -1,73 +1,15 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState } from "react";
 import { useTracker } from "../hooks/useTracker";
 import { COLUNAS, CARD_BORDER_LEFT, statusDateLabel, formatPrazo, initials } from "../types/tracker";
-import type { Card } from "../types/tracker";
 import StatCard from "./tracker/StatCard";
 import FilterChip from "./tracker/FilterChip";
 import BoardColumn from "./tracker/BoardColumn";
 import NewCardModal from "./tracker/NewCardModal";
 import DetailModal from "./tracker/DetailModal";
 
-const SWIPE_THRESHOLD = 80;
-
 export default function TrackerCandidaturas() {
   const tracker = useTracker();
   const [showArchived, setShowArchived] = useState(false);
-
-  // Desktop — zona de drop de arquivamento
-  const [archiveZoneOver, setArchiveZoneOver] = useState(false);
-  const dragCardStatus = tracker.dragId
-    ? (tracker.cards.find((c) => c.id === tracker.dragId)?.status ?? null)
-    : null;
-
-  // Mobile — swipe-right para arquivar
-  const swipeRef = useRef<{
-    cardId: string;
-    startX: number;
-    startY: number;
-    delta: number;
-    cancelled: boolean;
-  } | null>(null);
-  const [swipingCardId, setSwipingCardId] = useState<string | null>(null);
-  const [swipeDeltaX, setSwipeDeltaX] = useState(0);
-
-  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>, card: Card) => {
-    if (card.status !== "recusado") return;
-    const t = e.touches[0];
-    swipeRef.current = { cardId: card.id, startX: t.clientX, startY: t.clientY, delta: 0, cancelled: false };
-    setSwipingCardId(card.id);
-    setSwipeDeltaX(0);
-  }, []);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    if (!swipeRef.current || swipeRef.current.cancelled) return;
-    const t = e.touches[0];
-    const dx = t.clientX - swipeRef.current.startX;
-    const dy = Math.abs(t.clientY - swipeRef.current.startY);
-    // Cancela se o movimento for mais vertical do que horizontal
-    if (dy > 20 && dy > Math.abs(dx)) {
-      swipeRef.current.cancelled = true;
-      setSwipingCardId(null);
-      setSwipeDeltaX(0);
-      return;
-    }
-    if (dx > 0) {
-      e.preventDefault();
-      swipeRef.current.delta = dx;
-      setSwipeDeltaX(dx);
-    }
-  }, []);
-
-  const handleTouchEnd = useCallback(() => {
-    if (!swipeRef.current) return;
-    const { cardId, delta, cancelled } = swipeRef.current;
-    swipeRef.current = null;
-    setSwipingCardId(null);
-    setSwipeDeltaX(0);
-    if (!cancelled && delta >= SWIPE_THRESHOLD) {
-      tracker.archiveCard(cardId);
-    }
-  }, [tracker]);
 
   return (
     <>
@@ -130,43 +72,9 @@ export default function TrackerCandidaturas() {
               onDragLeave={tracker.onDragLeaveCol}
               onDrop={tracker.onDropCol}
               onCardClick={(id) => tracker.setDetailId(id)}
+              onArchiveCard={tracker.archiveCard}
             />
           ))}
-
-          {/* Zona de arquivamento — aparece ao arrastar card "recusado" */}
-          <div
-            className={`flex-shrink-0 transition-all duration-200 overflow-hidden ${
-              dragCardStatus === "recusado"
-                ? "w-[130px] opacity-100"
-                : "w-0 opacity-0 pointer-events-none"
-            }`}
-          >
-            <div
-              onDragOver={(e) => { e.preventDefault(); setArchiveZoneOver(true); }}
-              onDragLeave={() => setArchiveZoneOver(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setArchiveZoneOver(false);
-                if (tracker.dragId) {
-                  tracker.archiveCard(tracker.dragId);
-                  tracker.onDragEnd();
-                }
-              }}
-              className={`h-full min-h-[140px] rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-2 px-2 transition-all duration-150 ${
-                archiveZoneOver
-                  ? "border-on-surface-variant bg-surface-container-low dark:bg-slate-800/70 scale-[1.03] shadow-md"
-                  : "border-outline-variant/50 dark:border-slate-700/60 bg-surface-container-lowest/40 dark:bg-slate-900/30"
-              }`}
-            >
-              <span className={`material-symbols-outlined text-[28px] transition-colors ${archiveZoneOver ? "text-on-surface dark:text-white" : "text-on-surface-variant/60 dark:text-slate-500"}`}>
-                archive
-              </span>
-              <span className={`text-[11px] font-semibold text-center transition-colors leading-tight ${archiveZoneOver ? "text-on-surface dark:text-white" : "text-on-surface-variant/60 dark:text-slate-500"}`}>
-                Arquivar
-              </span>
-            </div>
-          </div>
-
           {/* Spacer para garantir que a última coluna não seja cortada */}
           <div className="flex-shrink-0 w-1" />
         </div>
@@ -200,92 +108,44 @@ export default function TrackerCandidaturas() {
             .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
             .map((card) => {
               const prazoText = formatPrazo(card.prazo);
-              const isRecusado = card.status === "recusado";
-              const isSwiping = swipingCardId === card.id;
-              const delta = isSwiping ? swipeDeltaX : 0;
-              const progress = Math.min(delta / SWIPE_THRESHOLD, 1);
-              const isTriggered = delta >= SWIPE_THRESHOLD;
 
               return (
                 <div
                   key={card.id}
-                  className="relative overflow-hidden rounded-lg"
-                  style={{ touchAction: isRecusado ? "pan-y" : undefined }}
+                  onClick={() => tracker.setDetailId(card.id)}
+                  className={`bg-surface-container-lowest dark:bg-[#242f44] rounded-lg border border-outline-variant/30 dark:border-slate-600/60 border-l-[3px] p-3 active:bg-surface-container-low dark:active:brightness-125 transition-all flex flex-col gap-2`}
+                  style={{ borderLeftColor: CARD_BORDER_LEFT[card.status] }}
                 >
-                  {/* Fundo revelado durante o swipe */}
-                  {isRecusado && (
-                    <div
-                      className={`absolute inset-0 flex items-center justify-end pr-4 rounded-lg transition-colors ${
-                        isTriggered
-                          ? "bg-on-surface-variant/20 dark:bg-slate-600/40"
-                          : "bg-surface-container dark:bg-slate-800/60"
-                      }`}
-                      style={{ opacity: isSwiping ? Math.min(progress * 1.2, 1) : 0 }}
-                    >
-                      <div className="flex flex-col items-center gap-0.5">
-                        <span
-                          className={`material-symbols-outlined transition-all ${
-                            isTriggered
-                              ? "text-[22px] text-on-surface dark:text-white"
-                              : "text-[18px] text-on-surface-variant dark:text-slate-400"
-                          }`}
-                        >
-                          archive
-                        </span>
-                        <span className={`text-[10px] font-semibold transition-colors ${isTriggered ? "text-on-surface dark:text-white" : "text-on-surface-variant/70 dark:text-slate-500"}`}>
-                          Arquivar
-                        </span>
-                      </div>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-md bg-primary/10 dark:bg-primary/25 text-primary dark:text-primary-fixed-dim font-bold text-xs flex items-center justify-center flex-shrink-0">
+                      {initials(card.empresa)}
                     </div>
-                  )}
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-[13px] leading-tight text-on-surface dark:text-white truncate">
+                        {card.cargo}
+                      </p>
+                      <p className="text-[11px] text-on-surface-variant dark:text-slate-300 truncate mt-0.5">
+                        {card.empresa}
+                      </p>
+                    </div>
+                  </div>
 
-                  {/* Card principal */}
-                  <div
-                    onClick={() => !isSwiping && tracker.setDetailId(card.id)}
-                    onTouchStart={isRecusado ? (e) => handleTouchStart(e, card) : undefined}
-                    onTouchMove={isRecusado ? handleTouchMove : undefined}
-                    onTouchEnd={isRecusado ? handleTouchEnd : undefined}
-                    className={`bg-surface-container-lowest dark:bg-[#242f44] rounded-lg border border-outline-variant/30 dark:border-slate-600/60 border-l-[3px] p-3 flex flex-col gap-2 ${
-                      !isSwiping ? "active:bg-surface-container-low dark:active:brightness-125 transition-all" : ""
-                    }`}
-                    style={{
-                      borderLeftColor: CARD_BORDER_LEFT[card.status],
-                      transform: isSwiping ? `translateX(${delta}px)` : "translateX(0)",
-                      transition: isSwiping ? "none" : "transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94)",
-                      opacity: isSwiping ? Math.max(0.55, 1 - progress * 0.35) : 1,
-                    }}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-md bg-primary/10 dark:bg-primary/25 text-primary dark:text-primary-fixed-dim font-bold text-xs flex items-center justify-center flex-shrink-0">
-                        {initials(card.empresa)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-[13px] leading-tight text-on-surface dark:text-white truncate">
-                          {card.cargo}
-                        </p>
-                        <p className="text-[11px] text-on-surface-variant dark:text-slate-300 truncate mt-0.5">
-                          {card.empresa}
-                        </p>
-                      </div>
+                  <div className="flex items-center justify-between pt-1.5 border-t border-outline-variant/15 dark:border-slate-600/60 text-[11px] text-on-surface-variant dark:text-slate-300">
+                    <div className="flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[13px]">schedule</span>
+                      <span>{statusDateLabel(card.status, card.updatedAt)}</span>
                     </div>
 
-                    <div className="flex items-center justify-between pt-1.5 border-t border-outline-variant/15 dark:border-slate-600/60 text-[11px] text-on-surface-variant dark:text-slate-300">
-                      <div className="flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[13px]">schedule</span>
-                        <span>{statusDateLabel(card.status, card.updatedAt)}</span>
-                      </div>
-
-                      {prazoText ? (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700 border border-red-200 dark:bg-[#3d1418] dark:text-[#f85149] dark:border-[#f85149]/30 leading-none">
-                          {prazoText}
-                        </span>
-                      ) : card.etapas && card.etapas.length > 0 ? (
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] bg-surface-container-low dark:bg-slate-700 text-on-surface-variant dark:text-slate-200 leading-none">
-                          <span className="material-symbols-outlined text-[11px]">checklist</span>
-                          {card.etapas.filter((e) => e.feita).length}/{card.etapas.length}
-                        </span>
-                      ) : null}
-                    </div>
+                    {prazoText ? (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700 border border-red-200 dark:bg-[#3d1418] dark:text-[#f85149] dark:border-[#f85149]/30 leading-none">
+                        {prazoText}
+                      </span>
+                    ) : card.etapas && card.etapas.length > 0 ? (
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] bg-surface-container-low dark:bg-slate-700 text-on-surface-variant dark:text-slate-200 leading-none">
+                        <span className="material-symbols-outlined text-[11px]">checklist</span>
+                        {card.etapas.filter((e) => e.feita).length}/{card.etapas.length}
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               );
