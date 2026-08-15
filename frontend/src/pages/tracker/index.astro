@@ -10,28 +10,6 @@ export const prerender = false;
   description="Acompanhe cada processo seletivo, do salvamento à proposta."
 >
   <div class="pt-24 pb-xl w-full">
-    <!-- Header -->
-    <div class="mb-xl px-gutter max-w-container-max mx-auto">
-      <nav class="flex items-center gap-2 font-body-sm text-body-sm text-on-surface-variant mb-sm" aria-label="Breadcrumb">
-        <a href="/" class="hover:text-primary transition-colors">Início</a>
-        <span class="material-symbols-outlined text-[16px] text-outline">chevron_right</span>
-        <a href="/vagas" class="hover:text-primary transition-colors">Vagas</a>
-        <span class="material-symbols-outlined text-[16px] text-outline">chevron_right</span>
-        <span class="text-on-surface truncate flex-1 min-w-0">Minhas candidaturas</span>
-      </nav>
-
-      <div class="flex items-end justify-between flex-wrap gap-4">
-        <div>
-          <h1 class="font-headline-lg text-headline-lg font-bold tracking-tight text-on-surface">
-            Minhas candidaturas
-          </h1>
-          <p class="font-body-md text-body-md text-on-surface-variant mt-sm">
-            Acompanhe cada processo, do salvamento à proposta.
-          </p>
-        </div>
-      </div>
-    </div>
-
     <!-- Componente React -->
     <TrackerCandidaturas client:load />
   </div>
