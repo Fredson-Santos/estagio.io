@@ -221,50 +221,52 @@ const vagasUrl = `/vagas${currentQuery ? `?${currentQuery}` : ''}`;
         </div>
       </section>
 
-      <!-- Toast / Popup de Confirmação do Tracker -->
-      <div
-        id="tracker-toast"
-        role="alert"
-        aria-live="polite"
-        class="fixed bottom-5 right-5 z-50 max-w-sm w-[calc(100vw-2.5rem)] bg-surface-container-lowest dark:bg-[#1e293b] border border-outline-variant/60 dark:border-slate-700 shadow-2xl rounded-2xl p-4 transition-all duration-300 transform translate-y-8 opacity-0 pointer-events-none"
-      >
-        <div class="flex items-start gap-3">
-          <div id="tracker-toast-icon-wrapper" class="w-10 h-10 rounded-xl bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-fixed-dim flex items-center justify-center flex-shrink-0">
-            <span class="material-symbols-outlined text-[24px]" id="tracker-toast-icon">bookmark_added</span>
-          </div>
-          <div class="flex-1 min-w-0">
-            <h4 id="tracker-toast-title" class="font-semibold text-on-surface dark:text-white text-sm">
-              Vaga salva no Tracker!
-            </h4>
-            <p id="tracker-toast-desc" class="text-xs text-on-surface-variant dark:text-slate-300 mt-0.5 leading-snug">
-              Acompanhe o processo em Minhas candidaturas.
-            </p>
-            <div class="mt-3 flex items-center gap-2">
-              <a
-                id="tracker-toast-link"
-                href="/tracker"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-on-primary text-xs font-semibold hover:brightness-110 active:scale-95 transition-all shadow-sm"
-              >
-                <span>Ver no Tracker</span>
-                <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-              </a>
-              <button
-                id="tracker-toast-close-btn"
-                type="button"
-                class="inline-flex items-center justify-center px-2.5 py-1.5 rounded-lg bg-surface-container-low dark:bg-slate-800 text-on-surface-variant dark:text-slate-300 text-xs font-medium hover:bg-surface-container active:scale-95 transition-all cursor-pointer"
-              >
-                Fechar
-              </button>
+      <!-- Toast / Popup de Confirmação do Tracker (Centralizado no Rodapé) -->
+      <div class="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
+        <div
+          id="tracker-toast"
+          role="alert"
+          aria-live="polite"
+          class="w-full max-w-md bg-surface-container-lowest dark:bg-[#1e293b] border border-outline-variant/60 dark:border-slate-700 shadow-2xl rounded-2xl p-4 transition-all duration-300 transform translate-y-8 opacity-0 pointer-events-none"
+        >
+          <div class="flex items-start gap-3">
+            <div id="tracker-toast-icon-wrapper" class="w-10 h-10 rounded-xl bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-fixed-dim flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-[24px]" id="tracker-toast-icon">bookmark_added</span>
             </div>
+            <div class="flex-1 min-w-0">
+              <h4 id="tracker-toast-title" class="font-semibold text-on-surface dark:text-white text-sm">
+                Vaga salva no Tracker!
+              </h4>
+              <p id="tracker-toast-desc" class="text-xs text-on-surface-variant dark:text-slate-300 mt-0.5 leading-snug">
+                Acompanhe o processo em Minhas candidaturas.
+              </p>
+              <div class="mt-3 flex items-center gap-2">
+                <a
+                  id="tracker-toast-link"
+                  href="/tracker"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-on-primary text-xs font-semibold hover:brightness-110 active:scale-95 transition-all shadow-sm"
+                >
+                  <span>Ver no Tracker</span>
+                  <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                </a>
+                <button
+                  id="tracker-toast-close-btn"
+                  type="button"
+                  class="inline-flex items-center justify-center px-2.5 py-1.5 rounded-lg bg-surface-container-low dark:bg-slate-800 text-on-surface-variant dark:text-slate-300 text-xs font-medium hover:bg-surface-container active:scale-95 transition-all cursor-pointer"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+            <button
+              id="tracker-toast-dismiss-x"
+              type="button"
+              aria-label="Fechar notificação"
+              class="text-on-surface-variant hover:text-on-surface dark:text-slate-400 dark:hover:text-white p-1 rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer"
+            >
+              <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
           </div>
-          <button
-            id="tracker-toast-dismiss-x"
-            type="button"
-            aria-label="Fechar notificação"
-            class="text-on-surface-variant hover:text-on-surface dark:text-slate-400 dark:hover:text-white p-1 rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer"
-          >
-            <span class="material-symbols-outlined text-[18px]">close</span>
-          </button>
         </div>
       </div>
 
