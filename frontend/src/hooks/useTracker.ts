@@ -55,13 +55,16 @@ export function useTracker() {
   }, [cards, isLoaded]);
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return cards;
+    const active = cards.filter((c) => !c.archived);
+    if (!query.trim()) return active;
     const q = query.toLowerCase();
-    return cards.filter(
+    return active.filter(
       (c) =>
         c.cargo.toLowerCase().includes(q) || c.empresa.toLowerCase().includes(q)
     );
   }, [cards, query]);
+
+  const archivedCards = useMemo(() => cards.filter((c) => c.archived === true), [cards]);
 
   const byStatus = useCallback(
     (status: string) => filtered.filter((c) => c.status === status),
@@ -83,6 +86,19 @@ export function useTracker() {
   function deleteCard(id: string) {
     setCards((prev) => prev.filter((c) => c.id !== id));
     setDetailId(null);
+  }
+
+  function archiveCard(id: string) {
+    setCards((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, archived: true } : c))
+    );
+    setDetailId(null);
+  }
+
+  function unarchiveCard(id: string) {
+    setCards((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, archived: false } : c))
+    );
   }
 
   function addCard(data: NewCardData) {
@@ -187,10 +203,13 @@ export function useTracker() {
     byStatus,
     stats,
     detailCard,
+    archivedCards,
 
     // Actions
     moveCard,
     deleteCard,
+    archiveCard,
+    unarchiveCard,
     addCard,
     addEtapa,
     toggleEtapa,

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useTracker } from "../hooks/useTracker";
 import { COLUNAS, CARD_BORDER_LEFT, statusDateLabel, formatPrazo, initials } from "../types/tracker";
 import StatCard from "./tracker/StatCard";
@@ -9,6 +9,7 @@ import DetailModal from "./tracker/DetailModal";
 
 export default function TrackerCandidaturas() {
   const tracker = useTracker();
+  const [showArchived, setShowArchived] = useState(false);
 
   return (
     <>
@@ -159,6 +160,57 @@ export default function TrackerCandidaturas() {
         </div>
       </div>
 
+      {/* Seção Arquivados */}
+      {tracker.archivedCards.length > 0 && (
+        <div className="px-4 md:px-6 max-w-container-max mx-auto mt-4 mb-6">
+          <button
+            onClick={() => setShowArchived((v) => !v)}
+            className="flex items-center gap-2 text-xs font-semibold text-on-surface-variant dark:text-slate-400 hover:text-on-surface dark:hover:text-slate-200 transition-colors w-full py-2 border-t border-outline-variant/30 dark:border-slate-700/60"
+            aria-expanded={showArchived}
+          >
+            <span className="material-symbols-outlined text-[16px]">{showArchived ? "expand_less" : "expand_more"}</span>
+            Arquivados
+            <span className="ml-1 text-[11px] font-normal bg-surface-container dark:bg-slate-700 text-on-surface-variant dark:text-slate-300 px-1.5 py-0.5 rounded">
+              {tracker.archivedCards.length}
+            </span>
+          </button>
+
+          {showArchived && (
+            <div className="flex flex-col gap-2 mt-2">
+              {tracker.archivedCards.map((card) => (
+                <div
+                  key={card.id}
+                  className="flex items-center justify-between gap-3 bg-surface-container-lowest dark:bg-[#1a2030] rounded-lg border border-outline-variant/20 dark:border-slate-700/50 border-l-[3px] px-3 py-2.5 opacity-70 hover:opacity-90 transition-opacity"
+                  style={{ borderLeftColor: "#ba1a1a" }}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div className="w-7 h-7 rounded-md bg-red-500/10 dark:bg-red-500/15 text-red-700 dark:text-red-400 font-bold text-xs flex items-center justify-center flex-shrink-0">
+                      {initials(card.empresa)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-[13px] leading-tight text-on-surface dark:text-white truncate">
+                        {card.cargo}
+                      </p>
+                      <p className="text-[11px] text-on-surface-variant dark:text-slate-400 truncate mt-0.5">
+                        {card.empresa}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => tracker.unarchiveCard(card.id)}
+                    className="flex-shrink-0 inline-flex items-center gap-1 text-[11px] font-medium text-on-surface-variant dark:text-slate-400 hover:text-primary dark:hover:text-primary-fixed-dim border border-outline-variant/40 dark:border-slate-700 hover:border-primary/50 dark:hover:border-primary/50 px-2 py-1 rounded-md transition-colors cursor-pointer"
+                    aria-label={`Restaurar ${card.cargo}`}
+                  >
+                    <span className="material-symbols-outlined text-[14px]">unarchive</span>
+                    Restaurar
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Botão flutuante — mobile */}
       <button
         onClick={() => tracker.setModalOpen(true)}
@@ -186,6 +238,7 @@ export default function TrackerCandidaturas() {
           onAddEtapa={(titulo) => tracker.addEtapa(tracker.detailCard!.id, titulo)}
           onToggleEtapa={(etapaId) => tracker.toggleEtapa(tracker.detailCard!.id, etapaId)}
           onRemoveEtapa={(etapaId) => tracker.removeEtapa(tracker.detailCard!.id, etapaId)}
+          onArchive={() => tracker.archiveCard(tracker.detailCard!.id)}
         />
       )}
 

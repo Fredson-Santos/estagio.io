@@ -10,6 +10,7 @@ interface DetailModalProps {
   onAddEtapa: (titulo: string) => void;
   onToggleEtapa: (etapaId: string) => void;
   onRemoveEtapa: (etapaId: string) => void;
+  onArchive?: () => void;
 }
 
 const STATUS_CONFIG: Record<string, { bg: string; border: string; text: string; dot: string }> = {
@@ -53,6 +54,7 @@ export default function DetailModal({
   onAddEtapa,
   onToggleEtapa,
   onRemoveEtapa,
+  onArchive,
 }: DetailModalProps) {
   const [novaEtapa, setNovaEtapa] = useState("");
   const sugestoesDisponiveis = SUGESTOES_ETAPAS.filter(
@@ -267,13 +269,24 @@ export default function DetailModal({
 
         {/* Footer */}
         <div className="flex items-center justify-between px-5 py-3 border-t border-outline-variant/20 dark:border-slate-700">
-          <button
-            onClick={onDelete}
-            className="inline-flex items-center gap-1 text-xs text-error dark:text-red-400 hover:underline cursor-pointer font-medium"
-          >
-            <span className="material-symbols-outlined text-[16px]">delete</span>
-            Remover
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onDelete}
+              className="inline-flex items-center gap-1 text-xs text-error dark:text-red-400 hover:underline cursor-pointer font-medium"
+            >
+              <span className="material-symbols-outlined text-[16px]">delete</span>
+              Remover
+            </button>
+            {card.status === "recusado" && onArchive && (
+              <button
+                onClick={onArchive}
+                className="inline-flex items-center gap-1 text-xs text-on-surface-variant dark:text-slate-400 hover:text-primary dark:hover:text-primary-fixed-dim hover:underline cursor-pointer font-medium transition-colors"
+              >
+                <span className="material-symbols-outlined text-[16px]">archive</span>
+                Arquivar
+              </button>
+            )}
+          </div>
           <span className="text-[11px] text-outline dark:text-slate-500">
             Atualizado {daysAgo(card.updatedAt)}
           </span>

@@ -19,6 +19,7 @@ export interface Card {
   prazo?: string;
   notas: string;
   etapas: Etapa[];
+  archived?: boolean;
 }
 
 export interface ColunaConfig {

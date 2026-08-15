@@ -151,3 +151,45 @@ describe("calculateStats", () => {
     expect(stats.taxaResposta).toBe(50);
   });
 });
+
+// ---------- campo archived (compatibilidade e comportamento) ----------
+describe("Card.archived — campo opcional", () => {
+  it("makeCard sem archived resulta em archived === undefined (compatibilidade retroativa)", () => {
+    const card = makeCard();
+    expect(card.archived).toBeUndefined();
+  });
+
+  it("makeCard com archived: true persiste o valor", () => {
+    const card = makeCard({ archived: true });
+    expect(card.archived).toBe(true);
+  });
+
+  it("makeCard com archived: false persiste o valor", () => {
+    const card = makeCard({ archived: false });
+    expect(card.archived).toBe(false);
+  });
+});
+
+// ---------- calculateStats — cards arquivados ----------
+describe("calculateStats com cards arquivados", () => {
+  it("inclui cards arquivados no total (comportamento atual: stats refletem todos os cards)", () => {
+    const cards = [
+      makeCard({ status: "recusado", archived: true }),
+      makeCard({ id: "2", status: "enviado" }),
+    ];
+    const stats = calculateStats(cards);
+    // stats conta todos os cards, arquivados ou não (o board é que os filtra)
+    expect(stats.total).toBe(2);
+  });
+
+  it("card arquivado no status recusado conta nas respostas (stats são globais)", () => {
+    const cards = [
+      makeCard({ status: "enviado" }),
+      makeCard({ id: "2", status: "recusado", archived: true }),
+    ];
+    const stats = calculateStats(cards);
+    // enviadosOuAlem = 2, respostas = 1 (recusado)
+    expect(stats.taxaResposta).toBe(50);
+  });
+});
+
