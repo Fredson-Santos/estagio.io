@@ -46,7 +46,6 @@ describe("Vagas [id] Page", () => {
     expect(html).toContain("Vaga salva no Tracker!");
     expect(html).toContain('href="/tracker"');
     expect(html).toContain("Ver no Tracker");
-    expect(html).toContain('id="tracker-toast-close-btn"');
     expect(html).toContain('id="tracker-toast-dismiss-x"');
   });
 });

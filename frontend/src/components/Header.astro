@@ -3,6 +3,7 @@ const pathname = Astro.url.pathname;
 const isHome = pathname === '/' || pathname === '/index.html';
 const isVagas = pathname.startsWith('/vagas');
 const isSobre = pathname.startsWith('/sobre');
+const isTracker = pathname.startsWith('/tracker');
 ---
 
 <nav class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-md border-b border-outline-variant/30">
@@ -15,6 +16,7 @@ const isSobre = pathname.startsWith('/sobre');
     <div class="hidden md:flex items-center gap-lg absolute left-1/2 -translate-x-1/2">
       <a class={`font-label-md text-label-md transition-colors duration-200 ${isHome ? 'text-primary border-b-2 border-primary pb-1 font-semibold' : 'text-on-surface-variant hover:text-primary'}`} href="/">Início</a>
       <a class={`font-label-md text-label-md transition-colors duration-200 ${isVagas ? 'text-primary border-b-2 border-primary pb-1 font-semibold' : 'text-on-surface-variant hover:text-primary'}`} href="/vagas">Vagas</a>
+      <a class={`font-label-md text-label-md transition-colors duration-200 ${isTracker ? 'text-primary border-b-2 border-primary pb-1 font-semibold' : 'text-on-surface-variant hover:text-primary'}`} href="/tracker">Tracker</a>
       <a class={`font-label-md text-label-md transition-colors duration-200 ${isSobre ? 'text-primary border-b-2 border-primary pb-1 font-semibold' : 'text-on-surface-variant hover:text-primary'}`} href="/sobre">Sobre</a>
     </div>
 
@@ -46,6 +48,7 @@ const isSobre = pathname.startsWith('/sobre');
     <div class="flex flex-col gap-sm">
       <a class={`px-md py-sm rounded-lg font-label-md text-label-md transition-colors ${isHome ? 'bg-primary/10 text-primary font-bold' : 'text-on-surface-variant hover:bg-surface-container-low'}`} href="/">Início</a>
       <a class={`px-md py-sm rounded-lg font-label-md text-label-md transition-colors ${isVagas ? 'bg-primary/10 text-primary font-bold' : 'text-on-surface-variant hover:bg-surface-container-low'}`} href="/vagas">Vagas</a>
+      <a class={`px-md py-sm rounded-lg font-label-md text-label-md transition-colors ${isTracker ? 'bg-primary/10 text-primary font-bold' : 'text-on-surface-variant hover:bg-surface-container-low'}`} href="/tracker">Tracker</a>
       <a class={`px-md py-sm rounded-lg font-label-md text-label-md transition-colors ${isSobre ? 'bg-primary/10 text-primary font-bold' : 'text-on-surface-variant hover:bg-surface-container-low'}`} href="/sobre">Sobre</a>
     </div>
   </div>
