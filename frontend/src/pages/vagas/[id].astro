@@ -195,8 +195,22 @@ const vagasUrl = `/vagas${currentQuery ? `?${currentQuery}` : ''}`;
                 Candidatar-se na {job.platformName}
               </a>
               <button
+                id="save-tracker-btn"
+                type="button"
+                data-job-title={job.title}
+                data-job-company={job.company}
+                data-job-location={job.location}
+                data-job-modality={job.modality}
+                data-job-url={job.sourceUrl}
+                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-surface-container border border-outline-variant text-on-surface rounded-xl font-medium text-body-md hover:bg-surface-container-high active:scale-[0.98] transition-all cursor-pointer"
+              >
+                <span class="material-symbols-outlined text-[20px]" id="save-tracker-icon">bookmark_add</span>
+                <span id="save-tracker-text">Salvar no Tracker</span>
+              </button>
+              <button
                 id="copy-link-btn"
-                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-surface-container border border-outline-variant text-on-surface rounded-xl font-medium text-body-md hover:bg-surface-container-high active:scale-[0.98] transition-all"
+                type="button"
+                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-surface-container border border-outline-variant text-on-surface rounded-xl font-medium text-body-md hover:bg-surface-container-high active:scale-[0.98] transition-all cursor-pointer"
               >
                 <span class="material-symbols-outlined text-[20px]">link</span>
                 Copiar link
@@ -206,6 +220,53 @@ const vagasUrl = `/vagas${currentQuery ? `?${currentQuery}` : ''}`;
           </div>
         </div>
       </section>
+
+      <!-- Toast / Popup de Confirmação do Tracker -->
+      <div
+        id="tracker-toast"
+        role="alert"
+        aria-live="polite"
+        class="fixed bottom-5 right-5 z-50 max-w-sm w-[calc(100vw-2.5rem)] bg-surface-container-lowest dark:bg-[#1e293b] border border-outline-variant/60 dark:border-slate-700 shadow-2xl rounded-2xl p-4 transition-all duration-300 transform translate-y-8 opacity-0 pointer-events-none"
+      >
+        <div class="flex items-start gap-3">
+          <div id="tracker-toast-icon-wrapper" class="w-10 h-10 rounded-xl bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-fixed-dim flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-[24px]" id="tracker-toast-icon">bookmark_added</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h4 id="tracker-toast-title" class="font-semibold text-on-surface dark:text-white text-sm">
+              Vaga salva no Tracker!
+            </h4>
+            <p id="tracker-toast-desc" class="text-xs text-on-surface-variant dark:text-slate-300 mt-0.5 leading-snug">
+              Acompanhe o processo em Minhas candidaturas.
+            </p>
+            <div class="mt-3 flex items-center gap-2">
+              <a
+                id="tracker-toast-link"
+                href="/tracker"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-on-primary text-xs font-semibold hover:brightness-110 active:scale-95 transition-all shadow-sm"
+              >
+                <span>Ver no Tracker</span>
+                <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+              </a>
+              <button
+                id="tracker-toast-close-btn"
+                type="button"
+                class="inline-flex items-center justify-center px-2.5 py-1.5 rounded-lg bg-surface-container-low dark:bg-slate-800 text-on-surface-variant dark:text-slate-300 text-xs font-medium hover:bg-surface-container active:scale-95 transition-all cursor-pointer"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+          <button
+            id="tracker-toast-dismiss-x"
+            type="button"
+            aria-label="Fechar notificação"
+            class="text-on-surface-variant hover:text-on-surface dark:text-slate-400 dark:hover:text-white p-1 rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer"
+          >
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+      </div>
 
     </div>
   </div>
@@ -271,6 +332,8 @@ const vagasUrl = `/vagas${currentQuery ? `?${currentQuery}` : ''}`;
 </style>
 
 <script>
+  import { saveJobToStorage, loadCards, isJobSaved } from '../../utils/trackerStorage';
+
   // Restaura URL de busca salva no breadcrumb se o link padrão estiver sem params
   const savedVagasUrl = sessionStorage.getItem('last_vagas_filter_url');
   if (savedVagasUrl) {
@@ -307,4 +370,78 @@ const vagasUrl = `/vagas${currentQuery ? `?${currentQuery}` : ''}`;
   });
 
   copyLinkBtn?.addEventListener('click', copyToClipboard);
+
+  // Tracker Save Button & Toast Logic
+  const saveTrackerBtn = document.getElementById('save-tracker-btn') as HTMLButtonElement | null;
+  const saveTrackerIcon = document.getElementById('save-tracker-icon');
+  const saveTrackerText = document.getElementById('save-tracker-text');
+  const trackerToast = document.getElementById('tracker-toast');
+  const trackerToastTitle = document.getElementById('tracker-toast-title');
+  const trackerToastDesc = document.getElementById('tracker-toast-desc');
+  const trackerToastCloseBtn = document.getElementById('tracker-toast-close-btn');
+  const trackerToastDismissX = document.getElementById('tracker-toast-dismiss-x');
+
+  let toastTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  function hideToast() {
+    if (!trackerToast) return;
+    trackerToast.classList.add('translate-y-8', 'opacity-0', 'pointer-events-none');
+    trackerToast.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
+  }
+
+  function showToast(title: string, desc: string) {
+    if (!trackerToast) return;
+    if (trackerToastTitle) trackerToastTitle.textContent = title;
+    if (trackerToastDesc) trackerToastDesc.textContent = desc;
+
+    trackerToast.classList.remove('translate-y-8', 'opacity-0', 'pointer-events-none');
+    trackerToast.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+
+    if (toastTimeout) clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+      hideToast();
+    }, 6000);
+  }
+
+  trackerToastCloseBtn?.addEventListener('click', hideToast);
+  trackerToastDismissX?.addEventListener('click', hideToast);
+
+  if (saveTrackerBtn) {
+    const jobTitle = saveTrackerBtn.dataset.jobTitle || '';
+    const jobCompany = saveTrackerBtn.dataset.jobCompany || '';
+    const jobLocation = saveTrackerBtn.dataset.jobLocation || '';
+    const jobModality = saveTrackerBtn.dataset.jobModality || '';
+    const jobUrl = saveTrackerBtn.dataset.jobUrl || '';
+
+    function markAsSaved() {
+      if (saveTrackerText) saveTrackerText.textContent = 'Salva no Tracker';
+      if (saveTrackerIcon) saveTrackerIcon.textContent = 'bookmark_added';
+      saveTrackerBtn?.classList.add('bg-primary/10', 'text-primary', 'border-primary/30');
+      saveTrackerBtn?.classList.remove('bg-surface-container', 'text-on-surface');
+    }
+
+    // Verifica se já está salvo no localStorage ao carregar a página
+    const currentCards = loadCards();
+    if (isJobSaved(currentCards, { cargo: jobTitle, empresa: jobCompany, link: jobUrl })) {
+      markAsSaved();
+    }
+
+    saveTrackerBtn.addEventListener('click', () => {
+      const result = saveJobToStorage({
+        cargo: jobTitle,
+        empresa: jobCompany,
+        local: jobLocation,
+        modalidade: jobModality,
+        link: jobUrl || window.location.href,
+      });
+
+      markAsSaved();
+
+      if (result.alreadySaved) {
+        showToast('Vaga já está no seu Tracker!', 'Acesse Minhas candidaturas para acompanhar o processo.');
+      } else if (result.success) {
+        showToast('Vaga salva no Tracker!', 'Acompanhe o processo em Minhas candidaturas.');
+      }
+    });
+  }
 </script>

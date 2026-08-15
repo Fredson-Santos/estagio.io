@@ -2,23 +2,8 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import type { Card, TrackerStats, NewCardData } from "../types/tracker";
 import { STORAGE_KEY } from "../types/tracker";
 
-/**
- * Carrega cards do localStorage com tratamento seguro para SSR,
- * dados corrompidos e localStorage indisponível.
- */
-export function loadCards(): Card[] {
-  try {
-    if (typeof window === "undefined") return [];
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) return parsed;
-    }
-  } catch {
-    // localStorage unavailable or corrupted data
-  }
-  return [];
-}
+import { loadCards } from "../utils/trackerStorage";
+export { loadCards };
 
 /** Calcula estatísticas do tracker a partir da lista de cards. */
 export function calculateStats(cards: Card[]): TrackerStats {
