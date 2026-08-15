@@ -16,7 +16,7 @@ export default function TrackerCandidaturas() {
       {/* Header com Breadcrumb + Título + Botão Nova Candidatura */}
       <div className="mb-6 px-4 md:px-6 max-w-container-max mx-auto">
         <nav className="flex items-center gap-2 font-body-sm text-body-sm text-on-surface-variant mb-2" aria-label="Breadcrumb">
-          <a href="/" className="hover:text-primary transition-colors">Início</a>
+          <a href="/" className="hover:text-primary transition-colors">Inicio</a>
           <span className="material-symbols-outlined text-[16px] text-outline">chevron_right</span>
           <a href="/vagas" className="hover:text-primary transition-colors">Vagas</a>
           <span className="material-symbols-outlined text-[16px] text-outline">chevron_right</span>
