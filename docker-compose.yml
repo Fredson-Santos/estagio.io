@@ -63,6 +63,12 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4321/').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     restart: always
     networks:
       - estagio_net
@@ -92,6 +98,12 @@ services:
     volumes:
       - scraper_data:/app/db
       - scraper_rules:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/health"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     restart: always
     networks:
       - estagio_net
