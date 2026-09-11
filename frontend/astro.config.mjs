@@ -13,6 +13,7 @@ export default defineConfig({
   }),
   security: {
     checkOrigin: true,
+    allowedDomains: [{ hostname: 'estagio.io', protocol: 'https' }],
   },
   integrations: [react()],
   vite: {
