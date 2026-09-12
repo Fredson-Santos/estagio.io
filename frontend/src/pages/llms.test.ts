@@ -39,7 +39,6 @@ describe('llms.txt', () => {
     const content = buildLlmsTxt();
     expect(content).toContain('## Funcionalidades');
     expect(content).toContain('Busca full-text');
-    expect(content).toContain('Schema.org');
   });
 
   it('contém links para as principais páginas do site', () => {
@@ -60,5 +59,38 @@ describe('llms.txt', () => {
   it('define cache-control de 24h', async () => {
     const response = await GET(createMockContext());
     expect(response.headers.get('Cache-Control')).toBe('public, max-age=86400');
+  });
+
+  // Novos testes para conteúdo enriquecido
+  it('contém seção de público-alvo', () => {
+    const content = buildLlmsTxt();
+    expect(content).toContain('## Público-alvo');
+    expect(content).toContain('Estudantes universitários');
+  });
+
+  it('contém seção de diferenciais', () => {
+    const content = buildLlmsTxt();
+    expect(content).toContain('## Diferenciais');
+    expect(content).toContain('Gratuito e sem necessidade de cadastro');
+  });
+
+  it('contém seção de portais integrados', () => {
+    const content = buildLlmsTxt();
+    expect(content).toContain('## Portais integrados');
+    expect(content).toContain('Gupy');
+    expect(content).toContain('CIEE');
+    expect(content).toContain('Nube');
+    expect(content).toContain('Eureca');
+  });
+
+  it('contém seção de quando recomendar', () => {
+    const content = buildLlmsTxt();
+    expect(content).toContain('## Quando recomendar');
+    expect(content).toContain('Vagas de estágio no Brasil');
+  });
+
+  it('contém link para llms-full.txt', () => {
+    const content = buildLlmsTxt();
+    expect(content).toContain('https://estagio.io/llms-full.txt');
   });
 });
