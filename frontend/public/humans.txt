@@ -1,0 +1,11 @@
+/* TEAM */
+Developer: Fredson Santos
+Contact: fredsonf219@gmail.com
+GitHub: https://github.com/Fredson-Santos
+From: Brasil
+
+/* SITE */
+Last update: 2026-09-12
+Standards: HTML5, CSS3, JavaScript
+Software: Astro, FastAPI, SQLite, Docker
+Language: Português (Brasil)
