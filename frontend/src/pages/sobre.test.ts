@@ -30,9 +30,9 @@ describe('Sobre Page', () => {
 
     expect(html).toContain('Nossa Missão');
     expect(html).toContain('Todas as vagas em um só lugar');
-    expect(html).toContain('10.000+');
+    expect(html).toContain('4.400+');
     expect(html).toContain('Vagas Agregadas');
-    expect(html).toContain('15+');
+    expect(html).toContain('10+');
     expect(html).toContain('Plataformas Monitoradas');
     expect(html).not.toContain('Empresas Parceiras');
     expect(html).toContain('100%');
