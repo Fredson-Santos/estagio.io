@@ -3,16 +3,25 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import UmamiAnalytics from './UmamiAnalytics.astro';
 
 describe('UmamiAnalytics Component', () => {
+  it('renders default script tag with conekta.dev when no props are passed', async () => {
+    const container = await AstroContainer.create();
+    const html = await container.renderToString(UmamiAnalytics);
+
+    expect(html).toContain('https://umami.conekta.dev/script.js');
+    expect(html).toContain('data-website-id="4e1126d9-318f-4904-affc-191de8567099"');
+    expect(html).toContain('defer');
+  });
+
   it('renders umami script tag when websiteId and scriptUrl are present', async () => {
     const container = await AstroContainer.create();
     const html = await container.renderToString(UmamiAnalytics, {
       props: {
         websiteId: '4e1126d9-318f-4904-affc-191de8567099',
-        scriptUrl: 'https://umami.conekta.tech/script.js',
+        scriptUrl: 'https://umami.conekta.dev/script.js',
       },
     });
 
-    expect(html).toContain('https://umami.conekta.tech/script.js');
+    expect(html).toContain('https://umami.conekta.dev/script.js');
     expect(html).toContain('data-website-id="4e1126d9-318f-4904-affc-191de8567099"');
     expect(html).toContain('defer');
   });
@@ -22,7 +31,7 @@ describe('UmamiAnalytics Component', () => {
     const html = await container.renderToString(UmamiAnalytics, {
       props: {
         websiteId: '4e1126d9-318f-4904-affc-191de8567099',
-        scriptUrl: 'https://umami.conekta.tech/script.js',
+        scriptUrl: 'https://umami.conekta.dev/script.js',
         domains: 'estagio.io',
       },
     });

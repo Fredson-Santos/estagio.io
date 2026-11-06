@@ -6,7 +6,7 @@ interface Props {
 }
 
 const websiteId = Astro.props.websiteId ?? import.meta.env.PUBLIC_UMAMI_WEBSITE_ID ?? '4e1126d9-318f-4904-affc-191de8567099';
-const scriptUrl = Astro.props.scriptUrl ?? import.meta.env.PUBLIC_UMAMI_SCRIPT_URL ?? 'https://umami.conekta.tech/script.js';
+const scriptUrl = Astro.props.scriptUrl ?? import.meta.env.PUBLIC_UMAMI_SCRIPT_URL ?? 'https://umami.conekta.dev/script.js';
 const domains = Astro.props.domains ?? import.meta.env.PUBLIC_UMAMI_DOMAINS;
 
 const isEnabled = Boolean(websiteId && scriptUrl);
